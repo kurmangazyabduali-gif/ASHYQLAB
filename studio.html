@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="src/styles/auth.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -1392,6 +1393,7 @@
                 
                 <!-- Right Action Buttons -->
                 <div class="flex items-center gap-2">
+                    <div id="ashyqAuthNavSlot"></div>
                     <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-lg border border-slate-200 bg-white items-center justify-center text-[#e1306c] hover:border-[#e1306c] transition hidden sm:flex" title="Instagram: @abduali__krm">
                         <i class="fa-brands fa-instagram"></i>
                     </a>
@@ -7512,6 +7514,16 @@
                 
                 state.editorData.title = `AI: ${topic}`;
                 state.editorData.items = parsed;
+
+                // Sync to user cloud if logged in
+                if (window.AshyqAuth && typeof window.AshyqAuth.saveGame === 'function') {
+                    window.AshyqAuth.saveGame({
+                        template: state.activeTemplate || 'quiz',
+                        title: state.editorData.title,
+                        items: state.editorData.items,
+                        settings: state.editorData.settings
+                    });
+                }
                 
                 render();
                 toggleAI();
@@ -7558,7 +7570,25 @@
                         } catch(e) { console.warn('LocalStorage load error', e); }
                     }
 
-                    // 2. Check URL payload
+                    // 2. Fetch from Cloud Database API if not in local cache
+                    if (!loadedData && gameId) {
+                        try {
+                            const apiRes = await fetch('/api/games', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'get', gameId: gameId })
+                            });
+                            if (apiRes.ok) {
+                                const cloudData = await apiRes.json();
+                                if (cloudData && cloudData.game) {
+                                    loadedData = cloudData.game;
+                                    localStorage.setItem('ashyq_game_' + gameId, JSON.stringify(loadedData));
+                                }
+                            }
+                        } catch(e) { console.warn('Cloud game fetch error', e); }
+                    }
+
+                    // 3. Check URL payload
                     if (!loadedData && payload) {
                         loadedData = decodeUrlPayload(payload);
                     }
@@ -7601,7 +7631,7 @@
         }
 
         // Initialize on Load
-        window.onload = initStudioFromUrl;
+        window.addEventListener('DOMContentLoaded', initStudioFromUrl);
     </script>
 
     <!-- Mobile Navigation Drawer & Backdrop -->
@@ -7697,6 +7727,7 @@
         }
     </script>
 
+    <script src="src/features/auth/auth.js"></script>
     <script src="translator.js"></script>
 </body>
 </html>

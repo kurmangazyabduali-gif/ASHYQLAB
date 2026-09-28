@@ -1167,6 +1167,11 @@ ${currentHtml}
         history.unshift(doc);
         if (history.length > 20) history.pop(); // Keep last 20
         localStorage.setItem('ashyq_doc_history', JSON.stringify(history));
+
+        // Sync to cloud account if logged in
+        if (window.AshyqAuth && typeof window.AshyqAuth.saveDocument === 'function') {
+            window.AshyqAuth.saveDocument(doc);
+        }
     }
 
     function renderHistoryList() {

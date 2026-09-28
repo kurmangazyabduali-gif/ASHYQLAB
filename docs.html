@@ -17,6 +17,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <link rel="stylesheet" href="./src/styles/docs.css">
+    <link rel="stylesheet" href="./src/styles/auth.css">
 </head>
 <body class="docs-app">
 
@@ -47,6 +48,9 @@
         </div>
 
         <div class="header-right">
+            <!-- Auth Profile Slot -->
+            <div id="ashyqAuthNavSlot"></div>
+
             <!-- Instagram Link -->
             <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="header-link-btn header-insta-btn" title="Instagram: @abduali__krm">
                 <i class="fa-brands fa-instagram" style="color: #e1306c;"></i> <span>Instagram</span>
@@ -662,6 +666,7 @@
         }
     </script>
 
+    <script src="./src/features/auth/auth.js"></script>
     <script src="./src/features/docs/app.js"></script>
     <script src="translator.js"></script>
 </body>
