@@ -1,8 +1,6 @@
-// api/_db.js — Universal Cloud Database Driver for AshyqLab
-// Supports: Upstash Redis, Vercel KV, KVdb.io Cloud Bucket, and fallback store.
-
-const https = require('https');
-const http = require('http');
+// api/_db.js — Universal Cloud Database Driver for AshyqLab (ES Module)
+import https from 'node:https';
+import http from 'node:http';
 
 const BUCKET_ID = process.env.ASHYQ_DB_BUCKET || 'ashyqlab_cloud_v1';
 const KV_REST_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
@@ -13,34 +11,38 @@ const memoryCache = new Map();
 
 function httpRequest(urlStr, options = {}, postData = null) {
     return new Promise((resolve, reject) => {
-        const parsed = new URL(urlStr);
-        const protocol = parsed.protocol === 'https:' ? https : http;
-        
-        const reqOptions = {
-            hostname: parsed.hostname,
-            port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
-            path: parsed.pathname + (parsed.search || ''),
-            method: options.method || 'GET',
-            headers: options.headers || {}
-        };
+        try {
+            const parsed = new URL(urlStr);
+            const protocol = parsed.protocol === 'https:' ? https : http;
+            
+            const reqOptions = {
+                hostname: parsed.hostname,
+                port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+                path: parsed.pathname + (parsed.search || ''),
+                method: options.method || 'GET',
+                headers: options.headers || {}
+            };
 
-        const req = protocol.request(reqOptions, (res) => {
-            let data = '';
-            res.on('data', chunk => { data += chunk; });
-            res.on('end', () => {
-                resolve({ statusCode: res.statusCode, body: data });
+            const req = protocol.request(reqOptions, (res) => {
+                let data = '';
+                res.on('data', chunk => { data += chunk; });
+                res.on('end', () => {
+                    resolve({ statusCode: res.statusCode, body: data });
+                });
             });
-        });
 
-        req.on('error', (e) => reject(e));
-        req.setTimeout(5000, () => {
-            req.destroy(new Error('DB Timeout'));
-        });
+            req.on('error', (e) => reject(e));
+            req.setTimeout(5000, () => {
+                req.destroy(new Error('DB Timeout'));
+            });
 
-        if (postData) {
-            req.write(typeof postData === 'string' ? postData : JSON.stringify(postData));
+            if (postData) {
+                req.write(typeof postData === 'string' ? postData : JSON.stringify(postData));
+            }
+            req.end();
+        } catch (err) {
+            reject(err);
         }
-        req.end();
     });
 }
 
@@ -141,4 +143,4 @@ const db = {
     }
 };
 
-module.exports = db;
+export default db;

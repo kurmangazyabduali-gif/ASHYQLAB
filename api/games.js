@@ -1,7 +1,7 @@
-// api/games.js — Vercel Serverless Interactive Games Storage API
-const db = require('./_db');
+// api/games.js — Vercel Serverless Interactive Games Storage API (ES Module)
+import db from './_db.js';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -17,10 +17,8 @@ module.exports = async (req, res) => {
         // 1. SAVE GAME
         if (action === 'save' && game) {
             const gid = game.id || ('game_' + Date.now());
-            // Save global lookup for sharing links
             await db.set(`game:${gid}`, game);
 
-            // If user is authenticated, also link to user games list
             if (userId) {
                 const listKey = `user_games:${userId}`;
                 let userGames = (await db.get(listKey)) || [];
@@ -88,4 +86,4 @@ module.exports = async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
-};
+}

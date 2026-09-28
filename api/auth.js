@@ -1,7 +1,7 @@
-// api/auth.js — Vercel Serverless Cloud Authentication API
-const db = require('./_db');
+// api/auth.js — Vercel Serverless Cloud Authentication API (ES Module)
+import db from './_db.js';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
                 return res.status(401).json({ error: 'Құпиясөз қате енгізілді' });
             }
 
-            // Also load user's cloud docs and games to return for full sync
+            // Load user's cloud docs and games
             const userDocs = (await db.get(`user_docs:${existingUser.id}`)) || [];
             const userGames = (await db.get(`user_games:${existingUser.id}`)) || [];
 
@@ -120,4 +120,4 @@ module.exports = async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
-};
+}

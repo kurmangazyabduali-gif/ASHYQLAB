@@ -1,7 +1,7 @@
-// api/documents.js — Vercel Serverless Documents Storage API
-const db = require('./_db');
+// api/documents.js — Vercel Serverless Documents Storage API (ES Module)
+import db from './_db.js';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -20,11 +20,9 @@ module.exports = async (req, res) => {
             let currentDocs = (await db.get(listKey)) || [];
             if (!Array.isArray(currentDocs)) currentDocs = [];
 
-            // Replace existing or prepend
             const filtered = currentDocs.filter(d => d.id !== doc.id);
             filtered.unshift(doc);
             
-            // Limit to last 60 documents per user in cloud
             const trimmed = filtered.slice(0, 60);
             await db.set(listKey, trimmed);
 
@@ -69,4 +67,4 @@ module.exports = async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
-};
+}
