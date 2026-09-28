@@ -1092,16 +1092,36 @@ html, body {
 }
 
 /* ──────────────────────────────────────────────
-   INTERACTIVE GAME STUDIO SECTION (QMJ INTEGRATION)
+   INTERACTIVE GAME STUDIO SECTION (STANDALONE WIDGET)
 ─────────────────────────────────────────────── */
+.doc-interactive-games-widget-container {
+    width: 210mm;
+    max-width: 100%;
+    margin: 24px auto 60px;
+    padding: 0;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 5;
+}
+
 .doc-interactive-games-section {
-    margin: 18pt 0 16pt !important;
-    padding: 14pt 16pt !important;
-    background: #f8fafc !important;
-    border: 1.5px solid #2563eb !important;
-    border-radius: 10px !important;
+    margin: 0 !important;
+    padding: 20px 24px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #3b82f6 !important;
+    border-radius: 18px !important;
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08) !important;
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.08) !important;
+}
+
+@media print {
+    .doc-interactive-games-widget-container,
+    .doc-interactive-games-section {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
 }
 
 .doc-interactive-games-section * {
@@ -1241,6 +1261,13 @@ html, body {
     background: #1e40af !important;
     color: #ffffff !important;
     box-shadow: 0 4px 10px rgba(29, 78, 216, 0.3) !important;
+}
+
+.doc-game-btn.doc-game-btn-secondary:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
 }
 
 .doc-games-footer-note {

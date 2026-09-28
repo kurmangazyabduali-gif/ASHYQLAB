@@ -759,6 +759,18 @@ document.addEventListener('DOMContentLoaded', function () {
     renderTopicChips();
     handleTopicCurriculumCheck();
 
+    // Initial Standalone Games Widget
+    try {
+        const initSubj = selectSubject.value;
+        const initGrade = selectGrade.value;
+        const initTopic = inputTopic.value || 'Тізбек бөлігі үшін Ом заңы және кедергі';
+        const initIsKz = selectLanguage.value === 'Қазақша';
+        const initGames = createQMJGames(initTopic, initSubj, initGrade, '', '', [], null, initIsKz);
+        renderExternalGamesWidget(initGames, { lang: selectLanguage.value, topic: initTopic, resolvedTopic: initTopic });
+    } catch(e) {
+        console.warn('Initial games widget setup error:', e);
+    }
+
     // ── Zoom Stepper ──
     if (btnZoomIn && btnZoomOut && zoomLevelText) {
         btnZoomIn.addEventListener('click', () => {
@@ -996,6 +1008,23 @@ document.addEventListener('DOMContentLoaded', function () {
             // Insert generated document
             a4DocumentPaper.innerHTML = htmlResult;
 
+            // Render Standalone Interactive Games Widget below A4 sheet
+            try {
+                const generatedGames = createQMJGames(
+                    resolvedTopic || topic,
+                    subject,
+                    grade,
+                    resolvedObjective,
+                    resolvedLessonObj,
+                    [],
+                    window._lastAiInteractiveGames,
+                    isKazakh
+                );
+                renderExternalGamesWidget(generatedGames, { lang, topic, resolvedTopic });
+            } catch(ge) {
+                console.warn('External games widget update error:', ge);
+            }
+
             // Re-apply stamp if active
             if (hasStamp) {
                 const existingStamp = a4DocumentPaper.querySelector('.doc-approval-stamp');
@@ -1202,6 +1231,10 @@ ${currentHtml}
 
             row.querySelector('[data-idx]').addEventListener('click', () => {
                 a4DocumentPaper.innerHTML = item.html;
+                try {
+                    const histGames = createQMJGames(item.topic || 'Сабақ тақырыбы', item.subject || 'Физика', item.grade || '8-сынып', '', '', [], null, selectLanguage.value === 'Қазақша');
+                    renderExternalGamesWidget(histGames, { lang: selectLanguage.value, topic: item.topic, resolvedTopic: item.topic });
+                } catch(e) {}
                 historyModal.classList.remove('active');
                 showToast(`«${item.title}» құжаты қалпына келтірілді!`, 'success');
                 triggerAutoSave();
@@ -1386,6 +1419,12 @@ ${resolvedLessonObj ? `САБАҚ МАҚСАТТАРЫ (ДИФФЕРЕНЦИАЦ
                 console.warn(`Gemini JSON model ${model} failed...`, e);
             }
         }
+    }
+
+    if (parsedData && parsedData.interactiveGames) {
+        window._lastAiInteractiveGames = parsedData.interactiveGames;
+    } else {
+        window._lastAiInteractiveGames = null;
     }
 
     // TIER 3: Deterministic High-Precision Template Assembly
@@ -1716,27 +1755,87 @@ window._ashyqCurrentQmjGames = {};
 function encodeGamePayload(gameObj) {
     try {
         const jsonStr = JSON.stringify(gameObj);
-        return encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
+        const utf8Bytes = new TextEncoder().encode(jsonStr);
+        let binaryStr = '';
+        utf8Bytes.forEach(b => binaryStr += String.fromCharCode(b));
+        return encodeURIComponent(btoa(binaryStr));
     } catch(e) {
-        return '';
+        try {
+            return encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(gameObj)))));
+        } catch(e2) {
+            return encodeURIComponent(JSON.stringify(gameObj));
+        }
     }
 }
 
 function decodeGamePayload(encodedStr) {
+    if (!encodedStr) return null;
     try {
-        return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(encodedStr)))));
+        const raw = atob(decodeURIComponent(encodedStr));
+        const bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) {
+            bytes[i] = raw.charCodeAt(i);
+        }
+        return JSON.parse(new TextDecoder('utf-8').decode(bytes));
     } catch(e) {
-        return null;
+        try {
+            return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(encodedStr)))));
+        } catch(e2) {
+            try {
+                return JSON.parse(decodeURIComponent(encodedStr));
+            } catch(e3) {
+                return null;
+            }
+        }
     }
 }
 
-window.launchQmjGame = function(gameId, template, evt) {
+window.openQmjGame = function(gameId, template, payloadStr) {
     try {
+        let gameObj = null;
         if (window._ashyqCurrentQmjGames && window._ashyqCurrentQmjGames[gameId]) {
-            localStorage.setItem('ashyq_game_' + gameId, JSON.stringify(window._ashyqCurrentQmjGames[gameId]));
+            gameObj = window._ashyqCurrentQmjGames[gameId];
+        } else if (payloadStr) {
+            gameObj = decodeGamePayload(payloadStr);
+        }
+        if (gameObj) {
+            localStorage.setItem('ashyq_game_' + gameId, JSON.stringify(gameObj));
+            if (window.AshyqAuth && typeof window.AshyqAuth.saveGame === 'function') {
+                window.AshyqAuth.saveGame(gameObj);
+            }
         }
     } catch(e) {
-        console.warn('Error saving game before launch:', e);
+        console.warn('Error preparing game before launch:', e);
+    }
+    const studioUrl = `studio.html?template=${template}&gameId=${gameId}&payload=${payloadStr}&auto=1`;
+    window.open(studioUrl, '_blank');
+};
+
+window.copyQmjGameLink = function(gameId, template, payloadStr) {
+    try {
+        let gameObj = null;
+        if (window._ashyqCurrentQmjGames && window._ashyqCurrentQmjGames[gameId]) {
+            gameObj = window._ashyqCurrentQmjGames[gameId];
+        } else if (payloadStr) {
+            gameObj = decodeGamePayload(payloadStr);
+        }
+        if (gameObj) {
+            localStorage.setItem('ashyq_game_' + gameId, JSON.stringify(gameObj));
+            if (window.AshyqAuth && typeof window.AshyqAuth.saveGame === 'function') {
+                window.AshyqAuth.saveGame(gameObj);
+            }
+        }
+    } catch(e) {}
+
+    const fullUrl = `${window.location.origin}/studio.html?template=${template}&gameId=${gameId}&payload=${payloadStr}&auto=1`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            showToast('🎮 Интерактивті ойын сілтемесі көшірілді! Оқушыларға жібере аласыз.', 'success');
+        }).catch(() => {
+            prompt('Ойынның тікелей сілтемесі:', fullUrl);
+        });
+    } else {
+        prompt('Ойынның тікелей сілтемесі:', fullUrl);
     }
 };
 
@@ -1955,12 +2054,12 @@ function createQMJGames(topicText, subject, grade, learningObj, lessonObj, stage
     return games;
 }
 
-function renderQMJInteractiveGamesBlock(games, params) {
-    const { lang, topic, resolvedTopic } = params;
+function renderInteractiveGamesWidgetHtml(games, params) {
+    const { lang, topic, resolvedTopic } = params || {};
     const isKazakh = lang === 'Қазақша';
-    const topicText = resolvedTopic || topic;
+    const topicText = resolvedTopic || topic || 'Сабақ тақырыбы';
 
-    const cardsHtml = games.map(g => {
+    const cardsHtml = (games || []).map(g => {
         const payloadStr = encodeGamePayload({
             id: g.id,
             template: g.template,
@@ -1968,7 +2067,6 @@ function renderQMJInteractiveGamesBlock(games, params) {
             items: g.items,
             settings: g.settings
         });
-        const studioHref = `studio.html?template=${g.template}&gameId=${g.id}&payload=${payloadStr}&auto=1`;
 
         return `
             <div class="doc-game-card">
@@ -1980,9 +2078,14 @@ function renderQMJInteractiveGamesBlock(games, params) {
                         <div class="doc-game-meta">${g.desc} • ${g.items.length} ${isKazakh ? 'тапсырма' : 'заданий'}</div>
                     </div>
                 </div>
-                <a href="${studioHref}" target="_blank" rel="noopener noreferrer" class="doc-game-btn" onclick="window.launchQmjGame('${g.id}', '${g.template}', event)">
-                    <span>🎮</span> <span>${isKazakh ? 'Ойынды бастау' : 'Запустить игру'}</span> <span style="font-size:10px;">→</span>
-                </a>
+                <div class="doc-game-actions" style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+                    <button type="button" class="doc-game-btn" style="flex:1;" onclick="window.openQmjGame('${g.id}', '${g.template}', '${payloadStr}')">
+                        <span>🎮</span> <span>${isKazakh ? 'Ойынды бастау' : 'Запустить игру'}</span> <span style="font-size:11px;">→</span>
+                    </button>
+                    <button type="button" class="doc-game-btn doc-game-btn-secondary" style="background:#f8fafc; color:#334155; border:1px solid #cbd5e1; padding:6pt 10pt;" onclick="window.copyQmjGameLink('${g.id}', '${g.template}', '${payloadStr}')" title="${isKazakh ? 'Сілтемені көшіру' : 'Копировать ссылку'}">
+                        <span>🔗</span>
+                    </button>
+                </div>
             </div>
         `;
     }).join('');
@@ -2011,6 +2114,16 @@ function renderQMJInteractiveGamesBlock(games, params) {
             </div>
         </div>
     `;
+}
+
+function renderExternalGamesWidget(games, params) {
+    const widgetEl = document.getElementById('doc-interactive-games-widget');
+    if (!widgetEl) return;
+    if (!games || games.length === 0) {
+        widgetEl.innerHTML = '';
+        return;
+    }
+    widgetEl.innerHTML = renderInteractiveGamesWidgetHtml(games, params);
 }
 
 function getOfficialHeader(params) {
@@ -2074,14 +2187,14 @@ function renderQMJDocument(data, params) {
             stageName: isKazakh ? '3. Практикалық бекіту' : '3. Первичное закрепление',
             time: '25–38 мин',
             teacherAction: isKazakh
-                ? 'Деңгейлік тапсырмалар ұсынады (А, В, С деңгейі). Топтық және жұптық жұмыстарды үйлестіреді. Қиналған оқушыларға бағыт-бағдар береді.'
-                : 'Организация разноуровневой практической работы (уровни A, B, C). Консультирование учащихся, индивидуальная поддержка.',
+                ? 'Деңгейлік тапсырмалар ұсынады (А, В, С деңгейі). Топтық және жұптық жұмыстарды үйлестіреді. AshyqLab ойын студиясының бекіту тапсырмаларын интерактивті тақтаға шығарады.'
+                : 'Организация разноуровневой практической работы (уровни A, B, C). Запуск интерактивных игровых заданий закрепления на смарт-доске.',
             studentAction: isKazakh
-                ? 'Оқушылар деңгейлік есептерді өз бетінше және жұпта орындайды. Формулаларды түрлендіріп, есептеулер жүргізеді, өзара жауаптарын тексереді.'
-                : 'Выполняют дифференцированные задания, производят расчеты, проверяют решения в парах по готовым критериям.',
+                ? 'Оқушылар деңгейлік есептерді өз бетінше және жұпта орындайды. Ойын тапсырмаларына белсенді қатысып, формулаларды түрлендіреді және өзара тексереді.'
+                : 'Выполняют дифференцированные задания, решают интерактивные игровые задачи, производят расчеты и проверяют решения.',
             assessment: isKazakh
-                ? 'Өзара бағалау: «Бағдаршам» әдісі. Тапсырма парақтары (3 балл)'
-                : 'Взаимооценивание: Метод «Светофор». Раздаточные карточки (3 балла)'
+                ? `Өзара бағалау: «Бағдаршам» әдісі. Тапсырма парақтары (3 балл). Ресурстар: AshyqLab ойын тапсырмалары («${topicText}» викторинасы және сәйкестендіру).`
+                : `Взаимооценивание: Метод «Светофор» (3 балла). Ресурсы: Интерактивные задания AshyqLab по теме «${topicText}».`
         },
         {
             stageName: isKazakh ? '4. Қорытынды және Рефлексия' : '4. Итоги и рефлексия',
@@ -2178,8 +2291,6 @@ function renderQMJDocument(data, params) {
                 <td>${safetyText}</td>
             </tr>
         </table>
-
-        ${renderQMJInteractiveGamesBlock(createQMJGames(topicText, subject, grade, learningObj, lessonObj, stages, data?.interactiveGames, isKazakh), params)}
 
         <div class="doc-signature-row">
             <div class="sig-block">
@@ -2601,8 +2712,6 @@ function renderTechMapDocument(data, params) {
             </tbody>
         </table>
 
-        ${renderQMJInteractiveGamesBlock(createQMJGames(topicText, subject, grade, '', '', [], data?.interactiveGames, isKazakh), params)}
-
         <div class="doc-signature-row">
             <div class="sig-block"><span>${isKazakh ? 'Мұғалім:' : 'Учитель:'} _________________ (${teacher})</span></div>
             <div class="sig-block" style="text-align: right;"><span>${isKazakh ? 'ӘБ жетекшісі:' : 'Руководитель МО:'} _________________</span></div>
@@ -2645,8 +2754,6 @@ function renderOpenLessonDocument(data, params) {
         <p style="margin-bottom:6pt;"><strong>${isKazakh ? 'Кіріспе:' : 'Введение:'}</strong> «Шаттық шеңбері» тренингі. «Ой қозғау» сұрақтары арқылы «${topicText}» тақырыбына шығу.</p>
         <p style="margin-bottom:6pt;"><strong>${isKazakh ? 'Негізгі бөлім:' : 'Основная часть:'}</strong> Оқушыларды 3 топқа бөлу («Теоретиктер», «Экспериментаторлар», «Сарапшылар»). Топтық зерттеулер жүргізу.</p>
         <p style="margin-bottom:6pt;"><strong>${isKazakh ? 'Қорытынды:' : 'Заключение:'}</strong> «Борт журналы» арқылы кері байланыс және формативті бағалау.</p>
-
-        ${renderQMJInteractiveGamesBlock(createQMJGames(topicText, subject, grade, '', '', [], data?.interactiveGames, isKazakh), params)}
 
         <div class="doc-signature-row">
             <div class="sig-block"><span>${isKazakh ? 'Мұғалім:' : 'Учитель:'} _________________ (${teacher})</span></div>

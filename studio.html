@@ -7537,18 +7537,28 @@
         }
 
         function decodeUrlPayload(str) {
+            if (!str) return null;
             try {
-                return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(str)))));
+                const raw = atob(decodeURIComponent(str));
+                const bytes = new Uint8Array(raw.length);
+                for (let i = 0; i < raw.length; i++) {
+                    bytes[i] = raw.charCodeAt(i);
+                }
+                return JSON.parse(new TextDecoder('utf-8').decode(bytes));
             } catch(e) {
                 try {
-                    return JSON.parse(decodeURIComponent(str));
+                    return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(str)))));
                 } catch(e2) {
-                    return null;
+                    try {
+                        return JSON.parse(decodeURIComponent(str));
+                    } catch(e3) {
+                        return null;
+                    }
                 }
             }
         }
 
-        function initStudioFromUrl() {
+        async function initStudioFromUrl() {
             try {
                 const params = new URLSearchParams(window.location.search);
                 const template = params.get('template');
@@ -7562,15 +7572,21 @@
                     state.activeTemplate = matchedTemplate.id;
 
                     let loadedData = null;
-                    // 1. Check localStorage by gameId
-                    if (gameId) {
+
+                    // 1. Instant URL payload (zero network delay)
+                    if (payload) {
+                        loadedData = decodeUrlPayload(payload);
+                    }
+
+                    // 2. Check localStorage by gameId
+                    if (!loadedData && gameId) {
                         try {
                             const raw = localStorage.getItem('ashyq_game_' + gameId);
                             if (raw) loadedData = JSON.parse(raw);
                         } catch(e) { console.warn('LocalStorage load error', e); }
                     }
 
-                    // 2. Fetch from Cloud Database API if not in local cache
+                    // 3. Fetch from Cloud Database API if needed
                     if (!loadedData && gameId) {
                         try {
                             const apiRes = await fetch('/api/games', {
@@ -7582,15 +7598,12 @@
                                 const cloudData = await apiRes.json();
                                 if (cloudData && cloudData.game) {
                                     loadedData = cloudData.game;
-                                    localStorage.setItem('ashyq_game_' + gameId, JSON.stringify(loadedData));
+                                    try {
+                                        localStorage.setItem('ashyq_game_' + gameId, JSON.stringify(loadedData));
+                                    } catch(e) {}
                                 }
                             }
                         } catch(e) { console.warn('Cloud game fetch error', e); }
-                    }
-
-                    // 3. Check URL payload
-                    if (!loadedData && payload) {
-                        loadedData = decodeUrlPayload(payload);
                     }
 
                     if (loadedData && Array.isArray(loadedData.items) && loadedData.items.length > 0) {
@@ -7631,7 +7644,11 @@
         }
 
         // Initialize on Load
-        window.addEventListener('DOMContentLoaded', initStudioFromUrl);
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', initStudioFromUrl);
+        } else {
+            initStudioFromUrl();
+        }
     </script>
 
     <!-- Mobile Navigation Drawer & Backdrop -->
