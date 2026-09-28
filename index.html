@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" translate="no" class="notranslate">
+<html lang="kk">
 
 <head>
     <meta charset="UTF-8">
@@ -11,28 +11,30 @@
     <link rel="apple-touch-icon" href="assets/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
         /* AI Assistant Widget styles adapted for index.html */
-        .ai-fab { position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, #a855f7, #3b82f6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; box-shadow: 0 10px 25px rgba(168,85,247,0.5); cursor: pointer; z-index: 9999; border: 2px solid rgba(255,255,255,0.2); transition: all 0.3s; }
-        .ai-fab:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 15px 35px rgba(59,130,246,0.6); }
-        .ai-modal { position: fixed; bottom: 90px; right: 2rem; width: 350px; height: 500px; background: rgba(15,23,42,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(168,85,247,0.3); border-radius: 20px; z-index: 9998; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Roboto', sans-serif;}
+        .ai-fab { position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #e11d48 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; box-shadow: 0 10px 25px rgba(15,23,42,0.35), 0 4px 14px rgba(225,29,72,0.3); cursor: pointer; z-index: 9999; border: 2px solid rgba(255,255,255,0.8); transition: all 0.3s; }
+        .ai-fab:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 15px 35px rgba(15,23,42,0.45), 0 6px 18px rgba(225,29,72,0.4); }
+        .ai-modal { position: fixed; bottom: 90px; right: 2rem; width: 360px; height: 520px; background: #ffffff; backdrop-filter: blur(20px); border: 1px solid #e2e8f0; border-radius: 24px; z-index: 9998; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(15,23,42,0.18), 0 0 1px rgba(15,23,42,0.1); transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Roboto', sans-serif;}
         .ai-modal.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
-        .ai-header { background: linear-gradient(to right, rgba(168,85,247,0.2), rgba(59,130,246,0.1)); padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center; }
-        .ai-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; animation: pop 0.3s ease-out; }
-        .msg.bot { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); align-self: flex-start; border-bottom-left-radius: 4px; color: #e2e8f0; }
-        .msg.user { background: linear-gradient(135deg, #a855f7, #3b82f6); align-self: flex-end; border-bottom-right-radius: 4px; color: white; }
-        .ai-input-area { padding: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px; }
-        .ai-input { flex: 1; background: #020617; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 15px; color: white; outline: none; transition: border 0.3s; font-size: 14px; }
-        .ai-input:focus { border-color: #a855f7; }
-        .ai-send { background: linear-gradient(135deg, #a855f7, #3b82f6); border: none; width: 40px; height: 40px; border-radius: 10px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
-        .ai-send:active { transform: scale(0.9); }
+        .ai-header { background: #f8fafc; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; border-radius: 24px 24px 0 0; display: flex; justify-content: space-between; align-items: center; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #ffffff; }
+        .msg { max-width: 85%; padding: 11px 15px; border-radius: 14px; font-size: 14px; line-height: 1.45; animation: pop 0.3s ease-out; }
+        .msg.bot { background: #f1f5f9; border: 1px solid #e2e8f0; align-self: flex-start; border-bottom-left-radius: 4px; color: #0f172a; font-weight: 500; }
+        .msg.user { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #e11d48 100%); align-self: flex-end; border-bottom-right-radius: 4px; color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(15,23,42,0.15); }
+        .ai-input-area { padding: 14px 16px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; background: #f8fafc; border-radius: 0 0 24px 24px; }
+        .ai-input { flex: 1; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 10px 15px; color: #0f172a; outline: none; transition: all 0.25s; font-size: 14px; font-family: inherit; }
+        .ai-input:focus { border-color: #0f172a; box-shadow: 0 0 0 3px rgba(15,23,42,0.08); }
+        .ai-send { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #e11d48 100%); border: none; width: 42px; height: 42px; border-radius: 12px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(15,23,42,0.2); }
+        .ai-send:hover { transform: scale(1.05); }
+        .ai-send:active { transform: scale(0.95); }
         @keyframes pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         /* Reset button styles inside modal */
         .ai-modal button { padding: 0; margin: 0; font-family: inherit; }
-        .ai-header button { background: transparent; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; transition: color 0.2s; }
-        .ai-header button:hover { color: white; }
+        .ai-header button { background: #f1f5f9; border: none; font-size: 16px; cursor: pointer; color: #64748b; transition: all 0.2s; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .ai-header button:hover { color: #0f172a; background: #e2e8f0; }
 
         /* ══════════════════════════════════════════ */
         /*  FULLSCREEN PRELOADER (PURE WHITE THEME)  */
@@ -251,7 +253,7 @@
                 </span>
                 <div class="nav-brand-text">
                     <span class="nav-title">Ashyq<span class="nav-title-accent">Lab</span></span>
-                    <span class="nav-tagline">32 Interactive Labs</span>
+                    <span class="nav-tagline" data-i18n="navTagline">32 зертханалық жұмыс</span>
                 </div>
             </a>
         </div>
@@ -260,7 +262,7 @@
         <div class="nav-links-center">
             <a href="index.html" class="nav-link-item active">
                 <i class="fa-solid fa-house"></i>
-                <span data-i18n="navHome">Главная</span>
+                <span data-i18n="navHome">Басты</span>
             </a>
 
             <!-- Subjects Direct Link with Badge -->
@@ -291,13 +293,6 @@
                 <span class="nav-pill-badge badge-game">Play</span>
             </a>
 
-            <!-- TilAI Teacher Platform -->
-            <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="nav-link-item" title="TilAI Teacher Platform">
-                <i class="fa-solid fa-graduation-cap"></i>
-                <span data-i18n="tilaiTitle">TilAI Мұғалім</span>
-                <span class="nav-pill-badge badge-tilai">TilAI</span>
-            </a>
-
             <!-- Tools Dropdown -->
             <div class="nav-dropdown">
                 <button type="button" class="nav-link-item nav-dropdown-trigger">
@@ -308,15 +303,15 @@
                 <div class="nav-dropdown-menu nav-tools-menu">
                     <a href="calculator.html" class="dropdown-item">
                         <span class="dropdown-emoji">🧮</span>
-                        <span class="dropdown-title" data-i18n="calculator">Научный калькулятор</span>
+                        <span class="dropdown-title" data-i18n="calculator">Ғылыми калькулятор</span>
                     </a>
                     <a href="converter.html" class="dropdown-item">
                         <span class="dropdown-emoji">⚖️</span>
-                        <span class="dropdown-title" data-i18n="converter">Конвертер единиц</span>
+                        <span class="dropdown-title" data-i18n="converter">Бірліктер конверторы</span>
                     </a>
                     <a href="graphing.html" class="dropdown-item">
                         <span class="dropdown-emoji">📈</span>
-                        <span class="dropdown-title" data-i18n="graphing">Построение графиков</span>
+                        <span class="dropdown-title" data-i18n="graphing">Функция графиктері</span>
                     </a>
                     <a href="stopwatch.html" class="dropdown-item">
                         <span class="dropdown-emoji">⏱️</span>
@@ -326,35 +321,33 @@
             </div>
 
             <!-- Direct AI Assistant Trigger -->
-            <button type="button" class="nav-link-item nav-ai-trigger-btn" onclick="toggleAI()" title="Открыть ИИ Помощник">
+            <button type="button" class="nav-link-item nav-ai-trigger-btn" onclick="toggleAI()" title="ИИ Көмекшіні ашу">
                 <i class="fa-solid fa-robot"></i>
-                <span data-i18n="aiTitle">ИИ Ассистент</span>
+                <span data-i18n="aiTitle">Нейро-Көмекші</span>
             </button>
         </div>
 
         <!-- Right Action Controls -->
         <div class="nav-actions">
-            <!-- Quick Search Button -->
-            <button type="button" class="nav-search-btn" onclick="focusSearch()" title="Поиск (Ctrl+K)">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <span class="search-btn-text" data-i18n="quickSearch">Поиск...</span>
-                <kbd class="search-btn-kbd">⌘K</kbd>
-            </button>
+            <!-- Instagram Profile Button -->
+            <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="nav-icon-btn nav-insta-btn" title="Instagram: @abduali__krm">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
 
             <!-- Theme Switcher -->
-            <button id="themeToggleBtn" class="nav-icon-btn" onclick="toggleTheme()" title="Переключить тему">
+            <button id="themeToggleBtn" class="nav-icon-btn" onclick="toggleTheme()" title="Тақырыпты ауыстыру">
                 <i class="fa-solid fa-moon" id="themeIcon"></i>
             </button>
 
             <!-- Modern Segmented Language Switcher -->
             <div class="lang-segmented-control">
-                <button class="lang-segment active" data-lang="ru" onclick="setLang('ru')">RU</button>
-                <button class="lang-segment" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
+                <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
+                <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
                 <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
             </div>
 
             <!-- Hamburger Button for Mobile Drawer -->
-            <button type="button" class="nav-hamburger-btn" id="navHamburgerBtn" onclick="toggleMobileDrawer()" title="Меню">
+            <button type="button" class="nav-hamburger-btn" id="navHamburgerBtn" onclick="toggleMobileDrawer()" title="Мәзір">
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
@@ -369,7 +362,7 @@
         <!-- ══════════════════════════════════════ -->
         <div class="announce-banner" id="announceBanner">
             <span class="announce-icon">🚀</span>
-            <span class="announce-text" id="announceText">Новые лаборатории добавлены: Фотосинтез • Реакции • Алгоритмы</span>
+            <span class="announce-text" id="announceText" data-i18n="announceText">Жаңа зертханалар қосылды: Фотосинтез • Реакциялар • Алгоритмдер</span>
             <button class="announce-close"
                 onclick="document.getElementById('announceBanner').style.display='none'">✕</button>
         </div>
@@ -378,33 +371,33 @@
         <!--  HERO SECTION                          -->
         <!-- ══════════════════════════════════════ -->
         <header class="dashboard-header">
-            <div class="hero-badge" id="heroBadge">🔬 Интерактивные лаборатории</div>
+            <div class="hero-badge" id="heroBadge" data-i18n="heroBadge">🔬 Интерактивті зертханалар</div>
             <h1 id="heroTitle" class="hero-title-designer">
                 <span class="hero-title-main">ASHYQ</span><span class="hero-title-lab">LAB</span>
             </h1>
-            <p id="heroSubtitle">Центр интерактивных лабораторных исследований</p>
+            <p id="heroSubtitle" data-i18n="heroSubtitle">Интерактивті зертханалық зерттеулер орталығы</p>
 
             <!-- STATS BAR -->
             <div class="stats-bar">
                 <div class="stat-chip">
                     <span class="stat-chip-icon">🧪</span>
                     <span class="stat-chip-value">32</span>
-                    <span class="stat-chip-label" id="statLabsLabel">лабораторий</span>
+                    <span class="stat-chip-label" id="statLabsLabel" data-i18n="statLabsLabel">зертхана</span>
                 </div>
                 <div class="stat-chip">
                     <span class="stat-chip-icon">✅</span>
                     <span class="stat-chip-value" id="visitedCount">0</span>
-                    <span class="stat-chip-label" id="statVisitedLabel">пройдено</span>
+                    <span class="stat-chip-label" id="statVisitedLabel" data-i18n="statVisitedLabel">өтілді</span>
                 </div>
                 <div class="stat-chip">
                     <span class="stat-chip-icon">🏆</span>
                     <span class="stat-chip-value" id="progressPct">0%</span>
-                    <span class="stat-chip-label" id="statProgressLabel">прогресс</span>
+                    <span class="stat-chip-label" id="statProgressLabel" data-i18n="statProgressLabel">прогресс</span>
                 </div>
                 <div class="stat-chip">
                     <span class="stat-chip-icon">📚</span>
                     <span class="stat-chip-value">8</span>
-                    <span class="stat-chip-label" id="statSubjectsLabel">предметов</span>
+                    <span class="stat-chip-label" id="statSubjectsLabel" data-i18n="statSubjectsLabel">пән</span>
                 </div>
             </div>
         </header>
@@ -417,8 +410,8 @@
                 <div class="showcase-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Generator</div>
                 <div class="showcase-icon">🖥️</div>
                 <div class="showcase-content">
-                    <h3>AI Презентации</h3>
-                    <p>Создание презентаций за 15 секунд по методичке с 20 готовыми дизайнами</p>
+                    <h3 data-i18n="showcasePresentationTitle">AI Презентациялар</h3>
+                    <p data-i18n="showcasePresentationDesc">Әдістеме бойынша 15 секундта 20 түрлі дайын дизайнмен слайдтар жасау</p>
                 </div>
                 <span class="showcase-arrow"><i class="fa-solid fa-arrow-right"></i></span>
             </a>
@@ -427,8 +420,8 @@
                 <div class="showcase-badge"><i class="fa-solid fa-file-signature"></i> AI Docs</div>
                 <div class="showcase-icon">📄</div>
                 <div class="showcase-content">
-                    <h3>AI Документация</h3>
-                    <p>Генерация КСП/ҚМЖ, СОР/СОЧ, тестов и аналитики по ГОСО с экспортом в Word (.docx)</p>
+                    <h3 data-i18n="showcaseDocsTitle">AI Құжаттар</h3>
+                    <p data-i18n="showcaseDocsDesc">МЖМББС бойынша ҚМЖ, БЖБ, ТЖБ, тесттер құрастыру және Word (.docx) форматына экспорттау</p>
                 </div>
                 <span class="showcase-arrow"><i class="fa-solid fa-arrow-right"></i></span>
             </a>
@@ -437,8 +430,8 @@
                 <div class="showcase-badge"><i class="fa-solid fa-gamepad"></i> Game Studio</div>
                 <div class="showcase-icon">🎓</div>
                 <div class="showcase-content">
-                    <h3>Конструктор игр</h3>
-                    <p>Создавайте свои интерактивные викторины, тесты и мини-игры</p>
+                    <h3 data-i18n="showcaseStudioTitle">Ойын студиясы</h3>
+                    <p data-i18n="showcaseStudioDesc">Өз интерактивті викториналарыңызды, тесттер мен шағын ойындарыңызды жасаңыз</p>
                 </div>
                 <span class="showcase-arrow"><i class="fa-solid fa-arrow-right"></i></span>
             </a>
@@ -447,8 +440,8 @@
                 <div class="showcase-badge"><i class="fa-solid fa-robot"></i> AshyqLab AI</div>
                 <div class="showcase-icon">🤖</div>
                 <div class="showcase-content">
-                    <h3>Нейро-Ассистент</h3>
-                    <p>Умный виртуальный помощник ответит на любой учебный вопрос 24/7</p>
+                    <h3 data-i18n="showcaseAssistantTitle">Нейро-Көмекші</h3>
+                    <p data-i18n="showcaseAssistantDesc">Ақылды виртуалды көмекші кез келген оқу сұрағына 24/7 жауап береді</p>
                 </div>
                 <span class="showcase-arrow"><i class="fa-solid fa-comment-dots"></i></span>
             </div>
@@ -461,7 +454,8 @@
             <div class="search-bar">
                 <span class="search-icon">🔍</span>
                 <input type="text" class="search-input" id="searchInput"
-                    placeholder="Поиск по 32 лабораториям (например: Оптика, Клетка, Пифагор)..."
+                    placeholder="32 зертхана бойынша іздеу (мысалы: Оптика, Торша, Пифагор)..."
+                    data-i18n-placeholder="searchPlaceholder"
                     oninput="handleSearch(this.value)">
                 <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none;">✕</button>
             </div>
@@ -470,22 +464,22 @@
 
         <!-- SUBJECT CATEGORY TABS -->
         <div class="subject-filter-tabs" id="subjectFilterTabs">
-            <button class="subj-tab active" data-filter="all" data-i18n="tabAll">🌟 Все предметы (8)</button>
-            <button class="subj-tab" data-filter="exact" data-i18n="tabExact">⚛️ Точные науки</button>
+            <button class="subj-tab active" data-filter="all" data-i18n="tabAll">🌟 Барлық пәндер (8)</button>
+            <button class="subj-tab" data-filter="exact" data-i18n="tabExact">⚛️ Нақты ғылымдар</button>
             <button class="subj-tab" data-filter="informatics" data-i18n="tabIT">💻 IT & Информатика</button>
-            <button class="subj-tab" data-filter="nature" data-i18n="tabNature">🌿 Естествознание</button>
-            <button class="subj-tab" data-filter="languages" data-i18n="tabLang">🌐 Языки</button>
-            <button class="subj-tab" data-filter="tools" data-i18n="tabTools">🛠️ Инструменты</button>
+            <button class="subj-tab" data-filter="nature" data-i18n="tabNature">🌿 Жаратылыстану</button>
+            <button class="subj-tab" data-filter="languages" data-i18n="tabLang">🌐 Тілдер</button>
+            <button class="subj-tab" data-filter="tools" data-i18n="tabTools">🛠️ Құралдар</button>
         </div>
 
         <!-- MOBILE INTERACTIVE SUBJECTS PROMPT & TOGGLE -->
         <div class="mobile-subjects-header" id="mobileSubjectsHeader">
             <div class="mobile-subjects-title">
                 <span class="mobile-pulse-dot"></span>
-                <span id="mobileSubjectPrompt" data-i18n="mobileSubjectPrompt">📚 Выберите предмет для изучения:</span>
+                <span id="mobileSubjectPrompt" data-i18n="mobileSubjectPrompt">📚 Оқығыңыз келетін пәнді таңдаңыз:</span>
             </div>
             <button type="button" class="mobile-toggle-all-btn" id="mobileToggleAllBtn" onclick="toggleAllSubjects()">
-                <i class="fa-solid fa-layer-group"></i> <span id="toggleAllText" data-i18n="expandAll">Развернуть все</span>
+                <i class="fa-solid fa-layer-group"></i> <span id="toggleAllText" data-i18n="expandAll">Барлығын ашу</span>
             </button>
         </div>
 
@@ -499,7 +493,7 @@
                 <div class="subject-header-small" onclick="toggleSubjectCard(this.closest('.subject-card'))">
                     <div class="subject-icon-small">⚛️</div>
                     <div class="subject-title-small" data-i18n="physics">Физика</div>
-                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">лаб</span></span>
+                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">зерт.</span></span>
                     <span class="subject-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="experiments-list-wrap">
@@ -517,16 +511,16 @@
                                 <span class="exp-name" data-i18n="optics">Оптика</span>
                                 <span class="exp-visited-dot" id="dot-optics"></span>
                             </a>
-                            <a href="pendulum.html" class="exp-link" data-id="pendulum" data-name="Маятники"
-                                onclick="trackVisit('pendulum','Маятники','pendulum.html','⚛️')">
+                            <a href="pendulum.html" class="exp-link" data-id="pendulum" data-name="Маятниктер"
+                                onclick="trackVisit('pendulum','Маятниктер','pendulum.html','⚛️')">
                                 <span class="exp-icon">🕰️</span>
-                                <span class="exp-name" data-i18n="pendulum">Маятники</span>
+                                <span class="exp-name" data-i18n="pendulum">Маятниктер</span>
                                 <span class="exp-visited-dot" id="dot-pendulum"></span>
                             </a>
-                            <a href="waves.html" class="exp-link" data-id="waves" data-name="Волны"
-                                onclick="trackVisit('waves','Волны','waves.html','⚛️')">
+                            <a href="waves.html" class="exp-link" data-id="waves" data-name="Толқындар"
+                                onclick="trackVisit('waves','Толқындар','waves.html','⚛️')">
                                 <span class="exp-icon">🌊</span>
-                                <span class="exp-name" data-i18n="waves">Волны</span>
+                                <span class="exp-name" data-i18n="waves">Толқындар</span>
                                 <span class="exp-visited-dot" id="dot-waves"></span>
                             </a>
                         </div>
@@ -539,34 +533,34 @@
                 <div class="subject-header-small" onclick="toggleSubjectCard(this.closest('.subject-card'))">
                     <div class="subject-icon-small">💻</div>
                     <div class="subject-title-small" data-i18n="informatics">Информатика</div>
-                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">лаб</span></span>
+                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">зерт.</span></span>
                     <span class="subject-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="experiments-list-wrap">
                     <div class="experiments-list-inner">
                         <div class="experiments-list">
                             <a href="logic.html" class="exp-link" data-id="logic"
-                                onclick="trackVisit('logic','Логические Схемы','logic.html','💻')">
+                                onclick="trackVisit('logic','Логикалық Схемалар','logic.html','💻')">
                                 <span class="exp-icon">🔌</span>
-                                <span class="exp-name" data-i18n="logic">Логические Схемы</span>
+                                <span class="exp-name" data-i18n="logic">Логикалық Схемалар</span>
                                 <span class="exp-visited-dot" id="dot-logic"></span>
                             </a>
                             <a href="crypto.html" class="exp-link" data-id="crypto"
-                                onclick="trackVisit('crypto','Шифры и Загадки','crypto.html','💻')">
+                                onclick="trackVisit('crypto','Шифрлар мен Жұмбақтар','crypto.html','💻')">
                                 <span class="exp-icon">🔐</span>
-                                <span class="exp-name" data-i18n="crypto">Шифры и Загадки</span>
+                                <span class="exp-name" data-i18n="crypto">Шифрлар мен Жұмбақтар</span>
                                 <span class="exp-visited-dot" id="dot-crypto"></span>
                             </a>
                             <a href="algo.html" class="exp-link" data-id="algo"
-                                onclick="trackVisit('algo','Алгоритмы','algo.html','💻')">
+                                onclick="trackVisit('algo','Алгоритмдер','algo.html','💻')">
                                 <span class="exp-icon">📊</span>
-                                <span class="exp-name" data-i18n="algo">Алгоритмы</span>
+                                <span class="exp-name" data-i18n="algo">Алгоритмдер</span>
                                 <span class="exp-visited-dot" id="dot-algo"></span>
                             </a>
                             <a href="binary.html" class="exp-link" data-id="binary"
-                                onclick="trackVisit('binary','Двоичный код','binary.html','💻')">
+                                onclick="trackVisit('binary','Екілік код','binary.html','💻')">
                                 <span class="exp-icon">🔢</span>
-                                <span class="exp-name" data-i18n="binary">Двоичный код</span>
+                                <span class="exp-name" data-i18n="binary">Екілік код</span>
                                 <span class="exp-visited-dot" id="dot-binary"></span>
                             </a>
                         </div>
@@ -579,16 +573,16 @@
                 <div class="subject-header-small" onclick="toggleSubjectCard(this.closest('.subject-card'))">
                     <div class="subject-icon-small">📐</div>
                     <div class="subject-title-small" data-i18n="geometry">Геометрия</div>
-                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">лаб</span></span>
+                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">зерт.</span></span>
                     <span class="subject-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="experiments-list-wrap">
                     <div class="experiments-list-inner">
                         <div class="experiments-list">
                             <a href="fractals.html" class="exp-link" data-id="fractals"
-                                onclick="trackVisit('fractals','Фракталы','fractals.html','📐')">
+                                onclick="trackVisit('fractals','Фракталдар','fractals.html','📐')">
                                 <span class="exp-icon">❄️</span>
-                                <span class="exp-name" data-i18n="fractals">Фракталы</span>
+                                <span class="exp-name" data-i18n="fractals">Фракталдар</span>
                                 <span class="exp-visited-dot" id="dot-fractals"></span>
                             </a>
                             <a href="spiro.html" class="exp-link" data-id="spiro"
@@ -598,15 +592,15 @@
                                 <span class="exp-visited-dot" id="dot-spiro"></span>
                             </a>
                             <a href="transform.html" class="exp-link" data-id="transform"
-                                onclick="trackVisit('transform','Гео-Мастер','transform.html','📐')">
+                                onclick="trackVisit('transform','Гео-Шебер','transform.html','📐')">
                                 <span class="exp-icon">💠</span>
-                                <span class="exp-name" data-i18n="transform">Гео-Мастер</span>
+                                <span class="exp-name" data-i18n="transform">Гео-Шебер</span>
                                 <span class="exp-visited-dot" id="dot-transform"></span>
                             </a>
                             <a href="pythagoras.html" class="exp-link" data-id="pythagoras"
-                                onclick="trackVisit('pythagoras','Теорема Пифагора','pythagoras.html','📐')">
+                                onclick="trackVisit('pythagoras','Пифагор теоремасы','pythagoras.html','📐')">
                                 <span class="exp-icon">📐</span>
-                                <span class="exp-name" data-i18n="pythagoras">Теорема Пифагора</span>
+                                <span class="exp-name" data-i18n="pythagoras">Пифагор теоремасы</span>
                                 <span class="exp-visited-dot" id="dot-pythagoras"></span>
                             </a>
                         </div>
@@ -619,7 +613,7 @@
                 <div class="subject-header-small" onclick="toggleSubjectCard(this.closest('.subject-card'))">
                     <div class="subject-icon-small">🇰🇿</div>
                     <div class="subject-title-small" data-i18n="kazakh">Қазақ тілі</div>
-                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">лаб</span></span>
+                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">зерт.</span></span>
                     <span class="subject-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="experiments-list-wrap">
@@ -659,7 +653,7 @@
                 <div class="subject-header-small" onclick="toggleSubjectCard(this.closest('.subject-card'))">
                     <div class="subject-icon-small">🇬🇧</div>
                     <div class="subject-title-small" data-i18n="english">English</div>
-                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">лаб</span></span>
+                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">зерт.</span></span>
                     <span class="subject-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="experiments-list-wrap">
@@ -672,9 +666,9 @@
                                 <span class="exp-visited-dot" id="dot-cards_en"></span>
                             </a>
                             <a href="tenses.html" class="exp-link" data-id="tenses"
-                                onclick="trackVisit('tenses','Машина времен','tenses.html','🇬🇧')">
+                                onclick="trackVisit('tenses','Шақтар машинасы','tenses.html','🇬🇧')">
                                 <span class="exp-icon">⏳</span>
-                                <span class="exp-name" data-i18n="tenses">Машина времен</span>
+                                <span class="exp-name" data-i18n="tenses">Шақтар машинасы</span>
                                 <span class="exp-visited-dot" id="dot-tenses"></span>
                             </a>
                             <a href="spelling.html" class="exp-link" data-id="spelling"
@@ -684,9 +678,9 @@
                                 <span class="exp-visited-dot" id="dot-spelling"></span>
                             </a>
                             <a href="idioms.html" class="exp-link" data-id="idioms"
-                                onclick="trackVisit('idioms','Idiom Matcher','idioms.html','🇬🇧')">
+                                onclick="trackVisit('idioms','Идиомалар','idioms.html','🇬🇧')">
                                 <span class="exp-icon">🎭</span>
-                                <span class="exp-name" data-i18n="idioms">Idiom Matcher</span>
+                                <span class="exp-name" data-i18n="idioms">Идиомалар</span>
                                 <span class="exp-visited-dot" id="dot-idioms"></span>
                             </a>
                         </div>
@@ -699,16 +693,16 @@
                 <div class="subject-header-small" onclick="toggleSubjectCard(this.closest('.subject-card'))">
                     <div class="subject-icon-small">🧬</div>
                     <div class="subject-title-small" data-i18n="biology">Биология</div>
-                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">лаб</span></span>
+                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">зерт.</span></span>
                     <span class="subject-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="experiments-list-wrap">
                     <div class="experiments-list-inner">
                         <div class="experiments-list">
                             <a href="biology.html" class="exp-link" data-id="biology"
-                                onclick="trackVisit('biology','Живая Клетка','biology.html','🧬')">
+                                onclick="trackVisit('biology','Тіршілік Клеткасы','biology.html','🧬')">
                                 <span class="exp-icon">🔬</span>
-                                <span class="exp-name" data-i18n="biolab">Живая Клетка</span>
+                                <span class="exp-name" data-i18n="biolab">Тіршілік Клеткасы</span>
                                 <span class="exp-visited-dot" id="dot-biology"></span>
                             </a>
                             <a href="photosynthesis.html" class="exp-link" data-id="photosynthesis"
@@ -718,9 +712,9 @@
                                 <span class="exp-visited-dot" id="dot-photosynthesis"></span>
                             </a>
                             <a href="genetics.html" class="exp-link" data-id="genetics"
-                                onclick="trackVisit('genetics','Законы Менделя','genetics.html','🧬')">
+                                onclick="trackVisit('genetics','Мендель Заңдары','genetics.html','🧬')">
                                 <span class="exp-icon">🫛</span>
-                                <span class="exp-name" data-i18n="genetics">Законы Менделя</span>
+                                <span class="exp-name" data-i18n="genetics">Мендель Заңдары</span>
                                 <span class="exp-visited-dot" id="dot-genetics"></span>
                             </a>
                             <a href="anatomy.html" class="exp-link" data-id="anatomy"
@@ -739,34 +733,34 @@
                 <div class="subject-header-small" onclick="toggleSubjectCard(this.closest('.subject-card'))">
                     <div class="subject-icon-small">⚗️</div>
                     <div class="subject-title-small" data-i18n="chemistry">Химия</div>
-                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">лаб</span></span>
+                    <span class="subject-count-badge">4 <span class="badge-unit" data-i18n="labsUnit">зерт.</span></span>
                     <span class="subject-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="experiments-list-wrap">
                     <div class="experiments-list-inner">
                         <div class="experiments-list">
                             <a href="periodic.html" class="exp-link" data-id="periodic"
-                                onclick="trackVisit('periodic','Таблица Менделеева','periodic.html','⚗️')">
+                                onclick="trackVisit('periodic','Менделеев кестесі','periodic.html','⚗️')">
                                 <span class="exp-icon">🧪</span>
-                                <span class="exp-name" data-i18n="periodic">Таблица Менделеева</span>
+                                <span class="exp-name" data-i18n="periodic">Менделеев кестесі</span>
                                 <span class="exp-visited-dot" id="dot-periodic"></span>
                             </a>
                             <a href="reactions.html" class="exp-link" data-id="reactions"
-                                onclick="trackVisit('reactions','Химические реакции','reactions.html','⚗️')">
+                                onclick="trackVisit('reactions','Химиялық реакциялар','reactions.html','⚗️')">
                                 <span class="exp-icon">🧫</span>
-                                <span class="exp-name" data-i18n="reactions">Химические реакции</span>
+                                <span class="exp-name" data-i18n="reactions">Химиялық реакциялар</span>
                                 <span class="exp-visited-dot" id="dot-reactions"></span>
                             </a>
                             <a href="molecules.html" class="exp-link" data-id="molecules"
-                                onclick="trackVisit('molecules','Конструктор молекул','molecules.html','⚗️')">
+                                onclick="trackVisit('molecules','Молекулалар конструкторы','molecules.html','⚗️')">
                                 <span class="exp-icon">🔗</span>
-                                <span class="exp-name" data-i18n="molecules">Конструктор молекул</span>
+                                <span class="exp-name" data-i18n="molecules">Молекулалар конструкторы</span>
                                 <span class="exp-visited-dot" id="dot-molecules"></span>
                             </a>
                             <a href="ph_scale.html" class="exp-link" data-id="ph_scale"
-                                onclick="trackVisit('ph_scale','Шкала pH','ph_scale.html','⚗️')">
+                                onclick="trackVisit('ph_scale','pH шкаласы','ph_scale.html','⚗️')">
                                 <span class="exp-icon">🍋</span>
-                                <span class="exp-name" data-i18n="ph_scale">Шкала pH</span>
+                                <span class="exp-name" data-i18n="ph_scale">pH шкаласы</span>
                                 <span class="exp-visited-dot" id="dot-ph_scale"></span>
                             </a>
                         </div>
@@ -778,29 +772,29 @@
             <div class="subject-card card-tools is-collapsed" style="--theme-color: #00cba9;" data-subject="tools">
                 <div class="subject-header-small" onclick="toggleSubjectCard(this.closest('.subject-card'))">
                     <div class="subject-icon-small">🛠️</div>
-                    <div class="subject-title-small" data-i18n="tools">Инструменты</div>
-                    <span class="subject-count-badge">5 <span class="badge-unit" data-i18n="labsUnit">лаб</span></span>
+                    <div class="subject-title-small" data-i18n="tools">Құралдар</div>
+                    <span class="subject-count-badge">5 <span class="badge-unit" data-i18n="labsUnit">зерт.</span></span>
                     <span class="subject-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="experiments-list-wrap">
                     <div class="experiments-list-inner">
                         <div class="experiments-list">
                             <a href="calculator.html" class="exp-link" data-id="calculator"
-                                onclick="trackVisit('calculator','Научный калькулятор','calculator.html','🧮')">
+                                onclick="trackVisit('calculator','Ғылыми калькулятор','calculator.html','🧮')">
                                 <span class="exp-icon">🧮</span>
-                                <span class="exp-name" data-i18n="calculator">Научный калькулятор</span>
+                                <span class="exp-name" data-i18n="calculator">Ғылыми калькулятор</span>
                                 <span class="exp-visited-dot" id="dot-calculator"></span>
                             </a>
                             <a href="converter.html" class="exp-link" data-id="converter"
-                                onclick="trackVisit('converter','Конвертер единиц','converter.html','⚖️')">
+                                onclick="trackVisit('converter','Бірліктер конверторы','converter.html','⚖️')">
                                 <span class="exp-icon">⚖️</span>
-                                <span class="exp-name" data-i18n="converter">Конвертер единиц</span>
+                                <span class="exp-name" data-i18n="converter">Бірліктер конверторы</span>
                                 <span class="exp-visited-dot" id="dot-converter"></span>
                             </a>
                             <a href="graphing.html" class="exp-link" data-id="graphing"
-                                onclick="trackVisit('graphing','Построение графиков','graphing.html','🛠️')">
+                                onclick="trackVisit('graphing','Функция графиктері','graphing.html','🛠️')">
                                 <span class="exp-icon">📈</span>
-                                <span class="exp-name" data-i18n="graphing">Построение графиков</span>
+                                <span class="exp-name" data-i18n="graphing">Функция графиктері</span>
                                 <span class="exp-visited-dot" id="dot-graphing"></span>
                             </a>
                             <a href="stopwatch.html" class="exp-link" data-id="stopwatch"
@@ -810,9 +804,9 @@
                                 <span class="exp-visited-dot" id="dot-stopwatch"></span>
                             </a>
                             <a href="presentation.html" class="exp-link" data-id="presentation"
-                                onclick="trackVisit('presentation','Создание презентации','presentation.html','🖥️')">
+                                onclick="trackVisit('presentation','Презентация жасау','presentation.html','🖥️')">
                                 <span class="exp-icon">🖥️</span>
-                                <span class="exp-name">Создание презентации</span>
+                                <span class="exp-name" data-i18n="createPresentation">Презентация жасау</span>
                                 <span class="exp-visited-dot" id="dot-presentation"></span>
                             </a>
                         </div>
@@ -829,33 +823,78 @@
         <!-- ══════════════════════════════════════ -->
         <section class="about-section">
             <h2 class="section-title">
-                <span id="aboutTitle">ℹ️ О проекте</span>
+                <span id="aboutTitle" data-i18n="aboutTitle">ℹ️ Жоба туралы</span>
             </h2>
             <div class="about-grid">
                 <div class="about-card">
                     <div class="about-card-icon">🎯</div>
-                    <h3 id="about1Title">Цель проекта</h3>
-                    <p id="about1Text">Интерактивные виртуальные лаборатории помогают ученикам понять сложные темы через
-                        практику и визуализацию.</p>
+                    <h3 id="about1Title" data-i18n="about1Title">Жобаның мақсаты</h3>
+                    <p id="about1Text" data-i18n="about1Text">Интерактивті виртуалды зертханалар оқушыларға күрделі тақырыптарды тәжірибе мен визуализация арқылы түсінуге көмектеседі.</p>
                 </div>
                 <div class="about-card">
                     <div class="about-card-icon">🖥️</div>
-                    <h3 id="about2Title">Как пользоваться</h3>
-                    <p id="about2Text">Выберите предмет, откройте лабораторию и экспериментируйте! Все симуляции
-                        работают прямо в браузере без установки.</p>
+                    <h3 id="about2Title" data-i18n="about2Title">Қалай пайдалану керек</h3>
+                    <p id="about2Text" data-i18n="about2Text">Пәнді таңдаңыз, зертхананы ашыңыз және эксперимент жасаңыз! Барлық симуляциялар тікелей браузерде орнатусыз жұмыс істейді.</p>
                 </div>
                 <div class="about-card">
                     <div class="about-card-icon">📱</div>
-                    <h3 id="about3Title">Любое устройство</h3>
-                    <p id="about3Text">Сайт адаптирован для компьютеров, планшетов и смартфонов. Учитесь где угодно и
-                        когда угодно.</p>
+                    <h3 id="about3Title" data-i18n="about3Title">Кез келген құрылғы</h3>
+                    <p id="about3Text" data-i18n="about3Text">Сайт компьютерлерге, планшеттерге және смартфондарға толық бейімделген. Кез келген жерде оқыңыз.</p>
                 </div>
             </div>
         </section>
 
         <!-- Footer -->
         <footer class="site-footer">
-            <p id="footerText">AshyqLab • Интерактивті виртуалды зертханалар • 2025</p>
+            <div class="footer-card">
+                <div class="footer-main-content">
+                    <div class="footer-brand-section">
+                        <div class="footer-brand-title">
+                            <img src="assets/logo.png" alt="AshyqLab" class="footer-logo-img">
+                            <span>Ashyq<span class="footer-brand-accent">Lab</span></span>
+                        </div>
+                        <p class="footer-created-by">
+                            Created with the support of <strong>Kurmangazy Abduali</strong>.
+                        </p>
+                    </div>
+
+                    <div class="footer-contacts-section">
+                        <a href="tel:87773404926" class="footer-contact-link" title="Телефон">
+                            <div class="footer-contact-icon phone-icon">
+                                <i class="fa-solid fa-phone"></i>
+                            </div>
+                            <div class="footer-contact-info">
+                                <span class="footer-contact-label">Телефон</span>
+                                <span class="footer-contact-val">87773404926</span>
+                            </div>
+                        </a>
+
+                        <a href="mailto:kurmangazyabduali@gmail.com" class="footer-contact-link" title="Gmail">
+                            <div class="footer-contact-icon mail-icon">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <div class="footer-contact-info">
+                                <span class="footer-contact-label">Gmail</span>
+                                <span class="footer-contact-val">kurmangazyabduali@gmail.com</span>
+                            </div>
+                        </a>
+
+                        <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="footer-contact-link" title="Instagram">
+                            <div class="footer-contact-icon insta-icon">
+                                <i class="fa-brands fa-instagram"></i>
+                            </div>
+                            <div class="footer-contact-info">
+                                <span class="footer-contact-label">Instagram</span>
+                                <span class="footer-contact-val">@abduali__krm</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-bottom-bar">
+                    <p id="footerText" data-i18n="footerText">AshyqLab • Интерактивті виртуалды зертханалық жұмыстар • 2025</p>
+                </div>
+            </div>
         </footer>
 
     </div>
@@ -865,6 +904,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="robot3d.js"></script>
     <script src="lobby.js"></script>
+    <script src="translator.js"></script>
 
     <!-- Site Preloader Controller -->
     <script>
@@ -945,15 +985,15 @@
         <div class="ai-header">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(to right, #a855f7, #3b82f6); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(168,85,247,0.5);"><i class="fa-solid fa-wand-magic-sparkles" style="color: white; font-size: 12px;"></i></div>
-                <div><h3 data-i18n="aiName" style="margin: 0; font-size: 14px; color: white; font-weight: bold;">Нейро-Ассистент</h3><p data-i18n="aiStatus" style="margin: 0; font-size: 10px; color: #4ade80;">В сети • Готов помочь</p></div>
+                <div><h3 data-i18n="aiName" style="margin: 0; font-size: 14px; color: #0f172a; font-weight: bold;">Нейро-Көмекші</h3><p data-i18n="aiStatus" style="margin: 0; font-size: 10px; color: #16a34a;">Желіде • Көмекке дайын</p></div>
             </div>
             <button onclick="toggleAI()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="ai-messages" id="ai-msgs">
-            <div class="msg bot" data-i18n="aiHello">Сәлем! Мен <b>AshyqLab</b> кіріктірілген ИИ-мын. Оқу бағдарламасы немесе зертханалар бойынша сұрағыңыз болса — менен сұраңыз!</div>
+            <div class="msg bot" data-i18n="aiHello">Сәлем! Мен <b>AshyqLab</b> кіріктірілген ИИ-мын. Оқу бағдарламасы бойынша сұрақтарыңыз болса немесе сайтта навигация жасауға көмек керек болса — менен сұраңыз!</div>
         </div>
         <div class="ai-input-area">
-            <input type="text" id="ai-input" class="ai-input" placeholder="Спроси о чем угодно..." data-i18n-placeholder="aiPlaceholder" onkeypress="if(event.key==='Enter') sendAIMsg()">
+            <input type="text" id="ai-input" class="ai-input" placeholder="Кез келген нәрсені сұраңыз..." data-i18n-placeholder="aiPlaceholder" onkeypress="if(event.key==='Enter') sendAIMsg()">
             <button class="ai-send" onclick="sendAIMsg()"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </div>
@@ -1041,11 +1081,11 @@
             
             const msgObj = document.createElement('div');
             msgObj.className = 'msg bot';
-            msgObj.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="color:#38bdf8;"></i> <span data-i18n="aiThinking">Анализирую запрос...</span>';
+            msgObj.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="color:#38bdf8;"></i> <span data-i18n="aiThinking">Сұрауды талдаудамын...</span>';
             document.getElementById('ai-msgs').appendChild(msgObj);
             document.getElementById('ai-msgs').scrollTop = document.getElementById('ai-msgs').scrollHeight;
             
-            const sysPrompt = "Тебя зовут Нейро-Ассистент. Ты умный образовательный ИИ-помощник на сайте 'AshyqLab'. Отвечай на вопрос ученика: дружелюбно, очень кратко (2-3 предложения), используя HTML-теги <b> для выделения вместо маркдауна.";
+            const sysPrompt = "Сенің есімің Нейро-Көмекші. Сен 'AshyqLab' сайтындағы ақылды білім беруші ИИ-көмекшісің. Оқушының сұрағына: достық ниетпен, өте қысқа (2-3 сөйлем) және негізгі ойды ерекшелеу үшін HTML <b> тегтерін қолданып жауап бер.";
             let ans = await fetchAI(txt, sysPrompt);
             
             msgObj.innerHTML = ans.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
@@ -1063,10 +1103,10 @@
                 <img src="assets/logo.png" alt="AshyqLab" class="drawer-logo-img">
                 <div class="drawer-brand-text">
                     <span class="drawer-title">Ashyq<span class="nav-title-accent">Lab</span></span>
-                    <span class="drawer-subtitle" data-i18n="drawerSub">Меню платформы</span>
+                    <span class="drawer-subtitle" data-i18n="drawerSub">Платформа мәзірі</span>
                 </div>
             </div>
-            <button type="button" class="drawer-close-btn" onclick="toggleMobileDrawer(false)" title="Закрыть">
+            <button type="button" class="drawer-close-btn" onclick="toggleMobileDrawer(false)" title="Жабу">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -1077,87 +1117,87 @@
             <nav class="drawer-nav">
                 <a href="index.html" class="drawer-link active" onclick="toggleMobileDrawer(false)">
                     <span class="drawer-link-icon"><i class="fa-solid fa-house"></i></span>
-                    <span class="drawer-link-text" data-i18n="navHome">Главная</span>
+                    <span class="drawer-link-text" data-i18n="navHome">Басты</span>
                 </a>
                 
                 <!-- Expandable Subject Section in Drawer -->
                 <div class="drawer-accordion" id="drawerAccordion">
                     <button type="button" class="drawer-link drawer-accordion-trigger" onclick="toggleDrawerSubmenu(this)">
                         <span class="drawer-link-icon"><i class="fa-solid fa-book-open"></i></span>
-                        <span class="drawer-link-text" data-i18n="navSubjects">Предметы (8)</span>
+                        <span class="drawer-link-text" data-i18n="navSubjects">Пәндер (8)</span>
                         <i class="fa-solid fa-chevron-down drawer-accordion-arrow"></i>
                     </button>
                     <div class="drawer-submenu">
                         <a href="subjects.html" class="drawer-sublink" onclick="toggleMobileDrawer(false)">
-                            <span>🎓 Все классы (7-11)</span>
+                            <span data-i18n="viewAllClasses">🎓 Барлық сыныптар (7-11) →</span>
                         </a>
                         <a href="#dashboardGrid" class="drawer-sublink" onclick="scrollToSubject('physics'); toggleMobileDrawer(false);">
-                            <span>⚛️ Физика</span>
+                            <span>⚛️ <span data-i18n="physics">Физика</span></span>
                         </a>
                         <a href="#dashboardGrid" class="drawer-sublink" onclick="scrollToSubject('informatics'); toggleMobileDrawer(false);">
-                            <span>💻 Информатика</span>
+                            <span>💻 <span data-i18n="informatics">Информатика</span></span>
                         </a>
                         <a href="#dashboardGrid" class="drawer-sublink" onclick="scrollToSubject('geometry'); toggleMobileDrawer(false);">
-                            <span>📐 Геометрия</span>
+                            <span>📐 <span data-i18n="geometry">Геометрия</span></span>
                         </a>
                         <a href="#dashboardGrid" class="drawer-sublink" onclick="scrollToSubject('biology'); toggleMobileDrawer(false);">
-                            <span>🧬 Биология</span>
+                            <span>🧬 <span data-i18n="biology">Биология</span></span>
                         </a>
                         <a href="#dashboardGrid" class="drawer-sublink" onclick="scrollToSubject('chemistry'); toggleMobileDrawer(false);">
-                            <span>⚗️ Химия</span>
+                            <span>⚗️ <span data-i18n="chemistry">Химия</span></span>
                         </a>
                         <a href="#dashboardGrid" class="drawer-sublink" onclick="scrollToSubject('kazakh'); toggleMobileDrawer(false);">
-                            <span>🇰🇿 Қазақ тілі</span>
+                            <span>🇰🇿 <span data-i18n="kazakh">Қазақ тілі</span></span>
                         </a>
                         <a href="#dashboardGrid" class="drawer-sublink" onclick="scrollToSubject('english'); toggleMobileDrawer(false);">
-                            <span>🇬🇧 English</span>
+                            <span>🇬🇧 <span data-i18n="english">English</span></span>
                         </a>
                         <a href="#dashboardGrid" class="drawer-sublink" onclick="scrollToSubject('tools'); toggleMobileDrawer(false);">
-                            <span>🛠️ Инструменты</span>
+                            <span>🛠️ <span data-i18n="tools">Құралдар</span></span>
                         </a>
                     </div>
                 </div>
 
                 <a href="presentation.html" class="drawer-link" onclick="toggleMobileDrawer(false)">
                     <span class="drawer-link-icon text-teal"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-                    <span class="drawer-link-text" data-i18n="presentationTitle">AI Презентации</span>
+                    <span class="drawer-link-text" data-i18n="presentationTitle">AI Презентациялар</span>
                     <span class="drawer-badge">AI</span>
                 </a>
 
                 <a href="docs.html" class="drawer-link" onclick="toggleMobileDrawer(false)">
                     <span class="drawer-link-icon text-cyan" style="color:#06b6d4;"><i class="fa-solid fa-file-signature"></i></span>
-                    <span class="drawer-link-text" data-i18n="docsTitle">AI Документация</span>
+                    <span class="drawer-link-text" data-i18n="docsTitle">AI Құжаттар</span>
                     <span class="drawer-badge" style="background:linear-gradient(135deg,#06b6d4,#3b82f6);color:#fff;">Doc</span>
                 </a>
 
                 <a href="studio.html" class="drawer-link" onclick="toggleMobileDrawer(false)">
                     <span class="drawer-link-icon text-blue"><i class="fa-solid fa-gamepad"></i></span>
-                    <span class="drawer-link-text" data-i18n="studioTitle">Конструктор игр</span>
+                    <span class="drawer-link-text" data-i18n="studioTitle">Ойын студиясы</span>
                 </a>
 
-                <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="drawer-link" onclick="toggleMobileDrawer(false)">
-                    <span class="drawer-link-icon text-indigo" style="color: #6366f1;"><i class="fa-solid fa-graduation-cap"></i></span>
-                    <span class="drawer-link-text" data-i18n="tilaiTitle">TilAI Мұғалім</span>
-                    <span class="drawer-badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;">TilAI</span>
+                <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="drawer-link" onclick="toggleMobileDrawer(false)">
+                    <span class="drawer-link-icon" style="color: #e1306c;"><i class="fa-brands fa-instagram"></i></span>
+                    <span class="drawer-link-text">Instagram (@abduali__krm)</span>
+                    <span class="drawer-badge" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff;">Insta</span>
                 </a>
 
                 <button type="button" class="drawer-link" onclick="toggleMobileDrawer(false); toggleAI();">
                     <span class="drawer-link-icon text-purple"><i class="fa-solid fa-robot"></i></span>
-                    <span class="drawer-link-text" data-i18n="aiTitle">Нейро-Ассистент</span>
+                    <span class="drawer-link-text" data-i18n="aiTitle">Нейро-Көмекші</span>
                 </button>
             </nav>
 
             <!-- Tools Section in Drawer -->
-            <div class="drawer-section-title" data-i18n="navTools">Инструменты</div>
+            <div class="drawer-section-title" data-i18n="navTools">Құралдар</div>
             <div class="drawer-tools-grid">
                 <a href="calculator.html" class="drawer-tool-chip" onclick="toggleMobileDrawer(false)">
-                    <span>🧮 <span data-i18n="calculator">Калькулятор</span></span>
+                    <span>🧮 <span data-i18n="calculator">Ғылыми калькулятор</span></span>
                 </a>
                 <a href="converter.html" class="drawer-tool-chip" onclick="toggleMobileDrawer(false)">
-                    <span>⚖️ <span data-i18n="converter">Конвертер</span></span>
+                    <span>⚖️ <span data-i18n="converter">Бірліктер конверторы</span></span>
                 </a>
                 <a href="graphing.html" class="drawer-tool-chip" onclick="toggleMobileDrawer(false)">
-                    <span>📈 <span data-i18n="graphing">Графики</span></span>
+                    <span>📈 <span data-i18n="graphing">Функция графиктері</span></span>
                 </a>
                 <a href="stopwatch.html" class="drawer-tool-chip" onclick="toggleMobileDrawer(false)">
                     <span>⏱️ <span data-i18n="stopwatch">Секундомер</span></span>
@@ -1168,19 +1208,19 @@
         <div class="drawer-footer">
             <!-- Language Selector -->
             <div class="drawer-footer-row">
-                <span class="drawer-footer-label" data-i18n="langLabel">Язык:</span>
+                <span class="drawer-footer-label" data-i18n="langLabel">Тіл:</span>
                 <div class="lang-segmented-control drawer-lang-control">
-                    <button class="lang-segment active" data-lang="ru" onclick="setLang('ru')">RU</button>
-                    <button class="lang-segment" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
+                    <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
+                    <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
                     <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
                 </div>
             </div>
             <!-- Theme Toggle -->
             <div class="drawer-footer-row">
-                <span class="drawer-footer-label" data-i18n="themeLabel">Тема:</span>
+                <span class="drawer-footer-label" data-i18n="themeLabel">Тақырып:</span>
                 <button type="button" class="drawer-theme-btn" onclick="toggleTheme()">
                     <i class="fa-solid fa-moon" id="drawerThemeIcon"></i>
-                    <span id="drawerThemeText">Темная</span>
+                    <span id="drawerThemeText">Жарық</span>
                 </button>
             </div>
         </div>
@@ -1190,23 +1230,23 @@
     <nav class="mobile-bottom-dock" id="mobileBottomDock">
         <a href="index.html" class="dock-item active">
             <i class="fa-solid fa-house"></i>
-            <span data-i18n="dockHome">Главная</span>
+            <span data-i18n="dockHome">Басты</span>
         </a>
         <a href="subjects.html" class="dock-item">
             <i class="fa-solid fa-book-open"></i>
-            <span data-i18n="dockSubjects">Предметы</span>
+            <span data-i18n="dockSubjects">Пәндер</span>
         </a>
-        <button type="button" class="dock-item dock-ai-btn" onclick="toggleAI()" title="ИИ Помощник">
+        <button type="button" class="dock-item dock-ai-btn" onclick="toggleAI()" title="ИИ Көмекші">
             <div class="dock-ai-glow"><i class="fa-solid fa-robot"></i></div>
             <span data-i18n="dockAI">ИИ Чат</span>
         </button>
         <a href="studio.html" class="dock-item">
             <i class="fa-solid fa-gamepad"></i>
-            <span data-i18n="dockStudio">Игры</span>
+            <span data-i18n="dockStudio">Ойындар</span>
         </a>
         <a href="presentation.html" class="dock-item">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span data-i18n="dockSlides">Слайды</span>
+            <span data-i18n="dockSlides">Слайдтар</span>
         </a>
     </nav>
 </body>

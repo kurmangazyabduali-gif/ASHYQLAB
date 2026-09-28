@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="kk" translate="no" class="notranslate">
+<html lang="kk">
 <head>
     <link rel="icon" type="image/png" href="assets/logo.png">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -41,7 +41,11 @@ footer{position:relative;z-index:1;text-align:center;padding:16px;color:rgba(148
 <nav class="nav">
   <a href="subjects.html" class="back"><i class="fa-solid fa-power-off"></i> Шығу</a>
   <div class="logo">🧬 BIO·LAB 8</div>
-  <div style="font-family:'Orbitron',sans-serif;font-size:.62rem;color:#334155">VIRTUAL LAB</div>
+  <div class="lang-segmented-control">
+    <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
+    <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
+    <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
+  </div>
 </nav>
 <div class="hero">
   <div class="badge">🧬 БИОЛОГИЯ · 8 СЫНЫП · ЗЕРТХАНА</div>
@@ -137,5 +141,6 @@ S.forEach(s=>{s.t+=s.s;ctx.beginPath();ctx.arc(s.x*c.width,s.y*c.height,s.r,0,Ma
 ctx.fillStyle=`hsla(${s.h},80%,70%,${.1+.9*Math.abs(Math.sin(s.t))})`;ctx.fill()});
 requestAnimationFrame(draw)})()})();
 </script>
+<script src="translator.js"></script>
 </body>
 </html>

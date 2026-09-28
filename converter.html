@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" translate="no" class="notranslate">
+<html lang="kk">
 
 <head>
     <link rel="icon" type="image/png" href="assets/logo.png">
@@ -267,10 +267,17 @@
 <body class="page-tool">
 
     <header class="tool-header">
-        <a href="index.html" class="btn-back-home">← Главная</a>
+        <a href="index.html" class="btn-back-home">← Басты бет</a>
         <div>
-            <h1>⚖️ Конвертер единиц</h1>
-            <p>Удобный перевод физических величин</p>
+            <h1>⚖️ Бірліктер конверторы</h1>
+            <p>Физикалық шамалардың өлшем бірліктерін түрлендіру</p>
+        </div>
+        <div style="margin-left: auto;">
+            <div class="lang-segmented-control">
+                <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
+                <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
+                <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
+            </div>
         </div>
     </header>
 
@@ -561,6 +568,7 @@
 
 
 
-\n</body>
+    <script src="translator.js"></script>
+</body>
 
 </html>

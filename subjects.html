@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" translate="no" class="notranslate">
+<html lang="kk">
 
 <head>
     <meta charset="UTF-8">
@@ -9,6 +9,7 @@
     <link rel="apple-touch-icon" href="assets/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
         .subjects-container {
@@ -174,15 +175,123 @@
             opacity: 1;
         }
 
-        .lang-info {
-            padding: 15px 20px;
-            font-size: 0.85rem;
-            color: #cbd5e1;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            opacity: 0.9;
+        /* ══════════════════════════════════════ */
+        /*  LIGHT THEME ADAPTATION                */
+        /* ══════════════════════════════════════ */
+        [data-theme="light"] .page-header h1 {
+            color: #ffffff !important;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.95), 0 2px 6px rgba(0, 0, 0, 0.9) !important;
+            font-weight: 900 !important;
+        }
+
+        [data-theme="light"] .page-header p {
+            color: #f8fafc !important;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95) !important;
+            font-weight: 600 !important;
+        }
+
+        [data-theme="light"] .row-title {
+            color: #ffffff !important;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
+            font-weight: 800 !important;
+        }
+
+        [data-theme="light"] .subject-card {
+            background: #ffffff !important;
+            border: 1px solid rgba(15, 23, 42, 0.12) !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+        }
+
+        [data-theme="light"] .subject-card:hover {
+            border-color: rgba(2, 132, 199, 0.4) !important;
+            box-shadow: 0 8px 24px rgba(2, 132, 199, 0.1) !important;
+        }
+
+        [data-theme="light"] .subject-card-header:hover {
+            background: rgba(15, 23, 42, 0.02) !important;
+        }
+
+        [data-theme="light"] .subject-title-small {
+            color: #0f172a !important;
+            text-shadow: none !important;
+        }
+
+        [data-theme="light"] .class-list-container {
+            background: #f8fafc !important;
+        }
+
+        [data-theme="light"] .class-btn {
+            background: #ffffff !important;
+            border: 1px solid rgba(15, 23, 42, 0.08) !important;
+            color: #1e293b !important;
+        }
+
+        [data-theme="light"] .class-btn:hover {
+            background: var(--theme-color, #38bdf8) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px var(--theme-shadow, rgba(56, 189, 248, 0.3)) !important;
+        }
+
+        [data-theme="light"] .lang-info {
+            color: #64748b !important;
+        }
+
+        /* ══════════════════════════════════════ */
+        /*  DARK THEME ADAPTATION                 */
+        /* ══════════════════════════════════════ */
+        [data-theme="dark"] .page-header h1 {
+            color: #ffffff !important;
+            text-shadow: 0 0 30px rgba(56, 189, 248, 0.6), 0 2px 10px rgba(0, 0, 0, 0.9) !important;
+        }
+
+        [data-theme="dark"] .page-header p {
+            color: #cbd5e1 !important;
+        }
+
+        [data-theme="dark"] .row-title {
+            color: #e2e8f0 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        [data-theme="dark"] .subject-card {
+            background: rgba(15, 23, 42, 0.85) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        [data-theme="dark"] .subject-card:hover {
+            border-color: rgba(56, 189, 248, 0.4) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        [data-theme="dark"] .subject-card-header:hover {
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        [data-theme="dark"] .subject-title-small {
+            color: #ffffff !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        [data-theme="dark"] .class-list-container {
+            background: rgba(0, 0, 0, 0.25) !important;
+        }
+
+        [data-theme="dark"] .class-btn {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            color: #e2e8f0 !important;
+        }
+
+        [data-theme="dark"] .class-btn:hover {
+            background: var(--theme-color, #38bdf8) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px var(--theme-shadow, rgba(56, 189, 248, 0.3)) !important;
+        }
+
+        [data-theme="dark"] .lang-info {
+            color: #cbd5e1 !important;
         }
     </style>
 </head>
@@ -201,7 +310,7 @@
                 </span>
                 <div class="nav-brand-text">
                     <span class="nav-title">Ashyq<span class="nav-title-accent">Lab</span></span>
-                    <span class="nav-tagline">Пәндер мен сыныптар</span>
+                    <span class="nav-tagline" data-i18n="navSubjects">Пәндер мен сыныптар</span>
                 </div>
             </a>
         </div>
@@ -210,7 +319,7 @@
         <div class="nav-links-center">
             <a href="index.html" class="nav-link-item">
                 <i class="fa-solid fa-house"></i>
-                <span data-i18n="navHome">Главная</span>
+                <span data-i18n="navHome">Басты</span>
             </a>
 
             <!-- Subjects Direct Link (Active) -->
@@ -258,15 +367,15 @@
                 <div class="nav-dropdown-menu nav-tools-menu">
                     <a href="calculator.html" class="dropdown-item">
                         <span class="dropdown-emoji">🧮</span>
-                        <span class="dropdown-title" data-i18n="calculator">Научный калькулятор</span>
+                        <span class="dropdown-title" data-i18n="calculator">Ғылыми калькулятор</span>
                     </a>
                     <a href="converter.html" class="dropdown-item">
                         <span class="dropdown-emoji">⚖️</span>
-                        <span class="dropdown-title" data-i18n="converter">Конвертер единиц</span>
+                        <span class="dropdown-title" data-i18n="converter">Бірліктер конверторы</span>
                     </a>
                     <a href="graphing.html" class="dropdown-item">
                         <span class="dropdown-emoji">📈</span>
-                        <span class="dropdown-title" data-i18n="graphing">Построение графиков</span>
+                        <span class="dropdown-title" data-i18n="graphing">Функция графиктері</span>
                     </a>
                     <a href="stopwatch.html" class="dropdown-item">
                         <span class="dropdown-emoji">⏱️</span>
@@ -278,27 +387,25 @@
 
         <!-- Right Action Controls -->
         <div class="nav-actions">
-            <!-- Search Link (back to index search) -->
-            <a href="index.html" class="nav-search-btn" title="Поиск">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <span class="search-btn-text" data-i18n="quickSearch">Поиск...</span>
-                <kbd class="search-btn-kbd">⌘K</kbd>
+            <!-- Instagram Profile Button -->
+            <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="nav-icon-btn nav-insta-btn" title="Instagram: @abduali__krm">
+                <i class="fa-brands fa-instagram"></i>
             </a>
 
             <!-- Theme Switcher -->
-            <button id="themeToggleBtn" class="nav-icon-btn" onclick="toggleTheme()" title="Переключить тему">
+            <button id="themeToggleBtn" class="nav-icon-btn" onclick="toggleTheme()" title="Тақырыпты ауыстыру">
                 <i class="fa-solid fa-moon" id="themeIcon"></i>
             </button>
 
             <!-- Modern Segmented Language Switcher -->
             <div class="lang-segmented-control">
-                <button class="lang-segment active" data-lang="ru" onclick="setLang('ru')">RU</button>
-                <button class="lang-segment" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
+                <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
+                <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
                 <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
             </div>
 
             <!-- Hamburger Button for Mobile Drawer -->
-            <button type="button" class="nav-hamburger-btn" id="navHamburgerBtn" onclick="toggleMobileDrawer()" title="Меню">
+            <button type="button" class="nav-hamburger-btn" id="navHamburgerBtn" onclick="toggleMobileDrawer()" title="Мәзір">
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
@@ -309,19 +416,19 @@
     <div class="subjects-container">
         
         <div class="page-header">
-            <h1>Предметы и классы</h1>
-            <p>Нажмите на предмет, чтобы раскрыть доступные классы для обучения</p>
+            <h1 data-i18n="subjectsPageTitle">Пәндер мен сыныптар</h1>
+            <p data-i18n="subjectsPageSub">Оқу сыныптарын ашу үшін пәнді таңдаңыз</p>
         </div>
 
         <!-- ROW 1: Biology, Chemistry, Physics -->
-        <h2 class="row-title">Естественные науки</h2>
+        <h2 class="row-title" data-i18n="subjectsRow1">🌿 Жаратылыстану ғылымдары</h2>
         <div class="subject-row">
             <!-- Biology -->
             <div class="subject-card" style="--theme-color: #28a745; --theme-shadow: rgba(40,167,69,0.4);">
                 <div class="subject-card-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="subject-header-small">
                         <div class="subject-icon-small">🧬</div>
-                        <div class="subject-title-small">Биология</div>
+                        <div class="subject-title-small" data-i18n="biology">Биология</div>
                     </div>
                     <div class="expand-icon"><i class="fa-solid fa-chevron-down"></i></div>
                 </div>
@@ -329,11 +436,11 @@
                     <div class="class-list-inner">
                         <div class="class-list">
                             <br>
-                            <a href="biology7.html" class="class-btn"><span class="emoji">🎓</span> 7 класс</a>
-                            <a href="biology8.html" class="class-btn"><span class="emoji">🎓</span> 8 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 9 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 10 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 11 класс</a>
+                            <a href="biology7.html" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade7">7 сынып</span></a>
+                            <a href="biology8.html" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade8">8 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade9">9 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade10">10 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade11">11 сынып</span></a>
                         </div>
                     </div>
                 </div>
@@ -344,7 +451,7 @@
                 <div class="subject-card-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="subject-header-small">
                         <div class="subject-icon-small">⚗️</div>
-                        <div class="subject-title-small">Химия</div>
+                        <div class="subject-title-small" data-i18n="chemistry">Химия</div>
                     </div>
                     <div class="expand-icon"><i class="fa-solid fa-chevron-down"></i></div>
                 </div>
@@ -352,11 +459,11 @@
                     <div class="class-list-inner">
                         <div class="class-list">
                             <br>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 7 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 8 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 9 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 10 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 11 класс</a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade7">7 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade8">8 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade9">9 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade10">10 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade11">11 сынып</span></a>
                         </div>
                     </div>
                 </div>
@@ -367,7 +474,7 @@
                 <div class="subject-card-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="subject-header-small">
                         <div class="subject-icon-small">⚛️</div>
-                        <div class="subject-title-small">Физика</div>
+                        <div class="subject-title-small" data-i18n="physics">Физика</div>
                     </div>
                     <div class="expand-icon"><i class="fa-solid fa-chevron-down"></i></div>
                 </div>
@@ -375,11 +482,11 @@
                     <div class="class-list-inner">
                         <div class="class-list">
                             <br>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 7 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 8 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 9 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 10 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 11 класс</a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade7">7 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade8">8 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade9">9 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade10">10 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade11">11 сынып</span></a>
                         </div>
                     </div>
                 </div>
@@ -387,14 +494,14 @@
         </div>
 
         <!-- ROW 2: Geometry, Mathematics, Informatics -->
-        <h2 class="row-title">Точные науки и информатика</h2>
+        <h2 class="row-title" data-i18n="subjectsRow2">⚛️ Нақты ғылымдар мен IT</h2>
         <div class="subject-row">
             <!-- Geometry -->
             <div class="subject-card" style="--theme-color: #f43f5e; --theme-shadow: rgba(244,63,94,0.4);">
                 <div class="subject-card-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="subject-header-small">
                         <div class="subject-icon-small">📐</div>
-                        <div class="subject-title-small">Геометрия</div>
+                        <div class="subject-title-small" data-i18n="geometry">Геометрия</div>
                     </div>
                     <div class="expand-icon"><i class="fa-solid fa-chevron-down"></i></div>
                 </div>
@@ -402,11 +509,11 @@
                     <div class="class-list-inner">
                         <div class="class-list">
                             <br>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 7 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 8 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 9 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 10 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 11 класс</a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade7">7 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade8">8 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade9">9 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade10">10 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade11">11 сынып</span></a>
                         </div>
                     </div>
                 </div>
@@ -417,7 +524,7 @@
                 <div class="subject-card-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="subject-header-small">
                         <div class="subject-icon-small">🔢</div>
-                        <div class="subject-title-small">Математика</div>
+                        <div class="subject-title-small" data-i18n="math">Математика</div>
                     </div>
                     <div class="expand-icon"><i class="fa-solid fa-chevron-down"></i></div>
                 </div>
@@ -425,17 +532,17 @@
                     <div class="class-list-inner">
                         <div class="class-list">
                             <br>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 1 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 2 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 3 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 4 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 5 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 6 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 7 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 8 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 9 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 10 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 11 класс</a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade1">1 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade2">2 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade3">3 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade4">4 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade5">5 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade6">6 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade7">7 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade8">8 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade9">9 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade10">10 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade11">11 сынып</span></a>
                         </div>
                     </div>
                 </div>
@@ -446,7 +553,7 @@
                 <div class="subject-card-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="subject-header-small">
                         <div class="subject-icon-small">💻</div>
-                        <div class="subject-title-small">Информатика</div>
+                        <div class="subject-title-small" data-i18n="informatics">Информатика</div>
                     </div>
                     <div class="expand-icon"><i class="fa-solid fa-chevron-down"></i></div>
                 </div>
@@ -454,13 +561,13 @@
                     <div class="class-list-inner">
                         <div class="class-list">
                             <br>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 5 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 6 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 7 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 8 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 9 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 10 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 11 класс</a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade5">5 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade6">6 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade7">7 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade8">8 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade9">9 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade10">10 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade11">11 сынып</span></a>
                         </div>
                     </div>
                 </div>
@@ -468,34 +575,34 @@
         </div>
 
         <!-- ROW 3: Languages -->
-        <h2 class="row-title">Языки (Тілдер / Languages)</h2>
+        <h2 class="row-title" data-i18n="subjectsRow3">🌐 Тілдік пәндер</h2>
         <div class="subject-row">
             <!-- Kazakh -->
             <div class="subject-card" style="--theme-color: #0d9488; --theme-shadow: rgba(13,148,136,0.4);">
                 <div class="subject-card-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="subject-header-small">
                         <div class="subject-icon-small">🇰🇿</div>
-                        <div class="subject-title-small">Қазақ тілі</div>
+                        <div class="subject-title-small" data-i18n="kazakh">Қазақ тілі</div>
                     </div>
                     <div class="expand-icon"><i class="fa-solid fa-chevron-down"></i></div>
                 </div>
                 <div class="class-list-container">
                     <div class="class-list-inner">
                         <div class="lang-info">
-                            <i class="fa-solid fa-circle-info"></i> Басталуы: 1-сынып. Аяқталуы: 11-сынып.
+                            <i class="fa-solid fa-circle-info"></i> <span data-i18n="langInfoDesc">Басталуы: 1-сынып. Аяқталуы: 11-сынып.</span>
                         </div>
                         <div class="class-list">
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 1 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 2 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 3 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 4 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 5 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 6 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 7 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 8 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 9 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 10 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 11 класс</a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade1">1 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade2">2 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade3">3 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade4">4 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade5">5 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade6">6 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade7">7 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade8">8 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade9">9 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade10">10 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade11">11 сынып</span></a>
                         </div>
                     </div>
                 </div>
@@ -506,27 +613,27 @@
                 <div class="subject-card-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="subject-header-small">
                         <div class="subject-icon-small">🇬🇧</div>
-                        <div class="subject-title-small">English</div>
+                        <div class="subject-title-small" data-i18n="english">English</div>
                     </div>
                     <div class="expand-icon"><i class="fa-solid fa-chevron-down"></i></div>
                 </div>
                 <div class="class-list-container">
                     <div class="class-list-inner">
                         <div class="lang-info">
-                            <i class="fa-solid fa-circle-info"></i> Басталуы: 1-сынып. Аяқталуы: 11-сынып.
+                            <i class="fa-solid fa-circle-info"></i> <span data-i18n="langInfoDesc">Басталуы: 1-сынып. Аяқталуы: 11-сынып.</span>
                         </div>
                         <div class="class-list">
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 1 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 2 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 3 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 4 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 5 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 6 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 7 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 8 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 9 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 10 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 11 класс</a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade1">1 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade2">2 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade3">3 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade4">4 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade5">5 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade6">6 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade7">7 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade8">8 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade9">9 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade10">10 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade11">11 сынып</span></a>
                         </div>
                     </div>
                 </div>
@@ -537,33 +644,86 @@
                 <div class="subject-card-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="subject-header-small">
                         <div class="subject-icon-small">🇷🇺</div>
-                        <div class="subject-title-small">Русский язык</div>
+                        <div class="subject-title-small" data-i18n="russian">Орыс тілі</div>
                     </div>
                     <div class="expand-icon"><i class="fa-solid fa-chevron-down"></i></div>
                 </div>
                 <div class="class-list-container">
                     <div class="class-list-inner">
                         <div class="lang-info">
-                            <i class="fa-solid fa-circle-info"></i> Басталуы: 1-сынып. Аяқталуы: 11-сынып.
+                            <i class="fa-solid fa-circle-info"></i> <span data-i18n="langInfoDesc">Басталуы: 1-сынып. Аяқталуы: 11-сынып.</span>
                         </div>
                         <div class="class-list">
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 1 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 2 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 3 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 4 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 5 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 6 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 7 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 8 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 9 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 10 класс</a>
-                            <a href="#" class="class-btn"><span class="emoji">🎓</span> 11 класс</a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade1">1 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade2">2 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade3">3 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade4">4 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade5">5 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade6">6 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade7">7 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade8">8 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade9">9 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade10">10 сынып</span></a>
+                            <a href="#" class="class-btn"><span class="emoji">🎓</span> <span data-i18n="grade11">11 сынып</span></a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- Footer -->
+        <footer class="site-footer" style="margin-top: 40px;">
+            <div class="footer-card">
+                <div class="footer-main-content">
+                    <div class="footer-brand-section">
+                        <div class="footer-brand-title">
+                            <img src="assets/logo.png" alt="AshyqLab" class="footer-logo-img">
+                            <span>Ashyq<span class="footer-brand-accent">Lab</span></span>
+                        </div>
+                        <p class="footer-created-by">
+                            Created with the support of <strong>Kurmangazy Abduali</strong>.
+                        </p>
+                    </div>
+
+                    <div class="footer-contacts-section">
+                        <a href="tel:87773404926" class="footer-contact-link" title="Телефон">
+                            <div class="footer-contact-icon phone-icon">
+                                <i class="fa-solid fa-phone"></i>
+                            </div>
+                            <div class="footer-contact-info">
+                                <span class="footer-contact-label">Телефон</span>
+                                <span class="footer-contact-val">87773404926</span>
+                            </div>
+                        </a>
+
+                        <a href="mailto:kurmangazyabduali@gmail.com" class="footer-contact-link" title="Gmail">
+                            <div class="footer-contact-icon mail-icon">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <div class="footer-contact-info">
+                                <span class="footer-contact-label">Gmail</span>
+                                <span class="footer-contact-val">kurmangazyabduali@gmail.com</span>
+                            </div>
+                        </a>
+
+                        <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="footer-contact-link" title="Instagram">
+                            <div class="footer-contact-icon insta-icon">
+                                <i class="fa-brands fa-instagram"></i>
+                            </div>
+                            <div class="footer-contact-info">
+                                <span class="footer-contact-label">Instagram</span>
+                                <span class="footer-contact-val">@abduali__krm</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-bottom-bar">
+                    <p id="footerText" data-i18n="footerText">AshyqLab • Интерактивті виртуалды зертханалық жұмыстар • 2025</p>
+                </div>
+            </div>
+        </footer>
+
     </div>
 
     <!-- ══════════════════════════════════════ -->
@@ -576,10 +736,10 @@
                 <img src="assets/logo.png" alt="AshyqLab" class="drawer-logo-img">
                 <div class="drawer-brand-text">
                     <span class="drawer-title">Ashyq<span class="nav-title-accent">Lab</span></span>
-                    <span class="drawer-subtitle" data-i18n="drawerSub">Меню платформы</span>
+                    <span class="drawer-subtitle" data-i18n="drawerSub">Платформа мәзірі</span>
                 </div>
             </div>
-            <button type="button" class="drawer-close-btn" onclick="toggleMobileDrawer(false)" title="Закрыть">
+            <button type="button" class="drawer-close-btn" onclick="toggleMobileDrawer(false)" title="Жабу">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -589,42 +749,48 @@
             <nav class="drawer-nav">
                 <a href="index.html" class="drawer-link" onclick="toggleMobileDrawer(false)">
                     <span class="drawer-link-icon"><i class="fa-solid fa-house"></i></span>
-                    <span class="drawer-link-text" data-i18n="navHome">Главная</span>
+                    <span class="drawer-link-text" data-i18n="navHome">Басты</span>
                 </a>
                 
                 <a href="subjects.html" class="drawer-link active" onclick="toggleMobileDrawer(false)">
                     <span class="drawer-link-icon"><i class="fa-solid fa-book-open"></i></span>
-                    <span class="drawer-link-text" data-i18n="navSubjects">Предметы и классы</span>
+                    <span class="drawer-link-text" data-i18n="navSubjects">Пәндер мен сыныптар</span>
                 </a>
 
                 <a href="presentation.html" class="drawer-link" onclick="toggleMobileDrawer(false)">
                     <span class="drawer-link-icon text-teal"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-                    <span class="drawer-link-text" data-i18n="presentationTitle">AI Презентации</span>
+                    <span class="drawer-link-text" data-i18n="presentationTitle">AI Презентациялар</span>
                     <span class="drawer-badge">AI</span>
                 </a>
 
                 <a href="docs.html" class="drawer-link" onclick="toggleMobileDrawer(false)">
                     <span class="drawer-link-icon text-cyan" style="color:#06b6d4;"><i class="fa-solid fa-file-signature"></i></span>
-                    <span class="drawer-link-text" data-i18n="docsTitle">AI Документация</span>
+                    <span class="drawer-link-text" data-i18n="docsTitle">AI Құжаттар</span>
                     <span class="drawer-badge" style="background:linear-gradient(135deg,#06b6d4,#3b82f6);color:#fff;">Doc</span>
                 </a>
 
                 <a href="studio.html" class="drawer-link" onclick="toggleMobileDrawer(false)">
                     <span class="drawer-link-icon text-blue"><i class="fa-solid fa-gamepad"></i></span>
-                    <span class="drawer-link-text" data-i18n="studioTitle">Конструктор игр</span>
+                    <span class="drawer-link-text" data-i18n="studioTitle">Ойын студиясы</span>
+                </a>
+
+                <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="drawer-link" onclick="toggleMobileDrawer(false)">
+                    <span class="drawer-link-icon" style="color: #e1306c;"><i class="fa-brands fa-instagram"></i></span>
+                    <span class="drawer-link-text">Instagram (@abduali__krm)</span>
+                    <span class="drawer-badge" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff;">Insta</span>
                 </a>
             </nav>
 
-            <div class="drawer-section-title" data-i18n="navTools">Инструменты</div>
+            <div class="drawer-section-title" data-i18n="navTools">Құралдар</div>
             <div class="drawer-tools-grid">
                 <a href="calculator.html" class="drawer-tool-chip" onclick="toggleMobileDrawer(false)">
-                    <span>🧮 <span data-i18n="calculator">Калькулятор</span></span>
+                    <span>🧮 <span data-i18n="calculator">Ғылыми калькулятор</span></span>
                 </a>
                 <a href="converter.html" class="drawer-tool-chip" onclick="toggleMobileDrawer(false)">
-                    <span>⚖️ <span data-i18n="converter">Конвертер</span></span>
+                    <span>⚖️ <span data-i18n="converter">Бірліктер конверторы</span></span>
                 </a>
                 <a href="graphing.html" class="drawer-tool-chip" onclick="toggleMobileDrawer(false)">
-                    <span>📈 <span data-i18n="graphing">Графики</span></span>
+                    <span>📈 <span data-i18n="graphing">Функция графиктері</span></span>
                 </a>
                 <a href="stopwatch.html" class="drawer-tool-chip" onclick="toggleMobileDrawer(false)">
                     <span>⏱️ <span data-i18n="stopwatch">Секундомер</span></span>
@@ -634,18 +800,18 @@
 
         <div class="drawer-footer">
             <div class="drawer-footer-row">
-                <span class="drawer-footer-label" data-i18n="langLabel">Язык:</span>
+                <span class="drawer-footer-label" data-i18n="langLabel">Тіл:</span>
                 <div class="lang-segmented-control drawer-lang-control">
-                    <button class="lang-segment active" data-lang="ru" onclick="setLang('ru')">RU</button>
-                    <button class="lang-segment" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
+                    <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
+                    <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
                     <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
                 </div>
             </div>
             <div class="drawer-footer-row">
-                <span class="drawer-footer-label" data-i18n="themeLabel">Тема:</span>
+                <span class="drawer-footer-label" data-i18n="themeLabel">Тақырып:</span>
                 <button type="button" class="drawer-theme-btn" onclick="toggleTheme()">
                     <i class="fa-solid fa-moon" id="drawerThemeIcon"></i>
-                    <span id="drawerThemeText">Темная</span>
+                    <span id="drawerThemeText">Күңгірт</span>
                 </button>
             </div>
         </div>
@@ -655,24 +821,25 @@
     <nav class="mobile-bottom-dock" id="mobileBottomDock">
         <a href="index.html" class="dock-item">
             <i class="fa-solid fa-house"></i>
-            <span data-i18n="dockHome">Главная</span>
+            <span data-i18n="dockHome">Басты</span>
         </a>
         <a href="subjects.html" class="dock-item active">
             <i class="fa-solid fa-book-open"></i>
-            <span data-i18n="dockSubjects">Предметы</span>
+            <span data-i18n="dockSubjects">Пәндер</span>
         </a>
         <a href="studio.html" class="dock-item">
             <i class="fa-solid fa-gamepad"></i>
-            <span data-i18n="dockStudio">Игры</span>
+            <span data-i18n="dockStudio">Ойындар</span>
         </a>
         <a href="presentation.html" class="dock-item">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span data-i18n="dockSlides">Слайды</span>
+            <span data-i18n="dockSlides">Слайдтар</span>
         </a>
     </nav>
 
     <!-- Background Animation Script -->
     <script src="lobby.js"></script>
+    <script src="translator.js"></script>
 
 </body>
 

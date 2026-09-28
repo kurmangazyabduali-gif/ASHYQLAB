@@ -1,4 +1,4 @@
-// Purge Google Translate cookies to prevent unwanted browser machine auto-translation
+// Google Translate cookie helpers
 function purgeGoogleTranslateCookies() {
     ['googtrans', 'googtrans_prev', 'googtrans_saved'].forEach(function(c) {
         document.cookie = c + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -8,7 +8,9 @@ function purgeGoogleTranslateCookies() {
         }
     });
 }
-purgeGoogleTranslateCookies();
+if ((localStorage.getItem('vsh-lang') || 'kk') === 'kk') {
+    purgeGoogleTranslateCookies();
+}
 
 /**
  * AshyqLab — Main Lobby Script
@@ -21,7 +23,7 @@ const i18n = {
     ru: {
         heroBadge: '🔬 Интерактивные лаборатории',
         heroSubtitle: 'Центр интерактивных лабораторных исследований',
-        searchPlaceholder: 'Поиск по лабораториям...',
+        searchPlaceholder: 'Поиск по 32 лабораториям (например: Оптика, Клетка, Пифагор)...',
         chemistry: 'Химия', tools: 'Инструменты',
         statLabsLabel: 'лабораторий', statVisitedLabel: 'пройдено',
         statProgressLabel: 'прогресс', statSubjectsLabel: 'предметов',
@@ -40,10 +42,11 @@ const i18n = {
         algo: 'Алгоритмы', binary: 'Двоичный код',
         fractals: 'Фракталы', spiro: 'Спирограф', transform: 'Гео-Мастер', pythagoras: 'Теорема Пифагора',
         cards_kk: 'Сөздік Карточкалары', morphology: 'Сөз Конструкторы', grammar: 'Грамматика', phonetics_kk: 'Дыбыстар',
-        cards_en: 'Vocabulary Lab', tenses: 'Машина времен', spelling: 'Spelling Bee', idioms: 'Idiom Matcher',
+        cards_en: 'Vocabulary Lab', tenses: 'Машина времен', spelling: 'Spelling Bee', idioms: 'Идиомы',
         biolab: 'Живая Клетка', photosynthesis: 'Фотосинтез', genetics: 'Законы Менделя', anatomy: 'Анатомия',
         periodic: 'Таблица Менделеева', reactions: 'Химические реакции', molecules: 'Конструктор молекул', ph_scale: 'Шкала pH',
         calculator: 'Научный калькулятор', converter: 'Конвертер единиц', graphing: 'Графики функций', stopwatch: 'Секундомер',
+        createPresentation: 'Создание презентации',
         tabAll: '🌟 Все предметы (8)', tabExact: '⚛️ Точные науки', tabIT: '💻 IT & Информатика', tabNature: '🌿 Естествознание', tabLang: '🌐 Языки', tabTools: '🛠️ Инструменты',
         noResults: 'Ничего не найдено',
         createGame: '🎓 Создать игру', aiName: 'Нейро-Ассистент', aiStatus: 'В сети • Готов помочь',
@@ -63,15 +66,24 @@ const i18n = {
         navSubjectsBadge: '7–11 кл',
         navCreative: 'AI & Студия',
         navTools: 'Инструменты',
+        navTagline: '32 интерактивные лаборатории',
         quickSearch: 'Поиск...',
         megaSubjectsTitle: '📚 Образовательные предметы',
-        viewAllClasses: 'Все классы (7-11) →',
+        viewAllClasses: '🎓 Все классы (7-11) →',
         presentationTitle: 'AI Презентации',
         presentationDesc: 'Слайды за 15 секунд по методичке',
+        showcasePresentationTitle: 'AI Презентации',
+        showcasePresentationDesc: 'Создание презентаций за 15 секунд по методичке с 20 готовыми дизайнами',
         docsTitle: 'AI Документация',
         docsDesc: 'КСП, СОР, СОЧ и поурочные планы',
+        showcaseDocsTitle: 'AI Документация',
+        showcaseDocsDesc: 'Генерация КСП/ҚМЖ, СОР/СОЧ, тестов и аналитики по ГОСО с экспортом в Word (.docx)',
         studioTitle: 'Конструктор игр',
         studioDesc: 'Викторины, тесты и мини-игры',
+        showcaseStudioTitle: 'Конструктор игр',
+        showcaseStudioDesc: 'Создавайте свои интерактивные викторины, тесты и мини-игры',
+        showcaseAssistantTitle: 'Нейро-Ассистент',
+        showcaseAssistantDesc: 'Умный виртуальный помощник ответит на любой учебный вопрос 24/7',
         tilaiTitle: 'TilAI Учителю',
         tilaiDesc: 'Платформа для учителей',
         aiTitle: 'Нейро-Ассистент',
@@ -81,21 +93,32 @@ const i18n = {
         langLabel: 'Язык:',
         themeLabel: 'Тема:',
         themeDark: 'Темная',
-        themeLight: 'Светлая'
+        themeLight: 'Светлая',
+        subjectsPageTitle: 'Предметы и классы',
+        subjectsPageSub: 'Нажмите на предмет, чтобы раскрыть доступные классы для обучения',
+        subjectsRow1: '🌿 Естественные науки',
+        subjectsRow2: '⚛️ Точные науки и IT',
+        subjectsRow3: '🌐 Языковые дисциплины',
+        math: 'Математика',
+        russian: 'Русский язык',
+        langInfoDesc: 'Начало: 1 класс. Окончание: 11 класс.',
+        gradeLabel: 'класс',
+        grade1: '1 класс', grade2: '2 класс', grade3: '3 класс', grade4: '4 класс', grade5: '5 класс',
+        grade6: '6 класс', grade7: '7 класс', grade8: '8 класс', grade9: '9 класс', grade10: '10 класс', grade11: '11 класс'
     },
     kk: {
         heroBadge: '🔬 Интерактивті зертханалар',
         heroSubtitle: 'Интерактивті зертханалық зерттеулер орталығы',
-        searchPlaceholder: 'Зертхана бойынша іздеу...',
+        searchPlaceholder: '32 зертхана бойынша іздеу (мысалы: Оптика, Торша, Пифагор)...',
         chemistry: 'Химия', tools: 'Құралдар',
         statLabsLabel: 'зертхана', statVisitedLabel: 'өтілді',
         statProgressLabel: 'прогресс', statSubjectsLabel: 'пән',
         recentTitle: '🕐 Жақында ашылған', progressLabel: 'Сіздің прогрессіңіз',
-        announceText: 'Жаңа зертханалар: Фотосинтез • Реакциялар • Алгоритмдер',
+        announceText: 'Жаңа зертханалар қосылды: Фотосинтез • Реакциялар • Алгоритмдер',
         aboutTitle: 'ℹ️ Жоба туралы',
         about1Title: 'Жобаның мақсаты', about1Text: 'Интерактивті виртуалды зертханалар оқушыларға күрделі тақырыптарды тәжірибе мен визуализация арқылы түсінуге көмектеседі.',
-        about2Title: 'Қалай пайдалану керек', about2Text: 'Пәнді таңдаңыз, зертхананы ашыңыз және эксперимент жасаңыз! Барлық симуляциялар браузерде жұмыс істейді.',
-        about3Title: 'Кез келген құрылғы', about3Text: 'Сайт компьютерлерге, планшеттерге және смартфондарға бейімделген.',
+        about2Title: 'Қалай пайдалану керек', about2Text: 'Пәнді таңдаңыз, зертхананы ашыңыз және эксперимент жасаңыз! Барлық симуляциялар тікелей браузерде орнатусыз жұмыс істейді.',
+        about3Title: 'Кез келген құрылғы', about3Text: 'Сайт компьютерлерге, планшеттерге және смартфондарға толық бейімделген. Кез келген жерде оқыңыз.',
         footerText: 'AshyqLab • Интерактивті виртуалды зертханалық жұмыстар • 2025',
         soon: 'Жақында',
         physics: 'Физика', informatics: 'Информатика', geometry: 'Геометрия',
@@ -109,6 +132,7 @@ const i18n = {
         biolab: 'Тіршілік Клеткасы', photosynthesis: 'Фотосинтез', genetics: 'Мендель Заңдары', anatomy: 'Анатомия',
         periodic: 'Менделеев кестесі', reactions: 'Химиялық реакциялар', molecules: 'Молекулалар конструкторы', ph_scale: 'pH шкаласы',
         calculator: 'Ғылыми калькулятор', converter: 'Бірліктер конверторы', graphing: 'Функция графиктері', stopwatch: 'Секундомер',
+        createPresentation: 'Презентация жасау',
         tabAll: '🌟 Барлық пәндер (8)', tabExact: '⚛️ Нақты ғылымдар', tabIT: '💻 IT & Информатика', tabNature: '🌿 Жаратылыстану', tabLang: '🌐 Тілдер', tabTools: '🛠️ Құралдар',
         noResults: 'Ештеңе табылмады',
         createGame: '🎓 Ойын жасау', aiName: 'Нейро-Көмекші', aiStatus: 'Желіде • Көмекке дайын',
@@ -128,15 +152,24 @@ const i18n = {
         navSubjectsBadge: '7–11 сынып',
         navCreative: 'AI & Студия',
         navTools: 'Құралдар',
+        navTagline: '32 зертханалық жұмыс',
         quickSearch: 'Іздеу...',
         megaSubjectsTitle: '📚 Оқу пәндері',
-        viewAllClasses: 'Барлық сыныптар (7-11) →',
+        viewAllClasses: '🎓 Барлық сыныптар (7-11) →',
         presentationTitle: 'AI Презентациялар',
         presentationDesc: 'Әдістеме бойынша 15 сек слайд',
+        showcasePresentationTitle: 'AI Презентациялар',
+        showcasePresentationDesc: 'Әдістеме бойынша 15 секундта 20 түрлі дайын дизайнмен слайдтар жасау',
         docsTitle: 'AI Құжаттар',
         docsDesc: 'ҚМЖ, БЖБ, ТЖБ және сабақ жоспарлары',
+        showcaseDocsTitle: 'AI Құжаттар',
+        showcaseDocsDesc: 'МЖМББС бойынша ҚМЖ, БЖБ, ТЖБ, тесттер құрастыру және Word (.docx) форматына экспорттау',
         studioTitle: 'Ойын студиясы',
         studioDesc: 'Викториналар мен мини-ойындар',
+        showcaseStudioTitle: 'Ойын студиясы',
+        showcaseStudioDesc: 'Өз интерактивті викториналарыңызды, тесттер мен шағын ойындарыңызды жасаңыз',
+        showcaseAssistantTitle: 'Нейро-Көмекші',
+        showcaseAssistantDesc: 'Ақылды виртуалды көмекші кез келген оқу сұрағына 24/7 жауап береді',
         tilaiTitle: 'TilAI Мұғалім',
         tilaiDesc: 'Мұғалімдер платформасы',
         aiTitle: 'Нейро-Көмекші',
@@ -146,12 +179,23 @@ const i18n = {
         langLabel: 'Тіл:',
         themeLabel: 'Тақырып:',
         themeDark: 'Күңгірт',
-        themeLight: 'Жарық'
+        themeLight: 'Жарық',
+        subjectsPageTitle: 'Пәндер мен сыныптар',
+        subjectsPageSub: 'Оқу сыныптарын ашу үшін пәнді таңдаңыз',
+        subjectsRow1: '🌿 Жаратылыстану ғылымдары',
+        subjectsRow2: '⚛️ Нақты ғылымдар мен IT',
+        subjectsRow3: '🌐 Тілдік пәндер',
+        math: 'Математика',
+        russian: 'Орыс тілі',
+        langInfoDesc: 'Басталуы: 1-сынып. Аяқталуы: 11-сынып.',
+        gradeLabel: 'сынып',
+        grade1: '1 сынып', grade2: '2 сынып', grade3: '3 сынып', grade4: '4 сынып', grade5: '5 сынып',
+        grade6: '6 сынып', grade7: '7 сынып', grade8: '8 сынып', grade9: '9 сынып', grade10: '10 сынып', grade11: '11 сынып'
     },
     en: {
         heroBadge: '🔬 Interactive Laboratories',
         heroSubtitle: 'Center for Interactive Laboratory Research',
-        searchPlaceholder: 'Search labs...',
+        searchPlaceholder: 'Search 32 laboratories (e.g., Optics, Cell, Pythagoras)...',
         chemistry: 'Chemistry', tools: 'Tools',
         statLabsLabel: 'labs', statVisitedLabel: 'completed',
         statProgressLabel: 'progress', statSubjectsLabel: 'subjects',
@@ -159,7 +203,7 @@ const i18n = {
         announceText: 'New labs added: Photosynthesis • Reactions • Algorithms',
         aboutTitle: 'ℹ️ About the Project',
         about1Title: 'Project Goal', about1Text: 'Interactive virtual labs help students understand complex topics through practice and visualization.',
-        about2Title: 'How to Use', about2Text: 'Choose a subject, open a lab, and experiment! All simulations run directly in the browser.',
+        about2Title: 'How to Use', about2Text: 'Choose a subject, open a lab, and experiment! All simulations run directly in the browser without installation.',
         about3Title: 'Any Device', about3Text: 'The site is optimized for computers, tablets & smartphones. Learn anywhere, anytime.',
         footerText: 'AshyqLab • Virtual Laboratory Works • 2025',
         soon: 'Soon',
@@ -170,10 +214,11 @@ const i18n = {
         algo: 'Algorithms', binary: 'Binary Code',
         fractals: 'Fractals', spiro: 'Spirograph', transform: 'Geo-Master', pythagoras: 'Pythagorean Theorem',
         cards_kk: 'Vocab Cards (KK)', morphology: 'Word Constructor', grammar: 'Grammar', phonetics_kk: 'Kazakh Phonetics',
-        cards_en: 'Vocabulary Lab', tenses: 'Time Machine (Tenses)', spelling: 'Spelling Bee', idioms: 'Idiom Matcher',
+        cards_en: 'Vocabulary Lab', tenses: 'Time Machine (Tenses)', spelling: 'Spelling Bee', idioms: 'Idioms',
         biolab: 'Living Cell', photosynthesis: 'Photosynthesis', genetics: 'Mendelian Genetics', anatomy: 'Anatomy',
         periodic: 'Periodic Table', reactions: 'Chemical Reactions', molecules: 'Molecule Builder', ph_scale: 'pH Scale',
         calculator: 'Scientific Calculator', converter: 'Unit Converter', graphing: 'Graphing Calculator', stopwatch: 'Stopwatch',
+        createPresentation: 'Create Presentation',
         tabAll: '🌟 All Subjects (8)', tabExact: '⚛️ Exact Sciences', tabIT: '💻 IT & Informatics', tabNature: '🌿 Natural Sciences', tabLang: '🌐 Languages', tabTools: '🛠️ Tools',
         noResults: 'No results found',
         createGame: '🎓 Create Game', aiName: 'Neuro-Assistant', aiStatus: 'Online • Ready to help',
@@ -193,15 +238,24 @@ const i18n = {
         navSubjectsBadge: 'Grades 7–11',
         navCreative: 'AI & Studio',
         navTools: 'Tools',
+        navTagline: '32 interactive laboratories',
         quickSearch: 'Search...',
         megaSubjectsTitle: '📚 Academic Subjects',
-        viewAllClasses: 'All grades (7-11) →',
+        viewAllClasses: '🎓 All grades (7-11) →',
         presentationTitle: 'AI Presentations',
         presentationDesc: 'Slides in 15 seconds from text',
+        showcasePresentationTitle: 'AI Presentations',
+        showcasePresentationDesc: 'Generate presentations in 15 seconds with 20 professional designs',
         docsTitle: 'AI Documents',
         docsDesc: 'Lesson plans, tests & assessments',
+        showcaseDocsTitle: 'AI Documents',
+        showcaseDocsDesc: 'Generate lesson plans, assessments and tests with Word (.docx) export',
         studioTitle: 'Game Studio',
         studioDesc: 'Quizzes, tests and mini-games',
+        showcaseStudioTitle: 'Game Studio',
+        showcaseStudioDesc: 'Create your own interactive quizzes, tests and mini-games',
+        showcaseAssistantTitle: 'Neuro-Assistant',
+        showcaseAssistantDesc: 'Smart virtual tutor available 24/7 for any curriculum questions',
         tilaiTitle: 'TilAI Teacher',
         tilaiDesc: 'Teacher AI Platform',
         aiTitle: 'Neuro-Assistant',
@@ -211,7 +265,18 @@ const i18n = {
         langLabel: 'Language:',
         themeLabel: 'Theme:',
         themeDark: 'Dark',
-        themeLight: 'Light'
+        themeLight: 'Light',
+        subjectsPageTitle: 'Subjects & Grades',
+        subjectsPageSub: 'Click on a subject to expand available grades for learning',
+        subjectsRow1: '🌿 Natural Sciences',
+        subjectsRow2: '⚛️ Exact Sciences & IT',
+        subjectsRow3: '🌐 Language Disciplines',
+        math: 'Mathematics',
+        russian: 'Russian Language',
+        langInfoDesc: 'Starts: Grade 1. Finishes: Grade 11.',
+        gradeLabel: 'Grade',
+        grade1: 'Grade 1', grade2: 'Grade 2', grade3: 'Grade 3', grade4: 'Grade 4', grade5: 'Grade 5',
+        grade6: 'Grade 6', grade7: 'Grade 7', grade8: 'Grade 8', grade9: 'Grade 9', grade10: 'Grade 10', grade11: 'Grade 11'
     }
 };
 
@@ -558,12 +623,15 @@ function updateRecent() {
     if (!section || !chips) return;
     if (!recentList.length) { section.style.display = 'none'; return; }
     section.style.display = 'block';
-    chips.innerHTML = recentList.slice(0, 6).map(item => `
-        <a href="${item.href}" class="recent-chip" onclick="trackVisit('${item.id}','${item.name}','${item.href}','${item.icon}')">
+    const t = i18n[currentLang] || i18n.kk;
+    chips.innerHTML = recentList.slice(0, 6).map(item => {
+        const displayName = t[item.id] || item.name;
+        return `
+        <a href="${item.href}" class="recent-chip" onclick="trackVisit('${item.id}','${displayName}','${item.href}','${item.icon}')">
             <span class="recent-chip-icon">${item.icon}</span>
-            <span>${item.name}</span>
+            <span>${displayName}</span>
         </a>
-    `).join('');
+    `}).join('');
 }
 
 function trackVisit(id, name, href, icon) {
@@ -582,16 +650,20 @@ function handleSearch(query) {
     const q = query.trim().toLowerCase();
     const results = document.getElementById('searchResults');
     const clearBtn = document.getElementById('searchClear');
-    clearBtn.style.display = q ? 'block' : 'none';
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+    if (!results) return;
     if (!q) { results.style.display = 'none'; resetGrid(); return; }
-    const t = i18n[currentLang];
+    const t = i18n[currentLang] || i18n.kk;
     const matches = LABS.filter(lab => {
-        const labName = (t[lab.id] || lab.id).toLowerCase();
-        const subjectName = (t[lab.subjectKey] || lab.subjectKey).toLowerCase();
-        return labName.includes(q) || subjectName.includes(q);
+        const curName = (t[lab.id] || lab.id).toLowerCase();
+        const curSubj = (t[lab.subjectKey] || lab.subjectKey).toLowerCase();
+        const ruName = (i18n.ru[lab.id] || '').toLowerCase();
+        const kkName = (i18n.kk[lab.id] || '').toLowerCase();
+        const enName = (i18n.en[lab.id] || '').toLowerCase();
+        return curName.includes(q) || curSubj.includes(q) || ruName.includes(q) || kkName.includes(q) || enName.includes(q);
     });
     if (!matches.length) {
-        results.innerHTML = `<div class="search-no-results">${t.noResults}</div>`;
+        results.innerHTML = `<div class="search-no-results">${t.noResults || 'Ештеңе табылмады'}</div>`;
         results.style.display = 'block';
         highlightGrid([]);
         return;
@@ -800,58 +872,87 @@ window.addEventListener('scroll', () => {
 //  LANGUAGE SWITCHER
 // ══════════════════════════════════════════
 function setLang(lang) {
-    currentLang = lang;
-    localStorage.setItem('vsh-lang', lang);
+    currentLang = lang || 'kk';
+    localStorage.setItem('vsh-lang', currentLang);
+    document.documentElement.setAttribute('lang', currentLang);
     
-    // Purge googtrans cookie
-    purgeGoogleTranslateCookies();
+    // Manage googtrans cookie and trigger
+    if (currentLang === 'kk') {
+        purgeGoogleTranslateCookies();
+        const combo = document.querySelector('.goog-te-combo');
+        if (combo && combo.value !== 'kk') {
+            combo.value = 'kk';
+            combo.dispatchEvent(new Event('change'));
+        }
+    } else {
+        const cookieVal = '/kk/' + currentLang;
+        document.cookie = 'googtrans=' + cookieVal + '; path=/;';
+        if (location.hostname) {
+            document.cookie = 'googtrans=' + cookieVal + '; path=/; domain=' + location.hostname + ';';
+            document.cookie = 'googtrans=' + cookieVal + '; path=/; domain=.' + location.hostname + ';';
+        }
+        const combo = document.querySelector('.goog-te-combo');
+        if (combo && combo.value !== currentLang) {
+            combo.value = currentLang;
+            combo.dispatchEvent(new Event('change'));
+        }
     }
 
     // Sync all language buttons (both desktop and mobile drawer)
     document.querySelectorAll('.lang-btn, .lang-segment').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.lang === lang);
+        btn.classList.toggle('active', btn.dataset.lang === currentLang);
     });
-    const t = i18n[lang];
-    document.getElementById('heroBadge').textContent = t.heroBadge;
-    document.getElementById('heroSubtitle').textContent = t.heroSubtitle;
+    
+    const t = i18n[currentLang] || i18n.kk;
+    
+    const safeSetText = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val !== undefined) el.innerHTML = val;
+    };
+
+    safeSetText('heroBadge', t.heroBadge);
+    safeSetText('heroSubtitle', t.heroSubtitle);
+    safeSetText('statLabsLabel', t.statLabsLabel);
+    safeSetText('statVisitedLabel', t.statVisitedLabel);
+    safeSetText('statProgressLabel', t.statProgressLabel);
+    safeSetText('statSubjectsLabel', t.statSubjectsLabel);
+    safeSetText('recentTitle', t.recentTitle);
+    safeSetText('progressLabel', t.progressLabel);
+    safeSetText('announceText', t.announceText);
+    safeSetText('aboutTitle', t.aboutTitle);
+    safeSetText('about1Title', t.about1Title);
+    safeSetText('about1Text', t.about1Text);
+    safeSetText('about2Title', t.about2Title);
+    safeSetText('about2Text', t.about2Text);
+    safeSetText('about3Title', t.about3Title);
+    safeSetText('about3Text', t.about3Text);
+    safeSetText('footerText', t.footerText);
+    safeSetText('mobileSubjectPrompt', t.mobileSubjectPrompt);
+    
     const searchInput = document.getElementById('searchInput');
-    if (searchInput) searchInput.placeholder = t.searchPlaceholder;
-    document.getElementById('statLabsLabel').textContent = t.statLabsLabel;
-    document.getElementById('statVisitedLabel').textContent = t.statVisitedLabel;
-    document.getElementById('statProgressLabel').textContent = t.statProgressLabel;
-    document.getElementById('statSubjectsLabel').textContent = t.statSubjectsLabel;
-    const recentTitleEl = document.getElementById('recentTitle');
-    if (recentTitleEl) recentTitleEl.textContent = t.recentTitle;
-    const progressLabelEl = document.getElementById('progressLabel');
-    if (progressLabelEl) progressLabelEl.textContent = t.progressLabel;
-    document.getElementById('announceText').textContent = t.announceText;
-    document.getElementById('aboutTitle').textContent = t.aboutTitle;
-    document.getElementById('about1Title').textContent = t.about1Title;
-    document.getElementById('about1Text').textContent = t.about1Text;
-    document.getElementById('about2Title').textContent = t.about2Title;
-    document.getElementById('about2Text').textContent = t.about2Text;
-    document.getElementById('about3Title').textContent = t.about3Title;
-    document.getElementById('about3Text').textContent = t.about3Text;
-    document.getElementById('footerText').textContent = t.footerText;
+    if (searchInput && t.searchPlaceholder) searchInput.placeholder = t.searchPlaceholder;
     
-    // Mobile prompts and dock translations
-    const mobileSubjectPromptEl = document.getElementById('mobileSubjectPrompt');
-    if (mobileSubjectPromptEl && t.mobileSubjectPrompt) mobileSubjectPromptEl.textContent = t.mobileSubjectPrompt;
-    
+    // Translate data-i18n elements
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
-        if (t[key]) el.innerHTML = t[key]; // use innerHTML for cases like aiHello with <b> tags
+        if (t[key] !== undefined) {
+            el.innerHTML = t[key];
+        }
     });
+    
+    // Translate data-i18n-placeholder elements
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.dataset.i18nPlaceholder;
-        if (t[key]) el.placeholder = t[key];
+        if (t[key] !== undefined) {
+            el.placeholder = t[key];
+        }
     });
     
     // Sync drawer theme text
     const isLight = document.documentElement.getAttribute('data-theme') === 'light';
     const drawerThemeText = document.getElementById('drawerThemeText');
     if (drawerThemeText) {
-        drawerThemeText.textContent = isLight ? (t.themeLight || 'Светлая') : (t.themeDark || 'Темная');
+        drawerThemeText.textContent = isLight ? (t.themeLight || 'Жарық') : (t.themeDark || 'Күңгірт');
     }
 
     updateToggleAllButton();
@@ -862,29 +963,33 @@ function setLang(lang) {
 //  THEME TOGGLE SYSTEM (DARK / LIGHT)
 // ══════════════════════════════════════════
 function applyTheme(theme) {
-    if (theme === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light');
-    } else {
-        document.documentElement.removeAttribute('data-theme');
-    }
+    const isDark = theme === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    
     const icon = document.getElementById('themeIcon');
     if (icon) {
-        icon.className = theme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        // If theme is dark, show sun (click to switch to light); if light, show moon (click to switch to dark)
+        icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        if (icon.parentElement) {
+            icon.parentElement.title = isDark 
+                ? (currentLang === 'kk' ? 'Жарық тақырыпқа ауысу' : currentLang === 'ru' ? 'Включить светлую тему' : 'Switch to Light Theme')
+                : (currentLang === 'kk' ? 'Күңгірт тақырыпқа ауысу' : currentLang === 'ru' ? 'Включить темную тему' : 'Switch to Dark Theme');
+        }
     }
     const drawerIcon = document.getElementById('drawerThemeIcon');
     if (drawerIcon) {
-        drawerIcon.className = theme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        drawerIcon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
     }
-    const t = i18n[currentLang] || i18n.ru;
+    const t = i18n[currentLang] || i18n.kk;
     const drawerThemeText = document.getElementById('drawerThemeText');
     if (drawerThemeText) {
-        drawerThemeText.textContent = theme === 'light' ? (t.themeLight || 'Светлая') : (t.themeDark || 'Темная');
+        drawerThemeText.textContent = isDark ? (t.themeDark || 'Күңгірт') : (t.themeLight || 'Жарық');
     }
 }
 
 function toggleTheme() {
-    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    const newTheme = isLight ? 'dark' : 'light';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     localStorage.setItem('vsh-theme', newTheme);
     applyTheme(newTheme);
 }
@@ -943,7 +1048,7 @@ function init() {
     updateRecent();
     initCategoryTabs();
     setLang(currentLang);
-    const savedTheme = localStorage.getItem('vsh-theme') || 'dark';
+    const savedTheme = localStorage.getItem('vsh-theme') || 'light';
     applyTheme(savedTheme);
     updateToggleAllButton();
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="kk" translate="no" class="notranslate">
+<html lang="kk">
 <head>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <meta charset="UTF-8">
@@ -32,6 +32,11 @@
         <a href="subjects.html" class="btn-exit"><i class="fa-solid fa-power-off"></i> Шығу</a>
         <div class="logo">
             <i class="fa-solid fa-dna" style="color:#38bdf8;"></i> BIO-LAB <span style="background:linear-gradient(90deg, #d946ef, #8b5cf6); padding:4px 8px; font-size:0.7rem; border-radius:4px;">PRO</span>
+        </div>
+        <div class="lang-segmented-control">
+            <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
+            <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
+            <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
         </div>
     </header>
     
@@ -83,5 +88,6 @@
             </a>
         </div>
     </div>
+    <script src="translator.js"></script>
 </body>
 </html>

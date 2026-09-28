@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html lang="ru" translate="no" class="notranslate">
+<html lang="kk">
 <head>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Презентации — AshyqLab</title>
+    <title>AI Презентациялар — AshyqLab</title>
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Urbanist:wght@600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css" rel="stylesheet">
     
     <!-- Export Libraries (JSZip & PptxGenJS & html2pdf & PDF.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -25,16 +26,24 @@
          ЭКРАН 1: ПРОМПТ И НАСТРОЙКИ (ЕДИНАЯ ФОРМА)
          ========================================== -->
     <div id="screen-prompt" class="screen active">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1080px; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
-            <a href="index.html" class="back-link" style="margin-bottom: 0;">
-                <i class="fa-solid fa-arrow-left"></i> Назад на главную
+        <div class="prompt-header-nav">
+            <a href="index.html" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> <span>Басты бетке</span>
             </a>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="header-link-btn" style="color: #94a3b8; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(99,102,241,0.6)';this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='#94a3b8';">
-                    <i class="fa-solid fa-graduation-cap" style="color: #818cf8;"></i> TilAI Мұғалім
+            <div class="header-links-group">
+                <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="header-link-btn" title="Instagram: @abduali__krm">
+                    <i class="fa-brands fa-instagram" style="color: #e1306c;"></i> Instagram
                 </a>
-                <a href="docs.html" class="header-link-btn" style="color: #94a3b8; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(6,182,212,0.6)';this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='#94a3b8';">
-                    <i class="fa-solid fa-file-signature" style="color: #06b6d4;"></i> AI Документация (КСП, СОР, СОЧ)
+                <div class="lang-segmented-control">
+                    <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
+                    <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
+                    <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
+                </div>
+                <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="header-link-btn">
+                    <i class="fa-solid fa-graduation-cap" style="color: #6366f1;"></i> TilAI Мұғалім
+                </a>
+                <a href="docs.html" class="header-link-btn">
+                    <i class="fa-solid fa-file-signature" style="color: #e11d48;"></i> AI Құжаттар
                 </a>
             </div>
         </div>
@@ -129,12 +138,27 @@
 
                 <!-- Быстрые идеи для тем -->
                 <div class="prompt-hints">
+                    <span class="hint-chip" data-text="Димаш Құдайберген: феноменалды вокал және әлемдік жетістіктері">🎤 Димаш Құдайберген</span>
+                    <span class="hint-chip" data-text="Kyzylorda Hub бизнес-инкубациялау және стартап экожүйесі">🚀 Kyzylorda Hub</span>
                     <span class="hint-chip" data-text="Законы движения Ньютона с формулами и примерами">⚛️ Физика: Ньютон</span>
                     <span class="hint-chip" data-text="Строение клетки, митохондрии и фотосинтез">🌿 Биология: Клетка</span>
                     <span class="hint-chip" data-text="Искусственный интеллект и нейросети в 2026 году">🤖 ИИ и Нейросети</span>
-                    <span class="hint-chip" data-text="История развития космонавтики и исследование Марса">🚀 Космос и Марс</span>
-                    <span class="hint-chip" data-text="Периодический закон Менделеева и строение атомов">🧪 Химия: Менделеев</span>
                     <span class="hint-chip" data-text="Абай Құнанбаевтың философиялық мұрасы мен Қара сөздері">📜 Абай мұрасы</span>
+                </div>
+
+                <!-- Выбор источника фото: Реальные фото из Сети или ИИ -->
+                <div class="image-source-toggle-row">
+                    <label class="image-source-label">
+                        <i class="fa-solid fa-camera"></i> Источник иллюстраций:
+                    </label>
+                    <div class="image-source-buttons" id="image-source-buttons">
+                        <button type="button" class="img-src-btn active" data-source-mode="web" title="Использовать реальные фотографии из Википедии и интернета">
+                            <i class="fa-solid fa-globe"></i> 🌐 Реальные фото (Wikipedia / Web)
+                        </button>
+                        <button type="button" class="img-src-btn" data-source-mode="ai" title="Генерировать 3D-графику через нейросеть">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 🎨 ИИ 3D-генерация
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Кнопка генерации -->
@@ -237,11 +261,13 @@
                         <i class="fa-solid fa-pen-to-square"></i> Редактор слайда <span id="active-slide-num">1</span>
                     </h3>
 
-                    <!-- Поле: Выбор макета слайда (7 WOW-архетипов) -->
+                    <!-- Поле: Выбор макета слайда (WOW-архетипы) -->
                     <div class="form-group">
                         <label><i class="fa-solid fa-layer-group"></i> Макет слайда (WOW Archetype):</label>
                         <div class="slide-layout-picker" id="slide-layout-picker">
                             <button type="button" class="layout-opt-btn" data-layout="cover" title="Кинематографичная обложка"><i class="fa-solid fa-clapperboard"></i> Обложка</button>
+                            <button type="button" class="layout-opt-btn" data-layout="hub-ecosystem" title="Радиальная экосистема (Kyzylorda Hub / Startups)"><i class="fa-solid fa-circle-nodes"></i> Hub Экосистема</button>
+                            <button type="button" class="layout-opt-btn" data-layout="kpi-grid" title="KPI Дашборд метрик"><i class="fa-solid fa-chart-line"></i> KPI Дашборд</button>
                             <button type="button" class="layout-opt-btn" data-layout="stat" title="Крупная метрика / Закон"><i class="fa-solid fa-chart-simple"></i> Метрика</button>
                             <button type="button" class="layout-opt-btn" data-layout="steps" title="Пошаговый процесс"><i class="fa-solid fa-stairs"></i> Шаги</button>
                             <button type="button" class="layout-opt-btn" data-layout="compare" title="Сравнение VS"><i class="fa-solid fa-code-compare"></i> Сравнение</button>
@@ -271,15 +297,27 @@
                         <textarea id="edit-speaker-notes" class="form-textarea" rows="3" placeholder="Что сказать на этом слайде (подсказка для выступления)..."></textarea>
                     </div>
 
-                    <!-- Поле: Промпт для картинки + Кнопки -->
+                    <!-- Поле: Фото слайда (Интернет / ИИ) -->
+                    <div class="form-group">
+                        <label for="edit-image-url">
+                            <i class="fa-solid fa-camera"></i> URL фото слайда (Интернет):
+                        </label>
+                        <input id="edit-image-url" class="form-input" type="text" placeholder="https://... или найдите в Википедии" />
+                        
+                        <button type="button" id="btn-search-web-photo" class="btn-search-photo">
+                            <i class="fa-solid fa-globe"></i> Найти реальное фото в Википедии / Сети
+                        </button>
+                    </div>
+
+                    <!-- Поле: Промпт для ИИ-генерации (Fallback) -->
                     <div class="form-group">
                         <label for="edit-image-prompt">
-                            <i class="fa-solid fa-image"></i> Промпт картинки (English):
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> ИИ 3D Промпт (English):
                         </label>
                         <input id="edit-image-prompt" class="form-input" type="text" placeholder="Description in English..." />
                         
-                        <button id="btn-refresh-image" class="btn-refresh-img">
-                            <i class="fa-solid fa-dice"></i> Сгенерировать новый вариант (Pollinations.ai)
+                        <button type="button" id="btn-refresh-image" class="btn-refresh-img">
+                            <i class="fa-solid fa-dice"></i> Сгенерировать 3D вариант через ИИ
                         </button>
                     </div>
                 </div>
@@ -292,6 +330,28 @@
                     <div class="preview-stage-header">
                         <span><i class="fa-solid fa-eye"></i> Живой предпросмотр слайда</span>
                         <span class="preview-nav-hint">Используйте ⬅ ➡ для переключения слайдов</span>
+                    </div>
+
+                    <!-- Панель быстрого переключения WOW-дизайнов -->
+                    <div class="quick-theme-toolbar" id="quick-theme-toolbar">
+                        <div class="quick-theme-title">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>WOW-Стиль:</span>
+                        </div>
+                        <div class="quick-theme-buttons" id="quick-theme-buttons">
+                            <button type="button" class="q-theme-btn" data-theme-id="hub-startup"><span class="q-dot" style="background:#ea580c;"></span> 🚀 Hub Startup Pro</button>
+                            <button type="button" class="q-theme-btn" data-theme-id="cyber-nebula"><span class="q-dot" style="background:#00f0ff;"></span> 🌌 Cyber Nebula</button>
+                            <button type="button" class="q-theme-btn" data-theme-id="quantum-tech"><span class="q-dot" style="background:#10b981;"></span> ⚡ Quantum Tech</button>
+                            <button type="button" class="q-theme-btn" data-theme-id="imperial-gold"><span class="q-dot" style="background:#fbbf24;"></span> 👑 Imperial Gold</button>
+                            <button type="button" class="q-theme-btn" data-theme-id="apple-titanium"><span class="q-dot" style="background:#4f46e5;"></span> 🍏 Apple Light</button>
+                            <button type="button" class="q-theme-btn" data-theme-id="biotech-matrix"><span class="q-dot" style="background:#34d399;"></span> 🧬 BioTech</button>
+                            <button type="button" class="q-theme-btn" data-theme-id="solar-flare"><span class="q-dot" style="background:#f43f5e;"></span> 🌅 Solar Flare</button>
+                            <button type="button" class="q-theme-btn" data-theme-id="deep-ocean"><span class="q-dot" style="background:#38bdf8;"></span> 🌊 Deep Ocean</button>
+                            <button type="button" class="q-theme-btn" data-theme-id="cosmic-aurora"><span class="q-dot" style="background:#c084fc;"></span> 🔮 Aurora</button>
+                        </div>
+                        <button type="button" id="btn-shuffle-theme" class="q-theme-shuffle" title="Случайный WOW-стиль">
+                            <i class="fa-solid fa-dice"></i> Shuffle
+                        </button>
                     </div>
 
                     <!-- Текущий слайд 16:9 -->
@@ -358,10 +418,34 @@
         </div>
     </div>
 
+    <!-- Модальное окно поиска реальных фото из Сети / Wikipedia -->
+    <div id="web-photo-modal-overlay" class="web-photo-modal-overlay hidden">
+        <div class="web-photo-modal">
+            <div class="web-photo-modal-header">
+                <div class="web-photo-modal-title">
+                    <i class="fa-solid fa-globe"></i> Поиск реальных фото (Wikipedia / Web)
+                </div>
+                <button type="button" id="btn-close-web-photo-modal" class="web-photo-modal-close" title="Закрыть">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="web-photo-modal-search-row">
+                <input type="text" id="web-photo-search-input" class="web-photo-search-input" placeholder="Введите имя персоны, тему или предмет..." />
+                <button type="button" id="btn-run-web-photo-search" class="web-photo-btn-run-search">
+                    <i class="fa-solid fa-magnifying-glass"></i> Найти
+                </button>
+            </div>
+            <div id="web-photo-results-grid" class="web-photo-results-grid">
+                <!-- Карточки с найденными фото -->
+            </div>
+        </div>
+    </div>
+
     <!-- Уведомления -->
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Скрипт приложения -->
     <script src="./src/features/presentation/app.js"></script>
+    <script src="translator.js"></script>
 </body>
 </html>

@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html lang="ru" translate="no" class="notranslate">
+<html lang="kk">
 <head>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Педагогикалық Құжаттама — AshyqDoc | AshyqLab</title>
+    <title>AI Педагогикалық Құжаттама — AshyqDoc 2.0 | AshyqLab</title>
     
     <!-- Professional Executive Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css" rel="stylesheet">
     
     <!-- Export Libraries (html2pdf for PDF) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -27,21 +28,39 @@
             <a href="index.html" class="nav-brand" title="AshyqLab Басты бетке">
                 <img src="assets/logo.png" alt="AshyqLab" class="brand-logo">
                 <div class="brand-info">
-                    <span class="brand-title">Ashyq<span class="brand-accent">Doc</span></span>
+                    <span class="brand-title">Ashyq<span class="brand-accent">Doc</span> <span class="version-tag">2.0 PRO</span></span>
                     <span class="brand-seal"><i class="fa-solid fa-shield-halved"></i> МЕМЛЕКЕТТІК СТАНДАРТ (ГОСО РК)</span>
                 </div>
             </a>
         </div>
 
-        <!-- Document Status Indicator -->
+        <!-- Document Status & Auto-Save Indicator -->
         <div class="header-center">
             <div class="doc-status-pill" id="doc-status-pill">
                 <span class="status-dot"></span>
                 <span id="doc-status-text">Жүйе дайын • Құжат баптауларын таңдаңыз</span>
             </div>
+            <div class="autosave-badge" id="autosave-indicator" title="Өзгерістер браузерде автосақталады">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span id="autosave-text">Автосақтау қосулы</span>
+            </div>
         </div>
 
         <div class="header-right">
+            <!-- Instagram Link -->
+            <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="header-link-btn" title="Instagram: @abduali__krm">
+                <i class="fa-brands fa-instagram" style="color: #e1306c;"></i> <span>Instagram</span>
+            </a>
+            <!-- Language Switcher -->
+            <div class="lang-segmented-control">
+                <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
+                <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
+                <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
+            </div>
+            <!-- Saved Documents History Button -->
+            <button type="button" class="header-link-btn" id="btn-open-history" title="Сақталған құжаттар тарихы">
+                <i class="fa-solid fa-clock-rotate-left text-blue"></i> <span>Құжаттар тарихы</span>
+            </button>
             <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="header-link-btn" title="TilAI Мұғалім">
                 <i class="fa-solid fa-graduation-cap"></i> <span>TilAI Мұғалім</span>
             </a>
@@ -153,6 +172,44 @@
                     </div>
                 </div>
 
+                <!-- Pedagogical Format & Lesson Type Config Grid -->
+                <div class="config-grid-2">
+                    <div class="config-group">
+                        <label for="select-format" class="group-label"><i class="fa-solid fa-graduation-cap"></i> Әдіснама / Стандарт:</label>
+                        <select id="select-format" class="docs-select-sm">
+                            <option value="goso_standard" selected>ГОСО РК (2025/2026 жаңартылған)</option>
+                            <option value="steam">STEAM & Интеграцияланған</option>
+                            <option value="inclusive">Инклюзивті оқыту (ООП бейімдеу)</option>
+                            <option value="advanced">Тереңдетілген (Лицей / БИЛ)</option>
+                        </select>
+                    </div>
+
+                    <div class="config-group">
+                        <label for="select-lesson-type" class="group-label"><i class="fa-solid fa-layer-group"></i> Сабақ типі:</label>
+                        <select id="select-lesson-type" class="docs-select-sm">
+                            <option value="new_knowledge" selected>Жаңа білімді меңгеру</option>
+                            <option value="practice_drill">Бекіту және есептер шығару</option>
+                            <option value="lab_experiment">Зертханалық / Эксперимент</option>
+                            <option value="assessment_control">Бақылау / Жиынтық бағалау</option>
+                            <option value="revision">Қайталау және жүйелеу</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- «Біртұтас тәрбие» бағдарламасы құндылықтары -->
+                <div class="config-section" id="birtutas-section">
+                    <label class="section-label-sm">
+                        <i class="fa-solid fa-heart text-rose"></i> «Біртұтас тәрбие» құндылықтары:
+                    </label>
+                    <div class="values-tags-container" id="values-tags-container">
+                        <button type="button" class="value-tag active" data-value="Әділдік пен жауапкершілік">⚖️ Әділдік пен жауапкершілік</button>
+                        <button type="button" class="value-tag active" data-value="Отаншылдық пен мемлекетшілдік">🇰🇿 Отаншылдық</button>
+                        <button type="button" class="value-tag active" data-value="Еңбекқорлық пен кәсіби біліктілік">💼 Еңбекқорлық</button>
+                        <button type="button" class="value-tag" data-value="Талап пен жасампаздық">💡 Жасампаздық</button>
+                        <button type="button" class="value-tag" data-value="Заң және тәртіп">🛡️ Заң мен тәртіп</button>
+                    </div>
+                </div>
+
                 <!-- Topic / Learning Goals Input -->
                 <div class="config-section">
                     <label for="input-topic" class="section-label">
@@ -164,6 +221,21 @@
                         rows="3" 
                         placeholder="Мысалы: «Тізбек бөлігі үшін Ом заңы: кернеу мен кедергіні есептеу», «Өсімдік жасушасының құрылысы және фотосинтез», «Квадрат теңдеулер және Виет теоремасы»..."
                     ></textarea>
+
+                    <!-- Smart Curriculum Match Indicator Card -->
+                    <div id="curriculum-match-card" class="curriculum-match-card hidden">
+                        <div class="match-header">
+                            <span class="match-badge"><i class="fa-solid fa-certificate"></i> ГОСО РК Бағдарламасынан анықталды</span>
+                            <span class="match-grade-badge" id="match-grade-badge">9-сынып • Физика</span>
+                        </div>
+                        <div class="match-topic-name" id="match-topic-title">Атомның планетарлық моделі. Резерфорд тәжірибесі</div>
+                        <div class="match-meta" id="match-meta-desc"><strong>Бөлім:</strong> Атом құрылысы | <strong>Оқу мақсаты:</strong> 9.6.1.1</div>
+                        <div class="match-actions">
+                            <button type="button" class="match-apply-btn" id="match-apply-btn">
+                                <i class="fa-solid fa-circle-check"></i> Ресми тақырыпты қолдану
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Quick Inspiration Chips -->
@@ -207,7 +279,7 @@
         </aside>
 
         <!-- RIGHT PANEL: A4 PAPER DOCUMENT VIEWER & EDITOR -->
-        <main class="docs-stage">
+        <main class="docs-stage" id="docs-stage">
             
             <!-- Document Action Toolbar (Executive Ribbon) -->
             <div class="doc-toolbar">
@@ -215,7 +287,7 @@
                     <span class="doc-title-badge" id="preview-doc-title">
                         <i class="fa-solid fa-file-lines"></i> Қысқа мерзімді сабақ жоспары (ҚМЖ)
                     </span>
-                    <span class="edit-hint-badge"><i class="fa-solid fa-pencil"></i> Тікелей өңдеу режимі қосулы</span>
+                    <span class="edit-hint-badge"><i class="fa-solid fa-pencil"></i> Тікелей өңдеу қосулы</span>
                 </div>
 
                 <div class="toolbar-center">
@@ -230,11 +302,16 @@
                     <button type="button" id="btn-toggle-stamp" class="toolbar-pill-btn" title="«БЕКІТЕМІН» грифін қосу/өшіру">
                         <i class="fa-solid fa-stamp"></i> <span>«БЕКІТЕМІН» грифі</span>
                     </button>
+
+                    <!-- Fullscreen Preview Toggle -->
+                    <button type="button" id="btn-toggle-fullscreen" class="toolbar-pill-btn" title="Толық экран режимі">
+                        <i class="fa-solid fa-expand" id="fullscreen-icon"></i> <span>Толық экран</span>
+                    </button>
                 </div>
 
                 <div class="toolbar-right">
                     <!-- Word DOCX Export -->
-                    <button id="btn-export-docx" class="tool-btn docx" title="Microsoft Word (.docx / .doc) форматында жүктеу">
+                    <button id="btn-export-docx" class="tool-btn docx" title="Microsoft Word (.doc) форматында жүктеу">
                         <i class="fa-solid fa-file-word"></i> <span>Word (.docx)</span>
                     </button>
 
@@ -255,6 +332,98 @@
                 </div>
             </div>
 
+            <!-- WYSIWYG Rich Text Formatting Sub-Ribbon -->
+            <div class="wysiwyg-sub-ribbon" id="wysiwyg-ribbon">
+                <div class="ribbon-group">
+                    <select id="format-font-family" class="ribbon-select" title="Қаріп түрі">
+                        <option value="'Times New Roman', Times, serif" selected>Times New Roman</option>
+                        <option value="'Inter', sans-serif">Inter</option>
+                        <option value="'Roboto', sans-serif">Roboto</option>
+                        <option value="Arial, sans-serif">Arial</option>
+                    </select>
+
+                    <select id="format-font-size" class="ribbon-select-sm" title="Қаріп өлшемі">
+                        <option value="1">10 pt</option>
+                        <option value="2">11 pt</option>
+                        <option value="3" selected>12 pt</option>
+                        <option value="4">14 pt</option>
+                        <option value="5">16 pt</option>
+                    </select>
+                </div>
+
+                <div class="ribbon-divider"></div>
+
+                <div class="ribbon-group">
+                    <button type="button" class="ribbon-btn" data-command="bold" title="Жуан қаріп (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
+                    <button type="button" class="ribbon-btn" data-command="italic" title="Көлбеу қаріп (Ctrl+I)"><i class="fa-solid fa-italic"></i></button>
+                    <button type="button" class="ribbon-btn" data-command="underline" title="Асты сызылған (Ctrl+U)"><i class="fa-solid fa-underline"></i></button>
+                    <button type="button" class="ribbon-btn" data-command="strikeThrough" title="Сызылған"><i class="fa-solid fa-strikethrough"></i></button>
+                </div>
+
+                <div class="ribbon-divider"></div>
+
+                <div class="ribbon-group">
+                    <button type="button" class="ribbon-btn" data-command="justifyLeft" title="Солға туралау"><i class="fa-solid fa-align-left"></i></button>
+                    <button type="button" class="ribbon-btn" data-command="justifyCenter" title="Ортаға туралау"><i class="fa-solid fa-align-center"></i></button>
+                    <button type="button" class="ribbon-btn" data-command="justifyRight" title="Оңға туралау"><i class="fa-solid fa-align-right"></i></button>
+                    <button type="button" class="ribbon-btn" data-command="justifyFull" title="Ені бойынша туралау"><i class="fa-solid fa-align-justify"></i></button>
+                </div>
+
+                <div class="ribbon-divider"></div>
+
+                <div class="ribbon-group">
+                    <button type="button" class="ribbon-btn" data-command="insertUnorderedList" title="Маркерленген тізім"><i class="fa-solid fa-list-ul"></i></button>
+                    <button type="button" class="ribbon-btn" data-command="insertOrderedList" title="Нөмірленген тізім"><i class="fa-solid fa-list-ol"></i></button>
+                </div>
+
+                <div class="ribbon-divider"></div>
+
+                <!-- Table Operations -->
+                <div class="ribbon-group">
+                    <button type="button" class="ribbon-btn" id="btn-tbl-add-row" title="Кестеге төменнен жол қосу"><i class="fa-solid fa-table-cells-large"></i> +Жол</button>
+                    <button type="button" class="ribbon-btn" id="btn-tbl-del-row" title="Кестеден ағымдағы жолды өшіру"><i class="fa-solid fa-trash-can"></i> -Жол</button>
+                    <button type="button" class="ribbon-btn" id="btn-tbl-add-col" title="Кестеге баған қосу"><i class="fa-solid fa-table-columns"></i> +Баған</button>
+                </div>
+
+                <div class="ribbon-divider"></div>
+
+                <div class="ribbon-group">
+                    <button type="button" class="ribbon-btn" data-command="undo" title="Болдырмау (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button type="button" class="ribbon-btn" data-command="redo" title="Қайталау (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
+                    <button type="button" class="ribbon-btn text-danger" id="btn-clear-doc" title="Құжатты тазарту"><i class="fa-solid fa-broom"></i> Тазарту</button>
+                </div>
+            </div>
+
+            <!-- SMART AI ACTIONS BAR (Quick Intelligent Assistants) -->
+            <div class="smart-ai-action-bar">
+                <div class="ai-bar-label">
+                    <i class="fa-solid fa-wand-magic-sparkles text-purple"></i>
+                    <span>ИИ-Әдіскер құралдары:</span>
+                </div>
+                <div class="ai-actions-scroll">
+                    <button type="button" class="ai-action-chip" id="ai-action-expand" title="Құжаттың кезеңдерін толығырақ сипаттау және дескрипторларды тереңдету">
+                        <i class="fa-solid fa-up-right-and-down-left-from-center text-blue"></i>
+                        <span>ИИ: Толықтырып кеңейту</span>
+                    </button>
+                    <button type="button" class="ai-action-chip" id="ai-action-add-tasks" title="Қосымша дифференциацияланған тапсырмалар мен деңгейлер қосу">
+                        <i class="fa-solid fa-circle-plus text-emerald"></i>
+                        <span>ИИ: Тапсырмалар санын көбейту</span>
+                    </button>
+                    <button type="button" class="ai-action-chip" id="ai-action-add-keys" title="10-балдық рубрикатор, дескрипторлар мен жауап кілттерін қосу">
+                        <i class="fa-solid fa-key text-amber"></i>
+                        <span>ИИ: Жауап кілттері мен бағалау</span>
+                    </button>
+                    <button type="button" class="ai-action-chip" id="ai-action-steam" title="STEAM интеграциясын және 4K дағдыларын (сыни ойлау, креатив) қосу">
+                        <i class="fa-solid fa-atom text-indigo"></i>
+                        <span>ИИ: STEAM & 4K модель қосу</span>
+                    </button>
+                    <button type="button" class="ai-action-chip" id="ai-action-translate" title="Құжатты ГОСО стандартын сақтай отырып басқа тілге аудару">
+                        <i class="fa-solid fa-language text-cyan"></i>
+                        <span>ИИ: Тілді аудару (ҚАЗ/РУС/ENG)</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- A4 Document Paper Container -->
             <div class="a4-stage-scroller" id="a4-stage-scroller">
                 <div class="a4-paper-wrapper" id="a4-paper-wrapper">
@@ -266,103 +435,138 @@
                             <h1 class="doc-main-title">ҚЫСҚА МЕРЗІМДІ САБАҚ ЖОСПАРЫ (ҚМЖ)</h1>
                         </div>
 
-                    <table class="doc-table-meta">
-                        <tr>
-                            <td class="cell-label"><strong>Бөлім:</strong></td>
-                            <td>Тұрақты электр тогы</td>
-                            <td class="cell-label"><strong>Педагогтің Т.А.Ә.:</strong></td>
-                            <td>Абдуғали К. М.</td>
-                        </tr>
-                        <tr>
-                            <td class="cell-label"><strong>Күні:</strong></td>
-                            <td>2026 жыл</td>
-                            <td class="cell-label"><strong>Сынып / Пән:</strong></td>
-                            <td>8-сынып • Физика</td>
-                        </tr>
-                        <tr>
-                            <td class="cell-label"><strong>Сабақтың тақырыбы:</strong></td>
-                            <td colspan="3"><strong>Тізбек бөлігі үшін Ом заңы. Электр кедергісі</strong></td>
-                        </tr>
-                        <tr>
-                            <td class="cell-label"><strong>Оқу мақсаттары:</strong></td>
-                            <td colspan="3">8.4.2.5 — тізбек бөлігі үшін Ом заңын есептер шығаруда қолдану; эксперименттік түрде I(U) тәуелділігін зерттеу</td>
-                        </tr>
-                        <tr>
-                            <td class="cell-label"><strong>Сабақтың мақсаты:</strong></td>
-                            <td colspan="3">Тізбек бөлігіндегі ток күшінің кернеуге және кедергіге тәуелділігін анықтау, формуласын талдау және есептеулер жүргізу.</td>
-                        </tr>
-                    </table>
+                        <table class="doc-table-meta">
+                            <tr>
+                                <td class="cell-label"><strong>Бөлім:</strong></td>
+                                <td>Тұрақты электр тогы</td>
+                                <td class="cell-label"><strong>Педагогтің Т.А.Ә.:</strong></td>
+                                <td>Абдуғали К. М.</td>
+                            </tr>
+                            <tr>
+                                <td class="cell-label"><strong>Күні:</strong></td>
+                                <td>2026 жыл</td>
+                                <td class="cell-label"><strong>Сынып / Пән:</strong></td>
+                                <td>8-сынып • Физика</td>
+                            </tr>
+                            <tr>
+                                <td class="cell-label"><strong>Сабақтың тақырыбы:</strong></td>
+                                <td colspan="3"><strong>Тізбек бөлігі үшін Ом заңы. Электр кедергісі</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="cell-label"><strong>Оқу мақсаттары:</strong></td>
+                                <td colspan="3">8.4.2.5 — тізбек бөлігі үшін Ом заңын есептер шығаруда қолдану; эксперименттік түрде I(U) тәуелділігін зерттеу</td>
+                            </tr>
+                            <tr>
+                                <td class="cell-label"><strong>Сабақтың мақсаты:</strong></td>
+                                <td colspan="3">
+                                    <strong>Барлық оқушылар:</strong> Тізбек бөлігі үшін Ом заңының физикалық мағынасы мен формуласын біледі.<br>
+                                    <strong>Көпшілік оқушылар:</strong> Ом заңының формуласын түрлендіріп, кернеу мен кедергіні есептейді.<br>
+                                    <strong>Кейбір оқушылар:</strong> Эксперименттік мәліметтер негізінде графикті талдап, күрделі комбинацияланған тізбектерді есептейді.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="cell-label"><strong>Құндылықтарды дарыту:</strong></td>
+                                <td colspan="3">«Біртұтас тәрбие» бағдарламасы: Еңбекқорлық және кәсіби біліктілік, зерттеушілік әдеп, жауапкершілік.</td>
+                            </tr>
+                        </table>
 
-                    <h2 class="doc-section-title">Сабақтың барысы мен кезеңдері</h2>
+                        <h2 class="doc-section-title">Сабақтың барысы мен кезеңдері (45 минут)</h2>
 
-                    <table class="doc-table-steps">
-                        <thead>
-                            <tr>
-                                <th style="width:16%;">Сабақтың кезеңі / Уақыты</th>
-                                <th style="width:34%;">Педагогтің әрекеті</th>
-                                <th style="width:34%;">Оқушының әрекеті</th>
-                                <th style="width:16%;">Бағалау / Ресурстар</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>1. Ұйымдастыру кезеңі</strong><br><span class="timing-badge">0–5 мин</span></td>
-                                <td>Оқушылармен сәлемдесу, түгелдеу. «Миға шабуыл» әдісі арқылы өткен тақырыптар бойынша сұрақтар қояды: Ток күші мен кернеу дегеніміз не?</td>
-                                <td>Мұғаліммен амандасады. Сұрақтарға жауап беріп, сабақтың тақырыбы мен мақсатын анықтайды.</td>
-                                <td><strong>Формативті:</strong><br>«Жарайсың!» ауызша мадақтау.<br><em>Слайд, плакат</em></td>
-                            </tr>
-                            <tr>
-                                <td><strong>2. Жаңа білімді меңгеру</strong><br><span class="timing-badge">5–25 мин</span></td>
-                                <td>Ом заңының формуласын (I = U/R) түсіндіреді. Виртуалды AshyqLab зертханасында реостат, амперметр және вольтметрді қосу тәртібін көрсетеді.</td>
-                                <td>Формуланы дәптерге жазады. I, U, R шамаларының арасындағы байланысты графиктен бақылайды, сұрақтарға жауап береді.</td>
-                                <td><strong>Дескриптор:</strong><br>- Ом заңының формуласын біледі;<br>- Шамалардың өлшем бірлігін дұрыс қолданады. (2 балл)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>3. Практикалық бекіту</strong><br><span class="timing-badge">25–38 мин</span></td>
-                                <td>Деңгейлік есептер ұсынады (А, В, С деңгейі). Топтық және жұптық жұмыстарды үйлестіреді. Эксперименттік есептерді шешуді бағыттайды.</td>
-                                <td>Оқушылар деңгейлік тапсырмаларды орындайды. Ом заңына арналған формулаларды түрлендіріп, кедергі мен кернеуді табады.</td>
-                                <td><strong>Өзара бағалау:</strong><br>«Бағдаршам» әдісі.<br>Тапсырма парақтары. (3 балл)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>4. Қорытынды және Рефлексия</strong><br><span class="timing-badge">38–45 мин</span></td>
-                                <td>Сабақты қорытындылайды. Оқу мақсаттарына жету деңгейін бағалайды. Үй тапсырмасын береді: §24 оқу, №3-4 есеп.</td>
-                                <td>«БББ» (Білдім, Білгім келеді, Үйрендім) кестесі бойынша кері байланыс береді. Күнделікке үй жұмысын жазып алады.</td>
-                                <td><strong>Рефлексия парағы:</strong><br>Жалпы бағалау.<br>Күнделік.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                        <table class="doc-table-steps">
+                            <thead>
+                                <tr>
+                                    <th style="width:16%;">Сабақтың кезеңі / Уақыты</th>
+                                    <th style="width:34%;">Педагогтің әрекеті</th>
+                                    <th style="width:34%;">Оқушының әрекеті</th>
+                                    <th style="width:16%;">Бағалау / Ресурстар</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>1. Ұйымдастыру кезеңі</strong><br><span class="timing-badge">0–5 мин</span></td>
+                                    <td>Оқушылармен амандасу, түгелдеу. Жағымды психологиялық ахуал орнату. «Миға шабуыл» әдісі арқылы қызығушылықты ояту: өткен тақырыптар бойынша сұрақтар қою: Ток күші мен кернеу шамалары қалай өлшенеді?</td>
+                                    <td>Мұғаліммен амандасады, сабаққа дайындалады. Сұрақтарға жауап беріп, сабақтың тақырыбы мен мақсатын анықтайды.</td>
+                                    <td><strong>Формативті:</strong><br>«Жарайсың!» ауызша мадақтау.<br><em>Интерактивті слайд</em></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>2. Жаңа білімді меңгеру</strong><br><span class="timing-badge">5–25 мин</span></td>
+                                    <td>Ом заңының формуласын (I = U/R) түсіндіреді. AshyqLab виртуалды зертханасында реостат, амперметр және вольтметрді қосу тәртібін көрсетеді. Ток күшінің кернеуге тура пропорционал, кедергіге кері пропорционал екенін дәлелдейді.</td>
+                                    <td>Формуланы дәптерге жазады. I(U) тәуелділік графигін бақылайды, шамалардың арасындағы байланысты талдап, мұғалімнің сұрақтарына жауап береді.</td>
+                                    <td><strong>Дескриптор:</strong><br>- Ом заңының формуласын біледі (1 б);<br>- Шамалардың өлшем бірлігін дұрыс қолданады (2 б).</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3. Практикалық бекіту</strong><br><span class="timing-badge">25–38 мин</span></td>
+                                    <td>Деңгейлік тапсырмалар ұсынады (А, В, С деңгейі). Топтық және жұптық жұмыстарды үйлестіреді. Формулаларды түрлендіруге бағыт-бағдар береді.</td>
+                                    <td>Оқушылар деңгейлік тапсырмаларды орындайды. Ом заңына арналған формулаларды түрлендіріп, кедергі мен кернеуді табады, өзара салыстырады.</td>
+                                    <td><strong>Өзара бағалау:</strong><br>«Бағдаршам» әдісі.<br>Тапсырма парақтары (3 б).</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>4. Қорытынды және Рефлексия</strong><br><span class="timing-badge">38–45 мин</span></td>
+                                    <td>Сабақты қорытындылайды. Оқу мақсаттарына жету деңгейін бағалайды. Үй тапсырмасын береді: §24 оқу, №3-4 есеп.</td>
+                                    <td>«БББ» (Білдім, Білгім келеді, Үйрендім) кестесі бойынша кері байланыс береді. Күнделікке үй жұмысын жазып алады.</td>
+                                    <td><strong>Рефлексия парағы:</strong><br>Жалпы бағалау.<br>Күнделік.</td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                    <h2 class="doc-section-title">Саралау және қауіпсіздік ережелері</h2>
-                    <table class="doc-table-meta">
-                        <tr>
-                            <td class="cell-label"><strong>Саралау (Дифференциация):</strong></td>
-                            <td>Қабілеті жоғары оқушыларға күрделі комбинацияланған тізбектерді есептеу беріледі. Қолдауды қажет ететін оқушыларға дайын формулалар мен алгоритмдік сызбалар ұсынылады.</td>
-                        </tr>
-                        <tr>
-                            <td class="cell-label"><strong>Денсаулық және қауіпсіздік:</strong></td>
-                            <td>Электр құралдарымен жұмыс істеу кезіндегі қауіпсіздік ережелерін қатаң сақтау. Көз жаттығулары мен сергіту сәті.</td>
-                        </tr>
-                    </table>
+                        <h2 class="doc-section-title">Саралау және қауіпсіздік ережелері</h2>
+                        <table class="doc-table-meta">
+                            <tr>
+                                <td class="cell-label"><strong>Саралау (Дифференциация):</strong></td>
+                                <td>Қабілеті жоғары оқушыларға күрделі комбинацияланған тізбектерді есептеу беріледі. Қолдауды қажет ететін оқушыларға дайын формулалар мен алгоритмдік сызбалар ұсынылады.</td>
+                            </tr>
+                            <tr>
+                                <td class="cell-label"><strong>Денсаулық және қауіпсіздік:</strong></td>
+                                <td>Электр құралдарымен жұмыс істеу кезіндегі қауіпсіздік ережелерін қатаң сақтау. Көз жаттығулары мен сергіту сәті.</td>
+                            </tr>
+                        </table>
 
-                    <div class="doc-signature-row">
-                        <div class="sig-block">
-                            <span>Пән мұғалімі: _________________ (қолы)</span>
-                        </div>
-                        <div class="sig-block" style="text-align: right;">
-                            <span>Тексерген оқу ісінің меңгерушісі: _________________</span>
+                        <div class="doc-signature-row">
+                            <div class="sig-block">
+                                <span>Пән мұғалімі: _________________ (Абдуғали К. М.)</span>
+                            </div>
+                            <div class="sig-block" style="text-align: right;">
+                                <span>Тексерген оқу ісінің меңгерушісі: _________________</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+        </main>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--  HISTORY MODAL (SAVED DOCUMENTS)           -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="docs-modal-backdrop" id="history-modal-backdrop">
+        <div class="docs-modal-box">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-solid fa-clock-rotate-left text-blue"></i>
+                    <span>Менің сақталған құжаттарым</span>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-history">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-list" id="history-list-container">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="tool-btn text-danger" id="btn-clear-all-history">
+                    <i class="fa-solid fa-trash-can"></i> Тарихты толық тазарту
+                </button>
+                <button type="button" class="header-link-btn primary" id="btn-close-history-footer">Жабу</button>
+            </div>
         </div>
+    </div>
 
-    </main>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
 
-</div>
-
-<!-- Toast Notification Container -->
-<div id="toast-container" class="toast-container"></div>
-
-<script src="./src/features/docs/app.js"></script>
+    <script src="./src/features/docs/app.js"></script>
+    <script src="translator.js"></script>
 </body>
 </html>
