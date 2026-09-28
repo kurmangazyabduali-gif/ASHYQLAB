@@ -131,6 +131,10 @@
             border: 1px solid rgba(226, 232, 240, 0.9); 
             box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08); 
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            min-height: 230px !important;
         }
         .template-card:hover { 
             border-color: #3b82f6; 
@@ -1118,19 +1122,227 @@
             }
         }
 
-        @media (max-width: 480px) {
-            .studio-hero h1 {
-                font-size: 1.45rem !important;
-            }
-
-            .wheel-center-container {
-                max-width: 280px !important;
-                max-height: 280px !important;
-            }
-
-            .brand-text-full {
-                display: none !important;
-            }
+        /* Studio Mobile Drawer Styles */
+        .studio-hamburger-btn {
+            display: inline-flex;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 4px;
+            padding: 0;
+            transition: all 0.2s ease;
+        }
+        .studio-hamburger-btn:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .studio-hamburger-btn.active .ham-line:nth-child(1) {
+            transform: translateY(6px) rotate(45deg);
+        }
+        .studio-hamburger-btn.active .ham-line:nth-child(2) {
+            opacity: 0;
+        }
+        .studio-hamburger-btn.active .ham-line:nth-child(3) {
+            transform: translateY(-6px) rotate(-45deg);
+        }
+        .ham-line {
+            width: 17px;
+            height: 2px;
+            background: #0f172a;
+            border-radius: 2px;
+            transition: all 0.25s ease;
+        }
+        .studio-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 99998;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .studio-drawer-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .studio-mobile-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 310px;
+            max-width: 86vw;
+            background: #ffffff;
+            z-index: 99999;
+            box-shadow: -10px 0 35px rgba(15, 23, 42, 0.18);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            font-family: 'Inter', sans-serif;
+        }
+        .studio-mobile-drawer.active {
+            transform: translateX(0);
+        }
+        .studio-drawer-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8fafc;
+        }
+        .studio-drawer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .studio-drawer-logo {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+        .studio-drawer-brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+        .studio-drawer-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+        }
+        .studio-drawer-subtitle {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+        }
+        .studio-drawer-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #64748b;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .studio-drawer-close:hover {
+            color: #0f172a;
+            background: #e2e8f0;
+        }
+        .studio-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .studio-drawer-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            padding: 0 6px;
+        }
+        .studio-drawer-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .studio-drawer-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #1e293b;
+            font-size: 13.5px;
+            font-weight: 600;
+            transition: all 0.18s ease;
+        }
+        .studio-drawer-link:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .studio-drawer-link.active {
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 700;
+        }
+        .drawer-icon-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .studio-drawer-badge {
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 9999px;
+            background: #e2e8f0;
+            color: #475569;
+        }
+        .studio-drawer-tools-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .studio-tool-chip {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            color: #334155;
+            transition: all 0.2s;
+        }
+        .studio-tool-chip:hover {
+            background: #ffffff;
+            border-color: #0f172a;
+            color: #0f172a;
+        }
+        .studio-drawer-footer {
+            padding: 14px 18px;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .studio-drawer-footer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .studio-drawer-footer-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
         }
     </style>
 </head>
@@ -1184,20 +1396,29 @@
                 </div>
                 
                 <!-- Right Action Buttons -->
-                <div class="flex items-center gap-2.5">
-                    <div class="lang-segmented-control">
+                <div class="flex items-center gap-2">
+                    <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-lg border border-slate-200 bg-white items-center justify-center text-[#e1306c] hover:border-[#e1306c] transition hidden sm:flex" title="Instagram: @abduali__krm">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                    <div class="lang-segmented-control hidden sm:inline-flex">
                         <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
                         <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
                         <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
                     </div>
-                    <button onclick="aiOpenGenerator(event)" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                    <button onclick="aiOpenGenerator(event)" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
                         <span>✨</span>
                         <span class="hidden sm:inline">AI Генератор</span>
                     </button>
-                    <a href="index.html" class="bg-slate-100 text-slate-700 hover:text-slate-900 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition border border-slate-200 flex items-center gap-1.5">
+                    <a href="index.html" class="bg-slate-100 text-slate-700 hover:text-slate-900 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition border border-slate-200 hidden sm:flex items-center gap-1.5">
                         <span class="font-bold">←</span>
-                        <span class="hidden sm:inline">Шығу</span>
+                        <span>Шығу</span>
                     </a>
+                    <!-- Mobile Hamburger Button -->
+                    <button type="button" class="studio-hamburger-btn md:hidden" id="studioHamburgerBtn" onclick="toggleStudioDrawer()" aria-label="Мәзір" title="Мәзір">
+                        <span class="ham-line"></span>
+                        <span class="ham-line"></span>
+                        <span class="ham-line"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1600,22 +1821,24 @@
                 const catLabel = t.cat === 'classic' ? 'Классика' : t.cat === 'arcade' ? 'Аркада' : t.cat === 'logic' ? 'Логика' : t.cat === 'language' ? 'Тілдер' : 'Ғылым';
                 
                 return `
-                <div class="template-card p-6 rounded-2xl cursor-pointer relative flex flex-col h-full group pb-20" onclick="playSfx('click'); navigate('editor', '${t.id}')">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="w-12 h-12 ${t.bg} rounded-xl flex items-center justify-center border group-hover:scale-105 transition-transform text-2xl select-none">
-                            <span>${t.emoji || '🎯'}</span>
+                <div class="template-card p-5 sm:p-6 rounded-2xl cursor-pointer flex flex-col justify-between h-full group transition-all" onclick="playSfx('click'); navigate('editor', '${t.id}')">
+                    <div class="flex-1 flex flex-col mb-4">
+                        <div class="flex justify-between items-start mb-3.5">
+                            <div class="w-12 h-12 ${t.bg} rounded-xl flex items-center justify-center border group-hover:scale-105 transition-transform text-2xl select-none shrink-0">
+                                <span>${t.emoji || '🎯'}</span>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${catLabel}</span>
+                                <span class="${diffColor} text-[10px] tracking-wider font-extrabold px-2 py-0.5 rounded border uppercase">${t.diff}</span>
+                            </div>
                         </div>
-                        <div class="flex flex-col items-end gap-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${catLabel}</span>
-                            <span class="${diffColor} text-[10px] tracking-wider font-extrabold px-2 py-0.5 rounded border uppercase">${t.diff}</span>
-                        </div>
+                        
+                        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 mb-1.5 leading-snug group-hover:text-blue-700 transition-colors">${t.name}</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed line-clamp-2 sm:line-clamp-3">${t.desc}</p>
                     </div>
                     
-                    <h3 class="text-lg font-extrabold text-slate-900 mb-1.5 leading-snug group-hover:text-blue-700 transition-colors">${t.name}</h3>
-                    <p class="text-slate-500 text-xs leading-relaxed line-clamp-2">${t.desc}</p>
-                    
-                    <div class="absolute bottom-5 left-6 right-6">
-                        <button class="w-full py-2.5 bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition-all rounded-xl font-bold text-xs border border-blue-200 flex items-center justify-center gap-1.5 shadow-sm">
+                    <div class="mt-auto pt-2">
+                        <button type="button" class="w-full py-2.5 px-3 bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition-all rounded-xl font-bold text-xs border border-blue-200 flex items-center justify-center gap-1.5 shadow-sm">
                             <span>Үлгіні таңдау</span>
                             <span class="text-xs font-bold">→</span>
                         </button>
@@ -7310,8 +7533,103 @@
         window.onload = render;
     </script>
 
-    
-    
+    <!-- Mobile Navigation Drawer & Backdrop -->
+    <div id="studioDrawerBackdrop" class="studio-drawer-backdrop" onclick="toggleStudioDrawer(false)"></div>
+    <aside id="studioMobileDrawer" class="studio-mobile-drawer">
+        <div class="studio-drawer-header">
+            <div class="studio-drawer-brand">
+                <img src="assets/logo.png" alt="AshyqLab" class="studio-drawer-logo">
+                <div class="studio-drawer-brand-text">
+                    <span class="studio-drawer-title">Ashyq<span class="text-blue-700">Lab</span></span>
+                    <span class="studio-drawer-subtitle">Ойын студиясы (23 қозғалтқыш)</span>
+                </div>
+            </div>
+            <button type="button" class="studio-drawer-close" onclick="toggleStudioDrawer(false)" aria-label="Жабу">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="studio-drawer-body">
+            <div class="studio-drawer-section-title">Негізгі навигация</div>
+            <nav class="studio-drawer-nav">
+                <a href="index.html" class="studio-drawer-link" onclick="toggleStudioDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#eff6ff;color:#2563eb;"><i class="fa-solid fa-house"></i></span>
+                    <span class="studio-drawer-link-text">Басты бет</span>
+                </a>
+                <a href="subjects.html" class="studio-drawer-link" onclick="toggleStudioDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#ecfdf5;color:#059669;"><i class="fa-solid fa-book-open"></i></span>
+                    <span class="studio-drawer-link-text">Пәндер (7–11 сынып)</span>
+                    <span class="studio-drawer-badge">7-11</span>
+                </a>
+                <a href="studio.html" class="studio-drawer-link active" onclick="toggleStudioDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#f5f3ff;color:#7c3aed;"><i class="fa-solid fa-gamepad"></i></span>
+                    <span class="studio-drawer-link-text">Ойын студиясы</span>
+                    <span class="studio-drawer-badge" style="background:#7c3aed;color:#fff;">Play</span>
+                </a>
+                <a href="presentation.html" class="studio-drawer-link" onclick="toggleStudioDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#fdf2f8;color:#db2777;"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                    <span class="studio-drawer-link-text">AI Презентациялар</span>
+                    <span class="studio-drawer-badge" style="background:#db2777;color:#fff;">AI</span>
+                </a>
+                <a href="docs.html" class="studio-drawer-link" onclick="toggleStudioDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#ecfeff;color:#0891b2;"><i class="fa-solid fa-file-signature"></i></span>
+                    <span class="studio-drawer-link-text">AI Құжаттар (AshyqDoc)</span>
+                    <span class="studio-drawer-badge" style="background:#0891b2;color:#fff;">Doc</span>
+                </a>
+                <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="studio-drawer-link" onclick="toggleStudioDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#eef2ff;color:#4f46e5;"><i class="fa-solid fa-graduation-cap"></i></span>
+                    <span class="studio-drawer-link-text">TilAI Мұғалім</span>
+                </a>
+                <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="studio-drawer-link" onclick="toggleStudioDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#fdf2f8;color:#e1306c;"><i class="fa-brands fa-instagram"></i></span>
+                    <span class="studio-drawer-link-text">Instagram (@abduali__krm)</span>
+                    <span class="studio-drawer-badge" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;">Insta</span>
+                </a>
+            </nav>
+
+            <div class="studio-drawer-section-title">Құралдар мен калькуляторлар</div>
+            <div class="studio-drawer-tools-grid">
+                <a href="calculator.html" class="studio-tool-chip" onclick="toggleStudioDrawer(false)">
+                    <span>🧮 Ғылыми калькулятор</span>
+                </a>
+                <a href="converter.html" class="studio-tool-chip" onclick="toggleStudioDrawer(false)">
+                    <span>⚖️ Конвертер</span>
+                </a>
+                <a href="graphing.html" class="studio-tool-chip" onclick="toggleStudioDrawer(false)">
+                    <span>📈 Графиктер</span>
+                </a>
+                <a href="stopwatch.html" class="studio-tool-chip" onclick="toggleStudioDrawer(false)">
+                    <span>⏱️ Секундомер</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="studio-drawer-footer">
+            <div class="studio-drawer-footer-row">
+                <span class="studio-drawer-footer-label">Тілді таңдау:</span>
+                <div class="lang-segmented-control">
+                    <button class="lang-segment" data-lang="ru" onclick="setLang('ru'); toggleStudioDrawer(false);">RU</button>
+                    <button class="lang-segment active" data-lang="kk" onclick="setLang('kk'); toggleStudioDrawer(false);">ҚАЗ</button>
+                    <button class="lang-segment" data-lang="en" onclick="setLang('en'); toggleStudioDrawer(false);">EN</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <script>
+        function toggleStudioDrawer(force) {
+            const drawer = document.getElementById('studioMobileDrawer');
+            const backdrop = document.getElementById('studioDrawerBackdrop');
+            const hamburger = document.getElementById('studioHamburgerBtn');
+            if (!drawer || !backdrop) return;
+            const shouldOpen = typeof force === 'boolean' ? force : !drawer.classList.contains('active');
+            drawer.classList.toggle('active', shouldOpen);
+            backdrop.classList.toggle('active', shouldOpen);
+            if (hamburger) hamburger.classList.toggle('active', shouldOpen);
+            document.body.style.overflow = shouldOpen ? 'hidden' : '';
+        }
+    </script>
+
     <script src="translator.js"></script>
-    </body>
+</body>
 </html>
