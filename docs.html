@@ -48,28 +48,34 @@
 
         <div class="header-right">
             <!-- Instagram Link -->
-            <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="header-link-btn" title="Instagram: @abduali__krm">
+            <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="header-link-btn header-insta-btn" title="Instagram: @abduali__krm">
                 <i class="fa-brands fa-instagram" style="color: #e1306c;"></i> <span>Instagram</span>
             </a>
             <!-- Language Switcher -->
-            <div class="lang-segmented-control">
+            <div class="lang-segmented-control docs-desktop-lang">
                 <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
                 <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
                 <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
             </div>
             <!-- Saved Documents History Button -->
-            <button type="button" class="header-link-btn" id="btn-open-history" title="Сақталған құжаттар тарихы">
+            <button type="button" class="header-link-btn btn-history-action" id="btn-open-history" title="Сақталған құжаттар тарихы">
                 <i class="fa-solid fa-clock-rotate-left text-blue"></i> <span>Құжаттар тарихы</span>
             </button>
-            <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="header-link-btn" title="TilAI Мұғалім">
+            <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="header-link-btn header-desktop-only" title="TilAI Мұғалім">
                 <i class="fa-solid fa-graduation-cap"></i> <span>TilAI Мұғалім</span>
             </a>
-            <a href="presentation.html" class="header-link-btn" title="AI Презентациялар">
+            <a href="presentation.html" class="header-link-btn header-desktop-only" title="AI Презентациялар">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> <span>AI Презентациялар</span>
             </a>
-            <a href="index.html" class="header-link-btn primary" title="Басты бетке өту">
+            <a href="index.html" class="header-link-btn primary header-desktop-only" title="Басты бетке өту">
                 <i class="fa-solid fa-house"></i> <span>Басты бетке</span>
             </a>
+            <!-- Mobile Hamburger Button -->
+            <button type="button" class="docs-hamburger-btn" id="docsHamburgerBtn" onclick="toggleDocsDrawer()" aria-label="Мәзір" title="Мәзір">
+                <span class="ham-line"></span>
+                <span class="ham-line"></span>
+                <span class="ham-line"></span>
+            </button>
         </div>
     </header>
 
@@ -563,10 +569,107 @@
         </div>
     </div>
 
+    <!-- Mobile Navigation Drawer & Backdrop -->
+    <div id="docsDrawerBackdrop" class="docs-drawer-backdrop" onclick="toggleDocsDrawer(false)"></div>
+    <aside id="docsMobileDrawer" class="docs-mobile-drawer">
+        <div class="docs-drawer-header">
+            <div class="docs-drawer-brand">
+                <img src="assets/logo.png" alt="AshyqLab" class="docs-drawer-logo">
+                <div class="docs-drawer-brand-text">
+                    <span class="docs-drawer-title">Ashyq<span class="text-blue">Doc</span></span>
+                    <span class="docs-drawer-subtitle">2.0 PRO • Құжаттар</span>
+                </div>
+            </div>
+            <button type="button" class="docs-drawer-close" onclick="toggleDocsDrawer(false)" aria-label="Жабу">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="docs-drawer-body">
+            <div class="docs-drawer-section-title">Негізгі навигация</div>
+            <nav class="docs-drawer-nav">
+                <a href="index.html" class="docs-drawer-link" onclick="toggleDocsDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#eff6ff;color:#2563eb;"><i class="fa-solid fa-house"></i></span>
+                    <span class="docs-drawer-link-text">Басты бет</span>
+                </a>
+                <a href="subjects.html" class="docs-drawer-link" onclick="toggleDocsDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#ecfdf5;color:#059669;"><i class="fa-solid fa-book-open"></i></span>
+                    <span class="docs-drawer-link-text">Пәндер (7–11 сынып)</span>
+                    <span class="docs-drawer-badge">7-11</span>
+                </a>
+                <a href="docs.html" class="docs-drawer-link active" onclick="toggleDocsDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#ecfeff;color:#0891b2;"><i class="fa-solid fa-file-signature"></i></span>
+                    <span class="docs-drawer-link-text">AI Құжаттар (AshyqDoc)</span>
+                    <span class="docs-drawer-badge" style="background:#0891b2;color:#fff;">Doc</span>
+                </a>
+                <a href="presentation.html" class="docs-drawer-link" onclick="toggleDocsDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#fdf2f8;color:#db2777;"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                    <span class="docs-drawer-link-text">AI Презентациялар</span>
+                    <span class="docs-drawer-badge" style="background:#db2777;color:#fff;">AI</span>
+                </a>
+                <a href="studio.html" class="docs-drawer-link" onclick="toggleDocsDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#f5f3ff;color:#7c3aed;"><i class="fa-solid fa-gamepad"></i></span>
+                    <span class="docs-drawer-link-text">Ойын студиясы</span>
+                    <span class="docs-drawer-badge" style="background:#7c3aed;color:#fff;">Play</span>
+                </a>
+                <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="docs-drawer-link" onclick="toggleDocsDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#eef2ff;color:#4f46e5;"><i class="fa-solid fa-graduation-cap"></i></span>
+                    <span class="docs-drawer-link-text">TilAI Мұғалім</span>
+                </a>
+                <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="docs-drawer-link" onclick="toggleDocsDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#fdf2f8;color:#e1306c;"><i class="fa-brands fa-instagram"></i></span>
+                    <span class="docs-drawer-link-text">Instagram (@abduali__krm)</span>
+                    <span class="docs-drawer-badge" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;">Insta</span>
+                </a>
+            </nav>
+
+            <div class="docs-drawer-section-title">Құралдар мен калькуляторлар</div>
+            <div class="docs-drawer-tools-grid">
+                <a href="calculator.html" class="docs-tool-chip" onclick="toggleDocsDrawer(false)">
+                    <span>🧮 Ғылыми калькулятор</span>
+                </a>
+                <a href="converter.html" class="docs-tool-chip" onclick="toggleDocsDrawer(false)">
+                    <span>⚖️ Конвертер</span>
+                </a>
+                <a href="graphing.html" class="docs-tool-chip" onclick="toggleDocsDrawer(false)">
+                    <span>📈 Графиктер</span>
+                </a>
+                <a href="stopwatch.html" class="docs-tool-chip" onclick="toggleDocsDrawer(false)">
+                    <span>⏱️ Секундомер</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="docs-drawer-footer">
+            <div class="docs-drawer-footer-row">
+                <span class="docs-drawer-footer-label">Тілді таңдау:</span>
+                <div class="lang-segmented-control">
+                    <button class="lang-segment" data-lang="ru" onclick="setLang('ru'); toggleDocsDrawer(false);">RU</button>
+                    <button class="lang-segment active" data-lang="kk" onclick="setLang('kk'); toggleDocsDrawer(false);">ҚАЗ</button>
+                    <button class="lang-segment" data-lang="en" onclick="setLang('en'); toggleDocsDrawer(false);">EN</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
+    <script>
+        function toggleDocsDrawer(force) {
+            const drawer = document.getElementById('docsMobileDrawer');
+            const backdrop = document.getElementById('docsDrawerBackdrop');
+            const hamburger = document.getElementById('docsHamburgerBtn');
+            if (!drawer || !backdrop) return;
+            const shouldOpen = typeof force === 'boolean' ? force : !drawer.classList.contains('active');
+            drawer.classList.toggle('active', shouldOpen);
+            backdrop.classList.toggle('active', shouldOpen);
+            if (hamburger) hamburger.classList.toggle('active', shouldOpen);
+            document.body.style.overflow = shouldOpen ? 'hidden' : '';
+        }
+    </script>
+
     <script src="./src/features/docs/app.js"></script>
     <script src="translator.js"></script>
-    </body>
+</body>
 </html>

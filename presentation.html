@@ -26,27 +26,61 @@
          ЭКРАН 1: ПРОМПТ И НАСТРОЙКИ (ЕДИНАЯ ФОРМА)
          ========================================== -->
     <div id="screen-prompt" class="screen active">
-        <div class="prompt-header-nav">
-            <a href="index.html" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> <span>Басты бетке</span>
-            </a>
-            <div class="header-links-group">
-                <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="header-link-btn" title="Instagram: @abduali__krm">
-                    <i class="fa-brands fa-instagram" style="color: #e1306c;"></i> Instagram
+        <header class="presentation-header" id="presTopNav">
+            <div class="pres-nav-left">
+                <a href="index.html" class="pres-nav-brand" title="AshyqLab">
+                    <img src="assets/logo.png" alt="AshyqLab" class="pres-nav-logo">
+                    <div class="pres-brand-text">
+                        <span class="pres-brand-title">Ashyq<span class="pres-brand-accent">Lab</span></span>
+                        <span class="pres-brand-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Слайдтар</span>
+                    </div>
                 </a>
+            </div>
+
+            <!-- Central Desktop Navigation Links -->
+            <div class="pres-nav-links-center">
+                <a href="index.html" class="pres-nav-link">
+                    <i class="fa-solid fa-house"></i> <span>Басты</span>
+                </a>
+                <a href="subjects.html" class="pres-nav-link">
+                    <i class="fa-solid fa-book-open"></i> <span>Пәндер</span>
+                    <span class="pres-nav-pill">7–11</span>
+                </a>
+                <a href="docs.html" class="pres-nav-link">
+                    <i class="fa-solid fa-file-signature"></i> <span>AI Құжаттар</span>
+                </a>
+                <a href="studio.html" class="pres-nav-link">
+                    <i class="fa-solid fa-gamepad"></i> <span>Ойындар</span>
+                </a>
+                <a href="presentation.html" class="pres-nav-link active">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Слайдтар</span>
+                </a>
+            </div>
+
+            <!-- Right Controls -->
+            <div class="pres-nav-actions">
+                <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="pres-icon-link" title="Instagram: @abduali__krm">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+
                 <div class="lang-segmented-control">
                     <button class="lang-segment" data-lang="ru" onclick="setLang('ru')">RU</button>
                     <button class="lang-segment active" data-lang="kk" onclick="setLang('kk')">ҚАЗ</button>
                     <button class="lang-segment" data-lang="en" onclick="setLang('en')">EN</button>
                 </div>
-                <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="header-link-btn">
-                    <i class="fa-solid fa-graduation-cap" style="color: #6366f1;"></i> TilAI Мұғалім
+
+                <a href="index.html" class="pres-back-btn" title="Басты бетке">
+                    <i class="fa-solid fa-arrow-left"></i> <span class="pres-back-text">Басты бет</span>
                 </a>
-                <a href="docs.html" class="header-link-btn">
-                    <i class="fa-solid fa-file-signature" style="color: #e11d48;"></i> AI Құжаттар
-                </a>
+
+                <!-- Hamburger button for mobile -->
+                <button type="button" class="pres-hamburger-btn" id="presHamburgerBtn" onclick="togglePresDrawer()" aria-label="Мәзір">
+                    <span class="pres-ham-bar"></span>
+                    <span class="pres-ham-bar"></span>
+                    <span class="pres-ham-bar"></span>
+                </button>
             </div>
-        </div>
+        </header>
 
         <div class="hero-content">
             <div class="hero-badge">
@@ -441,11 +475,108 @@
         </div>
     </div>
 
+    <!-- Mobile Navigation Drawer & Backdrop -->
+    <div id="presDrawerBackdrop" class="pres-drawer-backdrop" onclick="togglePresDrawer(false)"></div>
+    <aside id="presMobileDrawer" class="pres-mobile-drawer">
+        <div class="pres-drawer-header">
+            <div class="pres-drawer-brand">
+                <img src="assets/logo.png" alt="AshyqLab" class="pres-drawer-logo">
+                <div class="pres-drawer-brand-text">
+                    <span class="pres-drawer-title">Ashyq<span class="pres-brand-accent">Lab</span></span>
+                    <span class="pres-drawer-subtitle">AI Презентациялар</span>
+                </div>
+            </div>
+            <button type="button" class="pres-drawer-close" onclick="togglePresDrawer(false)" aria-label="Жабу">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="pres-drawer-body">
+            <div class="pres-drawer-section-title">Негізгі навигация</div>
+            <nav class="pres-drawer-nav">
+                <a href="index.html" class="pres-drawer-link" onclick="togglePresDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#eff6ff;color:#2563eb;"><i class="fa-solid fa-house"></i></span>
+                    <span class="pres-drawer-link-text">Басты бет</span>
+                </a>
+                <a href="subjects.html" class="pres-drawer-link" onclick="togglePresDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#ecfdf5;color:#059669;"><i class="fa-solid fa-book-open"></i></span>
+                    <span class="pres-drawer-link-text">Пәндер (7–11 сынып)</span>
+                    <span class="pres-drawer-badge">7-11</span>
+                </a>
+                <a href="presentation.html" class="pres-drawer-link active" onclick="togglePresDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#fdf2f8;color:#db2777;"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                    <span class="pres-drawer-link-text">AI Презентациялар</span>
+                    <span class="pres-drawer-badge" style="background:#db2777;color:#fff;">AI</span>
+                </a>
+                <a href="docs.html" class="pres-drawer-link" onclick="togglePresDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#ecfeff;color:#0891b2;"><i class="fa-solid fa-file-signature"></i></span>
+                    <span class="pres-drawer-link-text">AI Құжаттар (AshyqDoc)</span>
+                    <span class="pres-drawer-badge" style="background:#0891b2;color:#fff;">Doc</span>
+                </a>
+                <a href="studio.html" class="pres-drawer-link" onclick="togglePresDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#f5f3ff;color:#7c3aed;"><i class="fa-solid fa-gamepad"></i></span>
+                    <span class="pres-drawer-link-text">Ойын студиясы</span>
+                    <span class="pres-drawer-badge" style="background:#7c3aed;color:#fff;">Play</span>
+                </a>
+                <a href="https://tilai-platform.vercel.app/teacher" target="_blank" rel="noopener noreferrer" class="pres-drawer-link" onclick="togglePresDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#eef2ff;color:#4f46e5;"><i class="fa-solid fa-graduation-cap"></i></span>
+                    <span class="pres-drawer-link-text">TilAI Мұғалім</span>
+                </a>
+                <a href="https://www.instagram.com/abduali__krm?stkn=MW44Y2RsdGhtYXk3OQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="pres-drawer-link" onclick="togglePresDrawer(false)">
+                    <span class="drawer-icon-box" style="background:#fdf2f8;color:#e1306c;"><i class="fa-brands fa-instagram"></i></span>
+                    <span class="pres-drawer-link-text">Instagram (@abduali__krm)</span>
+                    <span class="pres-drawer-badge" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;">Insta</span>
+                </a>
+            </nav>
+
+            <div class="pres-drawer-section-title">Құралдар мен калькуляторлар</div>
+            <div class="pres-drawer-tools-grid">
+                <a href="calculator.html" class="pres-tool-chip" onclick="togglePresDrawer(false)">
+                    <span>🧮 Ғылыми калькулятор</span>
+                </a>
+                <a href="converter.html" class="pres-tool-chip" onclick="togglePresDrawer(false)">
+                    <span>⚖️ Конвертер</span>
+                </a>
+                <a href="graphing.html" class="pres-tool-chip" onclick="togglePresDrawer(false)">
+                    <span>📈 Функция графигі</span>
+                </a>
+                <a href="stopwatch.html" class="pres-tool-chip" onclick="togglePresDrawer(false)">
+                    <span>⏱️ Секундомер</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="pres-drawer-footer">
+            <div class="pres-drawer-footer-row">
+                <span class="pres-drawer-footer-label">Тілді таңдау:</span>
+                <div class="lang-segmented-control">
+                    <button class="lang-segment" data-lang="ru" onclick="setLang('ru'); togglePresDrawer(false);">RU</button>
+                    <button class="lang-segment active" data-lang="kk" onclick="setLang('kk'); togglePresDrawer(false);">ҚАЗ</button>
+                    <button class="lang-segment" data-lang="en" onclick="setLang('en'); togglePresDrawer(false);">EN</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
     <!-- Уведомления -->
     <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        function togglePresDrawer(force) {
+            const drawer = document.getElementById('presMobileDrawer');
+            const backdrop = document.getElementById('presDrawerBackdrop');
+            const hamburger = document.getElementById('presHamburgerBtn');
+            if (!drawer || !backdrop) return;
+            const shouldOpen = typeof force === 'boolean' ? force : !drawer.classList.contains('active');
+            drawer.classList.toggle('active', shouldOpen);
+            backdrop.classList.toggle('active', shouldOpen);
+            if (hamburger) hamburger.classList.toggle('active', shouldOpen);
+            document.body.style.overflow = shouldOpen ? 'hidden' : '';
+        }
+    </script>
 
     <!-- Скрипт приложения -->
     <script src="./src/features/presentation/app.js"></script>
     <script src="translator.js"></script>
-    </body>
+</body>
 </html>
