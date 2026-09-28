@@ -17,17 +17,8 @@ export default async function handler(req, res) {
         // 1. SAVE GAME
         if (action === 'save' && game) {
             const gid = game.id || ('game_' + Date.now());
-            await db.set(`game:${gid}`, game);
-
-            if (userId) {
-                const listKey = `user_games:${userId}`;
-                let userGames = (await db.get(listKey)) || [];
-                if (!Array.isArray(userGames)) userGames = [];
-
-                const filtered = userGames.filter(g => g.id !== gid);
-                filtered.unshift(game);
-                await db.set(listKey, filtered.slice(0, 60));
-            }
+            game.id = gid;
+            await db.saveGame(userId, game);
 
             return res.status(200).json({
                 status: 'ok',
@@ -38,7 +29,7 @@ export default async function handler(req, res) {
 
         // 2. GET SINGLE GAME (FOR SHARED DIRECT LINKS)
         if (action === 'get' && gameId) {
-            const foundGame = await db.get(`game:${gameId}`);
+            const foundGame = await db.getGameById(gameId);
             if (!foundGame) {
                 return res.status(404).json({ error: 'Ойын табылмады' });
             }
@@ -50,27 +41,16 @@ export default async function handler(req, res) {
 
         // 3. LIST USER GAMES
         if (action === 'list' && userId) {
-            const listKey = `user_games:${userId}`;
-            const games = (await db.get(listKey)) || [];
+            const games = await db.getUserGames(userId);
             return res.status(200).json({
                 status: 'ok',
-                games: Array.isArray(games) ? games : []
+                games: games
             });
         }
 
         // 4. DELETE GAME
         if (action === 'delete' && gameId) {
-            await db.del(`game:${gameId}`);
-
-            if (userId) {
-                const listKey = `user_games:${userId}`;
-                let userGames = (await db.get(listKey)) || [];
-                if (Array.isArray(userGames)) {
-                    const filtered = userGames.filter(g => g.id !== gameId);
-                    await db.set(listKey, filtered);
-                }
-            }
-
+            await db.deleteGame(userId, gameId);
             return res.status(200).json({
                 status: 'ok',
                 message: 'Ойын бұлттан өшірілді',

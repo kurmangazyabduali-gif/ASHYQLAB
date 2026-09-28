@@ -16,16 +16,7 @@ export default async function handler(req, res) {
 
         // 1. SAVE DOCUMENT
         if (action === 'save' && userId && doc) {
-            const listKey = `user_docs:${userId}`;
-            let currentDocs = (await db.get(listKey)) || [];
-            if (!Array.isArray(currentDocs)) currentDocs = [];
-
-            const filtered = currentDocs.filter(d => d.id !== doc.id);
-            filtered.unshift(doc);
-            
-            const trimmed = filtered.slice(0, 60);
-            await db.set(listKey, trimmed);
-
+            await db.saveDoc(userId, doc);
             return res.status(200).json({
                 status: 'ok',
                 message: 'Құжат бұлттық базада сақталды',
@@ -33,25 +24,18 @@ export default async function handler(req, res) {
             });
         }
 
-        // 2. LIST DOCUMENTS
+        // 2. LIST USER DOCUMENTS
         if (action === 'list' && userId) {
-            const listKey = `user_docs:${userId}`;
-            const docs = (await db.get(listKey)) || [];
+            const docs = await db.getUserDocs(userId);
             return res.status(200).json({
                 status: 'ok',
-                docs: Array.isArray(docs) ? docs : []
+                docs: docs
             });
         }
 
         // 3. DELETE DOCUMENT
         if (action === 'delete' && userId && docId) {
-            const listKey = `user_docs:${userId}`;
-            let currentDocs = (await db.get(listKey)) || [];
-            if (Array.isArray(currentDocs)) {
-                const updated = currentDocs.filter(d => d.id !== docId);
-                await db.set(listKey, updated);
-            }
-
+            await db.deleteDoc(userId, docId);
             return res.status(200).json({
                 status: 'ok',
                 message: 'Құжат бұлттан өшірілді',

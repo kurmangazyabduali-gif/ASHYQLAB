@@ -21,7 +21,7 @@ export default async function handler(req, res) {
             }
 
             const cleanEmail = String(user.email).trim().toLowerCase();
-            const existingUser = await db.get(`users:${cleanEmail}`);
+            const existingUser = await db.getUserByEmail(cleanEmail);
 
             if (existingUser) {
                 return res.status(409).json({ error: 'Бұл электрондық пошта бұлттық базада бар' });
@@ -38,8 +38,7 @@ export default async function handler(req, res) {
                 createdAt: user.createdAt || new Date().toISOString()
             };
 
-            await db.set(`users:${cleanEmail}`, userRecord);
-            await db.set(`users_by_id:${userRecord.id}`, userRecord);
+            await db.saveUser(userRecord);
 
             return res.status(200).json({
                 status: 'ok',
@@ -63,7 +62,7 @@ export default async function handler(req, res) {
                 return res.status(400).json({ error: 'Электрондық поштаны енгізіңіз' });
             }
 
-            const existingUser = await db.get(`users:${cleanEmail}`);
+            const existingUser = await db.getUserByEmail(cleanEmail);
             if (!existingUser) {
                 return res.status(404).json({ error: 'Бұл электрондық поштамен пайдаланушы табылмады' });
             }
@@ -72,9 +71,9 @@ export default async function handler(req, res) {
                 return res.status(401).json({ error: 'Құпиясөз қате енгізілді' });
             }
 
-            // Load user's cloud docs and games
-            const userDocs = (await db.get(`user_docs:${existingUser.id}`)) || [];
-            const userGames = (await db.get(`user_games:${existingUser.id}`)) || [];
+            // Fetch user's persistent cloud docs & games
+            const userDocs = await db.getUserDocs(existingUser.id);
+            const userGames = await db.getUserGames(existingUser.id);
 
             return res.status(200).json({
                 status: 'ok',
@@ -93,10 +92,10 @@ export default async function handler(req, res) {
             });
         }
 
-        // 3. GET USER PROFILE
+        // 3. GET USER
         if (action === 'get_user') {
             const cleanEmail = String(email || '').trim().toLowerCase();
-            const existingUser = await db.get(`users:${cleanEmail}`);
+            const existingUser = await db.getUserByEmail(cleanEmail);
             if (!existingUser) return res.status(404).json({ error: 'Табылмады' });
 
             return res.status(200).json({
