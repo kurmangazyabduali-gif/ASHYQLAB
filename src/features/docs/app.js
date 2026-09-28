@@ -1302,6 +1302,7 @@ async function callUniversalDocAI(params) {
 1. ОҚУ МАҚСАТЫ: Қазақстан стандартының нақты кодын (мысалы 9.6.1.1, 8.4.2.5, 7.2.2.3, 8.1.2.3) және нақты оқу мақсатын қамтысын.
 2. САБАҚ БАРЫСЫ (ҚМЖ): Сабақтың 4 кезеңіне де нақты мысалдар, мұғалім сұрақтары, формулалар, есептер мен дескрипторларды (1-10 балл) толық, мазмұнды жаз. Ешқандай жалпылама шаблондық сөздерсіз, нақты осы тақырыптың ғылыми фактілері мен есептерін бер.
 3. БЖБ (СОР) / ТЖБ (СОЧ): Тапсырмалар НАҚТЫ сандық мәндері, формулалары, реакция теңдеулері немесе кодтары бар толық есептер мен сұрақтардан тұруы тиіс (жалпылама сөздерге қатаң тыйым салынады). 1-нұсқа мен 2-нұсқа өзара параллель, күрделілігі теңдей, бірақ мәндері әртүрлі болуы қажет. Балл қою кестесінде әрбір қадамға (формула, есептеу, қорытынды) жеке-жеке 1 баллдық нақты дескрипторлар жазылсын.
+4. ИНТЕРАКТИВТІ ОЙЫНДАР (ҚМЖ): 'interactiveGames' құрамында осы сабақтың тапсырмалары мен тақырыбы бойынша 4 ойын жиынтығын құрастыр: quiz (4 сұрақ, 4 нұсқалы, correct:0), match (4 жұп термин-анықтама), truefalse (4 тұжырым), blitz (4 жылдам тест).
 
 ${jsonSchemaInstruction}`;
 
@@ -1625,7 +1626,33 @@ function getDocJsonSchema(docTypeId, lang) {
     }
   ],
   "differentiation": "Қабілеті жоғары оқушыларға күрделі шығармашылық есептер. Қолдауды қажет ететін оқушыларға көмекші сызба-алгоритмдер.",
-  "safety": "Кабинеттегі қауіпсіздік ережелерін сақтау. Көз жаттығулары мен сергіту сәті."
+  "safety": "Кабинеттегі қауіпсіздік ережелерін сақтау. Көз жаттығулары мен сергіту сәті.",
+  "interactiveGames": {
+    "quiz": [
+      { "q": "1-тест сұрағы?", "ans": ["Дұрыс жауап", "Қате нұсқа 1", "Қате нұсқа 2", "Қате нұсқа 3"], "correct": 0 },
+      { "q": "2-тест сұрағы?", "ans": ["Дұрыс жауап", "Қате нұсқа 1", "Қате нұсқа 2", "Қате нұсқа 3"], "correct": 0 },
+      { "q": "3-тест сұрағы?", "ans": ["Дұрыс жауап", "Қате нұсқа 1", "Қате нұсқа 2", "Қате нұсқа 3"], "correct": 0 },
+      { "q": "4-тест сұрағы?", "ans": ["Дұрыс жауап", "Қате нұсқа 1", "Қате нұсқа 2", "Қате нұсқа 3"], "correct": 0 }
+    ],
+    "match": [
+      { "term": "1-термин немесе формула", "def": "Анықтамасы немесе мағынасы" },
+      { "term": "2-термин", "def": "Анықтамасы" },
+      { "term": "3-термин", "def": "Анықтамасы" },
+      { "term": "4-термин", "def": "Анықтамасы" }
+    ],
+    "truefalse": [
+      { "statement": "1-тұжырым мәтіні", "isTrue": true },
+      { "statement": "2-тұжырым мәтіні", "isTrue": false },
+      { "statement": "3-тұжырым мәтіні", "isTrue": true },
+      { "statement": "4-тұжырым мәтіні", "isTrue": false }
+    ],
+    "blitz": [
+      { "q": "1-блиц сұрақ?", "ans": ["Дұрыс", "Қате 1", "Қате 2", "Қате 3"], "correct": 0 },
+      { "q": "2-блиц сұрақ?", "ans": ["Дұрыс", "Қате 1", "Қате 2", "Қате 3"], "correct": 0 },
+      { "q": "3-блиц сұрақ?", "ans": ["Дұрыс", "Қате 1", "Қате 2", "Қате 3"], "correct": 0 },
+      { "q": "4-блиц сұрақ?", "ans": ["Дұрыс", "Қате 1", "Қате 2", "Қате 3"], "correct": 0 }
+    ]
+  }
 }`;
 }
 
@@ -1674,6 +1701,311 @@ function renderDeterministicDocument(docTypeId, data, params) {
     }
     // Default: QMJ Lesson Plan
     return renderQMJDocument(data, params);
+}
+
+/* ──────────────────────────────────────────────
+   INTERACTIVE GAME STUDIO GENERATOR FOR ҚМЖ / КСП
+─────────────────────────────────────────────── */
+window._ashyqCurrentQmjGames = {};
+
+function encodeGamePayload(gameObj) {
+    try {
+        const jsonStr = JSON.stringify(gameObj);
+        return encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
+    } catch(e) {
+        return '';
+    }
+}
+
+function decodeGamePayload(encodedStr) {
+    try {
+        return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(encodedStr)))));
+    } catch(e) {
+        return null;
+    }
+}
+
+window.launchQmjGame = function(gameId, template, evt) {
+    try {
+        if (window._ashyqCurrentQmjGames && window._ashyqCurrentQmjGames[gameId]) {
+            localStorage.setItem('ashyq_game_' + gameId, JSON.stringify(window._ashyqCurrentQmjGames[gameId]));
+        }
+    } catch(e) {
+        console.warn('Error saving game before launch:', e);
+    }
+};
+
+function generateDefaultQuizItems(topic, subject, grade, learningObj, isKazakh) {
+    const t = topic || 'Тақырып';
+    if (subject.includes('Физика')) {
+        return [
+            { q: `«${t}» тақырыбы бойынша негізгі физикалық шаманың ХБЖ (SI) жүйесіндегі өлшем бірлігі қандай?`, ans: ['Дж (Джоуль) / Па / Н', 'кг·м / с²', 'Ватт (Вт)', 'Кельвин (К)'], correct: 0 },
+            { q: `«${t}» құбылысын сипаттайтын негізгі формула қайсы?`, ans: ['Заңдылыққа сәйкес негізгі формула', 'F = ma', 'E = mc²', 'p = mv'], correct: 0 },
+            { q: `«${t}» кезінде жүйедегі энергия қалай өзгереді?`, ans: ['Энергияның сақталу заңына бағынады', 'Жоқтан пайда болады', 'Мүлдем өзгермейді', 'Шексіз артады'], correct: 0 },
+            { q: `Зертханалық симуляцияда «${t}» процесін зерттеу үшін қандай құрал қолданылады?`, ans: ['Динамометр / Мензурка / Секундомер', 'Барометр', 'Омметр', 'Термометр'], correct: 0 }
+        ];
+    } else if (subject.includes('Химия')) {
+        return [
+            { q: `«${t}» тақырыбы бойынша заттардың өзара әрекеттесу типі қандай?`, ans: ['Химиялық реакция теңдеуіне сәйкес', 'Тек физикалық араласу', 'Ядролық ыдырау', 'Фазалық өзгеріс'], correct: 0 },
+            { q: `«${t}» процесінде пайда болатын негізгі өнім немесе белгі қайсы?`, ans: ['Тұнба түзілуі, газ бөлінуі немесе түс өзгеруі', 'Массаның жоғалуы', 'Атомдардың жойылуы', 'Температураның тұрақты қалуы'], correct: 0 },
+            { q: `Берілген құбылыс қандай ортада белсенді жүреді?`, ans: ['Сулы ерітіндіде және тиісті температурада', 'Тек вакуумда', 'Тек -50°C-де', 'Инертті газда'], correct: 0 },
+            { q: `Периодтық кесте бойынша қатысушы элементтердің валенттілігі:`, ans: ['Электрондық құрылысына сәйкес тұрақты не айнымалы', 'Әрқашан 0', 'Әрқашан 8', 'Анықталмайды'], correct: 0 }
+        ];
+    } else if (subject.includes('Биология')) {
+        return [
+            { q: `«${t}» процесі жасушаның қай органоидында жүзеге асады?`, ans: ['Митохондрия / Хлоропласт / Ядро', 'Вакуоль', 'Рибосома', 'Лизосома'], correct: 0 },
+            { q: `«${t}» биологиялық құбылысының тірі ағзалар үшін негізгі маңызы:`, ans: ['Зат алмасу және тіршілікті қамтамасыз ету', 'Тек жылу бөлу', 'Қозғалысты тоқтату', 'Жасуша санын азайту'], correct: 0 },
+            { q: `Төмендегілердің қайсысы осы тақырыпқа тікелей қатысты фермент немесе органикалық қосылыс?`, ans: ['Биологиялық катализаторлар (ферменттер)', 'Глюкоза', 'Минералды тұздар', 'Су'], correct: 0 },
+            { q: `Бұл үдерістің экологиялық немесе эволюциялық нәтижесі:`, ans: ['Тірі ағзалардың бейімделуі мен дамуы', 'Ағзаның жойылуы', 'Мутацияның тоқтауы', 'Генетикалық әртүрліліктің азаюы'], correct: 0 }
+        ];
+    } else {
+        return [
+            { q: `«${t}» ұғымының негізгі ғылыми анықтамасы қандай?`, ans: [isKazakh ? `Тақырыптың негізгі заңдылығы мен қағидасы` : 'Основной закон и принцип темы', 'Қосалқы ереже', 'Жалпылама түсінік', 'Қате тұжырым'], correct: 0 },
+            { q: `Осы тақырып бойынша негізгі қасиеттер мен белгілер:`, ans: [isKazakh ? 'Ғылыми тұрғыда дәлелденген қасиеттер' : 'Научно обоснованные свойства', 'Кездейсоқ факторлар', 'Тек болжамдар', 'Шектеулі мысалдар'], correct: 0 },
+            { q: `Бұл білімді тәжірибеде және есептер шығаруда қолдану тәсілі:`, ans: [isKazakh ? 'Алгоритм мен ережелерге сәйкес орындау' : 'Выполнение по алгоритмам и правилам', 'Тек жатқа айту', 'Басқа есептерге сәйкес келмейді', 'Қолдану мүмкін емес'], correct: 0 },
+            { q: `«${t}» тақырыбы бойынша сабақтың қорытынды тұжырымы:`, ans: [isKazakh ? 'Оқу мақсатына толық қол жеткізілді' : 'Цель обучения полностью достигнута', 'Тақырып ашылмады', 'Қосымша фактілер жоқ', 'Дәлелдеусіз қабылданды'], correct: 0 }
+        ];
+    }
+}
+
+function generateDefaultMatchItems(topic, subject, grade, isKazakh) {
+    const t = topic || 'Тақырып';
+    if (subject.includes('Физика')) {
+        return [
+            { term: 'Жылдамдық (v)', def: 'v = s / t (м/с)' },
+            { term: 'Күш (F)', def: 'F = m · a (Ньютон, Н)' },
+            { term: 'Жұмыс (A)', def: 'A = F · s (Джоуль, Дж)' },
+            { term: 'Қысым (p)', def: 'p = F / S (Паскаль, Па)' }
+        ];
+    } else if (subject.includes('Химия')) {
+        return [
+            { term: 'H2O', def: 'Су молекуласы' },
+            { term: 'CO2', def: 'Көмірқышқыл газы' },
+            { term: 'NaCl', def: 'Ас тұзы (Натрий хлориді)' },
+            { term: 'O2', def: 'Тыныс алуға қажетті оттек' }
+        ];
+    } else if (subject.includes('Биология')) {
+        return [
+            { term: 'Митохондрия', def: 'Жасушаның энергетикалық станциясы' },
+            { term: 'Хлоропласт', def: 'Фотосинтез жүретін органоид' },
+            { term: 'Ядро', def: 'Генетикалық ақпаратты сақтаушы' },
+            { term: 'Рибосома', def: 'Ақуыз синтездейтін органоид' }
+        ];
+    } else if (subject.includes('Информатика')) {
+        return [
+            { term: 'Алгоритм', def: 'Іс-әрекеттердің реттелген тізбегі' },
+            { term: 'Python', def: 'Жоғары деңгейлі бағдарламалау тілі' },
+            { term: 'Цикл (for / while)', def: 'Әрекетті бірнеше рет қайталау' },
+            { term: 'Массив (List)', def: 'Біртекті деректер жиынтығы' }
+        ];
+    } else {
+        return [
+            { term: `1. «${t}» термині`, def: 'Негізгі ғылыми ұғым' },
+            { term: '2. Қасиеті', def: 'Объектінің сипаттамалық ерекшелігі' },
+            { term: '3. Қолданылуы', def: 'Практикалық есептер мен өмірде' },
+            { term: '4. Қорытынды', def: 'Оқу мақсатына қол жеткізу' }
+        ];
+    }
+}
+
+function generateDefaultTrueFalseItems(topic, subject, grade, isKazakh) {
+    const t = topic || 'Тақырып';
+    return [
+        { statement: isKazakh ? `«${t}» тақырыбының негізгі заңдылығы табиғат пен ғылымда әрқашан орындалады` : `Законы по теме «${t}» строго выполняются`, isTrue: true },
+        { statement: isKazakh ? `Бұл құбылыс энергияның сақталу заңына қайшы келеді` : `Данное явление противоречит закону сохранения энергии`, isTrue: false },
+        { statement: isKazakh ? `Тәжірибелік зерттеуде алынған нәтижелер теориялық формулаларға сәйкес келеді` : `Экспериментальные данные соответствуют формулам`, isTrue: true },
+        { statement: isKazakh ? `Бұл тақырыптың практикалық есептерін формуласыз және өлшем бірліксіз шығаруға болады` : `Задачи можно решать без формул и единиц`, isTrue: false }
+    ];
+}
+
+function generateDefaultBlitzItems(topic, subject, grade, isKazakh) {
+    const t = topic || 'Тақырып';
+    return [
+        { q: `«${t}» бойынша негізгі формула?`, ans: ['Дұрыс қағида', 'Қате 1', 'Қате 2', 'Қате 3'], correct: 0 },
+        { q: `Шаманың өлшем бірлігі қандай?`, ans: ['ХБЖ өлшем бірлігі', 'Градус', 'Пайыз %', 'Белгісіз'], correct: 0 },
+        { q: `Процесс қай кезде жылдам жүреді?`, ans: ['Оңтайлы параметрлер кезінде', 'Мүлдем жүрмейді', 'Тек вакуумда', 'Анықталмайды'], correct: 0 },
+        { q: `Бұл сабақтың негізгі түйіні:`, ans: ['Оқу мақсаты меңгерілді', 'Нәтиже жоқ', 'Дәлелденбеген', 'Есеп шешілмеді'], correct: 0 }
+    ];
+}
+
+function createQMJGames(topicText, subject, grade, learningObj, lessonObj, stages, rawGames, isKazakh) {
+    const timestamp = Date.now();
+    const cleanTopic = (topicText || 'Сабақ тақырыбы').trim();
+
+    // 1. QUIZ
+    let quizItems = [];
+    if (rawGames?.quiz && Array.isArray(rawGames.quiz) && rawGames.quiz.length >= 2) {
+        quizItems = rawGames.quiz.map(q => ({
+            q: String(q.q || q.question || `${cleanTopic} бойынша тест сұрағы`).trim(),
+            ans: Array.isArray(q.ans || q.options) && (q.ans || q.options).length >= 2
+                ? (q.ans || q.options).slice(0, 4).map(a => String(a).replace(/^[A-D]\)\s*/i, '').trim())
+                : ['Дұрыс жауап', 'Қате нұсқа A', 'Қате нұсқа B', 'Қате нұсқа C'],
+            correct: typeof q.correct === 'number' ? q.correct : 0
+        }));
+    }
+    if (quizItems.length < 3) {
+        quizItems = generateDefaultQuizItems(cleanTopic, subject, grade, learningObj, isKazakh);
+    }
+
+    // 2. MATCH
+    let matchItems = [];
+    if (rawGames?.match && Array.isArray(rawGames.match) && rawGames.match.length >= 2) {
+        matchItems = rawGames.match.map(m => ({
+            term: String(m.term || m.key || m.left || 'Термин').trim(),
+            def: String(m.def || m.value || m.right || 'Анықтамасы').trim()
+        }));
+    }
+    if (matchItems.length < 3) {
+        matchItems = generateDefaultMatchItems(cleanTopic, subject, grade, isKazakh);
+    }
+
+    // 3. TRUE / FALSE
+    let tfItems = [];
+    if (rawGames?.truefalse && Array.isArray(rawGames.truefalse) && rawGames.truefalse.length >= 2) {
+        tfItems = rawGames.truefalse.map(tf => ({
+            statement: String(tf.statement || tf.text || tf.q || 'Тұжырым мәтіні').trim(),
+            isTrue: typeof tf.isTrue === 'boolean' ? tf.isTrue : (tf.isTrue === 'true' || tf.correct === 'True' || tf.correct === true)
+        }));
+    }
+    if (tfItems.length < 3) {
+        tfItems = generateDefaultTrueFalseItems(cleanTopic, subject, grade, isKazakh);
+    }
+
+    // 4. SPEED BLITZ x3
+    let blitzItems = [];
+    if (rawGames?.blitz && Array.isArray(rawGames.blitz) && rawGames.blitz.length >= 2) {
+        blitzItems = rawGames.blitz.map(b => ({
+            q: String(b.q || b.question || 'Жылдам сұрақ').trim(),
+            ans: Array.isArray(b.ans || b.options) && (b.ans || b.options).length >= 2
+                ? (b.ans || b.options).slice(0, 4).map(a => String(a).replace(/^[A-D]\)\s*/i, '').trim())
+                : ['Дұрыс', 'Қате 1', 'Қате 2', 'Қате 3'],
+            correct: typeof b.correct === 'number' ? b.correct : 0
+        }));
+    }
+    if (blitzItems.length < 3) {
+        blitzItems = generateDefaultBlitzItems(cleanTopic, subject, grade, isKazakh);
+    }
+
+    const games = [
+        {
+            id: `qmj_${timestamp}_quiz`,
+            template: 'quiz',
+            icon: '🎯',
+            name: isKazakh ? `Викториналық тест: «${cleanTopic}»` : `Викторина: «${cleanTopic}»`,
+            typeName: isKazakh ? 'Викторина / Тест' : 'Викторина / Тест',
+            desc: isKazakh ? '4 нұсқалы сұрақ-жауап, ұпайлар мен таймер' : 'Тест с 4 вариантами ответа',
+            items: quizItems,
+            settings: { timer: 45, shuffle: true }
+        },
+        {
+            id: `qmj_${timestamp}_match`,
+            template: 'match',
+            icon: '🔗',
+            name: isKazakh ? `Жұбын тап: «${cleanTopic}»` : `Найди пару: «${cleanTopic}»`,
+            typeName: isKazakh ? 'Жұбын тап / Сәйкестендіру' : 'Соответствие / Найди пару',
+            desc: isKazakh ? 'Терминдер мен формулаларды анықтамаларымен қосу' : 'Сопоставление терминов и формул',
+            items: matchItems,
+            settings: { timer: 60, shuffle: true }
+        },
+        {
+            id: `qmj_${timestamp}_tf`,
+            template: 'truefalse',
+            icon: '⚖️',
+            name: isKazakh ? `Шындық немесе Жалған: «${cleanTopic}»` : `Правда или Ложь: «${cleanTopic}»`,
+            typeName: isKazakh ? 'Шындық / Жалған' : 'Правда или Ложь',
+            desc: isKazakh ? 'Тұжырымдардың дұрыстығын жылдам тексеру' : 'Быстрая проверка утверждений',
+            items: tfItems,
+            settings: { timer: 30, shuffle: true }
+        },
+        {
+            id: `qmj_${timestamp}_blitz`,
+            template: 'blitz',
+            icon: '⚡',
+            name: isKazakh ? `Спид-Блиц x3: «${cleanTopic}»` : `Спид-Блиц x3: «${cleanTopic}»`,
+            typeName: isKazakh ? 'Спид-Блиц x3' : 'Спид-Блиц x3',
+            desc: isKazakh ? '15 секундтық адреналинге толы жарыс режимі' : '15-секундный спринт вопросов',
+            items: blitzItems,
+            settings: { timer: 15, shuffle: true }
+        }
+    ];
+
+    // Save to memory registry and localStorage
+    games.forEach(g => {
+        const payloadObj = {
+            id: g.id,
+            template: g.template,
+            title: g.name,
+            subject: subject,
+            grade: grade,
+            topic: cleanTopic,
+            items: g.items,
+            settings: g.settings
+        };
+        window._ashyqCurrentQmjGames[g.id] = payloadObj;
+        try {
+            localStorage.setItem('ashyq_game_' + g.id, JSON.stringify(payloadObj));
+        } catch(e) {}
+    });
+
+    return games;
+}
+
+function renderQMJInteractiveGamesBlock(games, params) {
+    const { lang, topic, resolvedTopic } = params;
+    const isKazakh = lang === 'Қазақша';
+    const topicText = resolvedTopic || topic;
+
+    const cardsHtml = games.map(g => {
+        const payloadStr = encodeGamePayload({
+            id: g.id,
+            template: g.template,
+            title: g.name,
+            items: g.items,
+            settings: g.settings
+        });
+        const studioHref = `studio.html?template=${g.template}&gameId=${g.id}&payload=${payloadStr}&auto=1`;
+
+        return `
+            <div class="doc-game-card">
+                <div class="doc-game-top">
+                    <div class="doc-game-icon">${g.icon}</div>
+                    <div class="doc-game-info">
+                        <div class="doc-game-type">${g.typeName}</div>
+                        <div class="doc-game-name">${g.name}</div>
+                        <div class="doc-game-meta">${g.desc} • ${g.items.length} ${isKazakh ? 'тапсырма' : 'заданий'}</div>
+                    </div>
+                </div>
+                <a href="${studioHref}" target="_blank" rel="noopener noreferrer" class="doc-game-btn" onclick="window.launchQmjGame('${g.id}', '${g.template}', event)">
+                    <span>🎮</span> <span>${isKazakh ? 'Ойынды бастау' : 'Запустить игру'}</span> <span style="font-size:10px;">→</span>
+                </a>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="doc-interactive-games-section">
+            <div class="doc-games-header">
+                <div class="doc-games-badge">
+                    <span>🎮</span> AshyqLab Game Studio
+                </div>
+                <h3 class="doc-games-title">${isKazakh ? 'Интерактивті ойын тапсырмалары (Сабақты бекіту және ойындық бағалау)' : 'Интерактивные игровые задания (Game Studio)'}</h3>
+                <p class="doc-games-desc">
+                    ${isKazakh 
+                        ? `Осы ҚМЖ сабақ жоспарының оқу мақсаттары мен тапсырмалары негізінде жасалған <b>4 интерактивті білім беру ойыны</b>. Төмендегі батырмаларды басып, интерактивті тақтада немесе оқушылардың телефондарында бірден ойнатыңыз:`
+                        : `На основе целей и заданий данного КСП автоматически созданы <b>4 интерактивные обучающие игры</b>. Нажмите кнопку, чтобы запустить игру на интерактивной доске или смартфонах учеников:`}
+                </p>
+            </div>
+            
+            <div class="doc-games-grid">
+                ${cardsHtml}
+            </div>
+
+            <div class="doc-games-footer-note">
+                <span>🔗 <b>${isKazakh ? 'Ойын студиясының тікелей сілтемесі:' : 'Прямая ссылка на студию:'}</b> <a href="studio.html" target="_blank" class="doc-studio-link">ashyqlab.vercel.app/studio.html</a></span>
+                <span class="doc-games-tag">${isKazakh ? '✓ Интерактивті тақта & Телефондарға 100% бейімделген' : '✓ 100% адаптивно для доски и смартфонов'}</span>
+            </div>
+        </div>
+    `;
 }
 
 function getOfficialHeader(params) {
@@ -1841,6 +2173,8 @@ function renderQMJDocument(data, params) {
                 <td>${safetyText}</td>
             </tr>
         </table>
+
+        ${renderQMJInteractiveGamesBlock(createQMJGames(topicText, subject, grade, learningObj, lessonObj, stages, data?.interactiveGames, isKazakh), params)}
 
         <div class="doc-signature-row">
             <div class="sig-block">
@@ -2262,6 +2596,8 @@ function renderTechMapDocument(data, params) {
             </tbody>
         </table>
 
+        ${renderQMJInteractiveGamesBlock(createQMJGames(topicText, subject, grade, '', '', [], data?.interactiveGames, isKazakh), params)}
+
         <div class="doc-signature-row">
             <div class="sig-block"><span>${isKazakh ? 'Мұғалім:' : 'Учитель:'} _________________ (${teacher})</span></div>
             <div class="sig-block" style="text-align: right;"><span>${isKazakh ? 'ӘБ жетекшісі:' : 'Руководитель МО:'} _________________</span></div>
@@ -2304,6 +2640,8 @@ function renderOpenLessonDocument(data, params) {
         <p style="margin-bottom:6pt;"><strong>${isKazakh ? 'Кіріспе:' : 'Введение:'}</strong> «Шаттық шеңбері» тренингі. «Ой қозғау» сұрақтары арқылы «${topicText}» тақырыбына шығу.</p>
         <p style="margin-bottom:6pt;"><strong>${isKazakh ? 'Негізгі бөлім:' : 'Основная часть:'}</strong> Оқушыларды 3 топқа бөлу («Теоретиктер», «Экспериментаторлар», «Сарапшылар»). Топтық зерттеулер жүргізу.</p>
         <p style="margin-bottom:6pt;"><strong>${isKazakh ? 'Қорытынды:' : 'Заключение:'}</strong> «Борт журналы» арқылы кері байланыс және формативті бағалау.</p>
+
+        ${renderQMJInteractiveGamesBlock(createQMJGames(topicText, subject, grade, '', '', [], data?.interactiveGames, isKazakh), params)}
 
         <div class="doc-signature-row">
             <div class="sig-block"><span>${isKazakh ? 'Мұғалім:' : 'Учитель:'} _________________ (${teacher})</span></div>

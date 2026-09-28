@@ -7524,8 +7524,84 @@
             }
         }
 
+        function decodeUrlPayload(str) {
+            try {
+                return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(str)))));
+            } catch(e) {
+                try {
+                    return JSON.parse(decodeURIComponent(str));
+                } catch(e2) {
+                    return null;
+                }
+            }
+        }
+
+        function initStudioFromUrl() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const template = params.get('template');
+                const gameId = params.get('gameId');
+                const payload = params.get('payload') || params.get('data');
+                const auto = params.get('auto');
+                const topic = params.get('topic');
+
+                if (template) {
+                    const matchedTemplate = TEMPLATES.find(t => t.id === template) || TEMPLATES[0];
+                    state.activeTemplate = matchedTemplate.id;
+
+                    let loadedData = null;
+                    // 1. Check localStorage by gameId
+                    if (gameId) {
+                        try {
+                            const raw = localStorage.getItem('ashyq_game_' + gameId);
+                            if (raw) loadedData = JSON.parse(raw);
+                        } catch(e) { console.warn('LocalStorage load error', e); }
+                    }
+
+                    // 2. Check URL payload
+                    if (!loadedData && payload) {
+                        loadedData = decodeUrlPayload(payload);
+                    }
+
+                    if (loadedData && Array.isArray(loadedData.items) && loadedData.items.length > 0) {
+                        state.editorData = {
+                            title: loadedData.title || `Ойын: ${matchedTemplate.name}`,
+                            items: loadedData.items,
+                            settings: loadedData.settings || { timer: matchedTemplate.id === 'blitz' ? 15 : 45, shuffle: true }
+                        };
+
+                        if (auto === '1' || auto === 'true') {
+                            state.view = 'game';
+                        } else {
+                            state.view = 'editor';
+                        }
+                        render();
+                        return;
+                    } else if (topic) {
+                        navigate('editor', matchedTemplate.id);
+                        state.editorData.title = `Сабақ: ${topic}`;
+                        if (auto === '1' || auto === 'true') {
+                            state.view = 'game';
+                        }
+                        render();
+                        return;
+                    } else {
+                        navigate('editor', matchedTemplate.id);
+                        if (auto === '1' || auto === 'true') {
+                            state.view = 'game';
+                        }
+                        render();
+                        return;
+                    }
+                }
+            } catch(err) {
+                console.error('Error during initStudioFromUrl:', err);
+            }
+            render();
+        }
+
         // Initialize on Load
-        window.onload = render;
+        window.onload = initStudioFromUrl;
     </script>
 
     <!-- Mobile Navigation Drawer & Backdrop -->
