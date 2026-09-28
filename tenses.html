@@ -83,7 +83,16 @@
         .screen-overlay.active { opacity: 1; pointer-events: all; }
         .screen-overlay h2 { font-size: 50px; margin-bottom: 20px; }
         .btn-restart { background: #38bdf8; color: #0f172a; border: none; padding: 15px 30px; font-size: 20px; font-weight: 800; font-family: inherit; border-radius: 10px; cursor: pointer; }
-    </style>
+    
+/* MOBILE_RESPONSIVE_PATCH */
+
+@media (max-width: 768px) {
+    body { padding: 10px !important; }
+    .game-card { padding: 16px 12px !important; }
+    .timeline { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+}
+
+</style>
 
     
 </head>

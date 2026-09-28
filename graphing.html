@@ -37,7 +37,18 @@
 
         .btn-back { display: block; width: max-content; margin: 20px auto 0; background: rgba(255,255,255,0.1); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; transition: all 0.3s; }
         .btn-back:hover { background: rgba(255,255,255,0.2); }
-    </style>
+    
+/* MOBILE_RESPONSIVE_PATCH */
+
+@media (max-width: 768px) {
+    body { padding: 10px !important; }
+    .lab { padding: 16px 12px !important; border-radius: 14px !important; }
+    .input-row { flex-direction: column !important; gap: 8px !important; }
+    .btn-plot { width: 100% !important; }
+    canvas { max-width: 100% !important; height: auto !important; }
+}
+
+</style>
 
     
 </head>

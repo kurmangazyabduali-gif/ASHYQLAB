@@ -128,7 +128,14 @@
         .overlay.active { opacity: 1; pointer-events: all; }
         .overlay h2 { font-size: 48px; color: #a855f7; margin-bottom: 20px; }
 
-    </style>
+    
+/* MOBILE_RESPONSIVE_PATCH */
+
+@media (max-width: 768px) {
+    .cards-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+}
+
+</style>
 
     
 </head>

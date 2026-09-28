@@ -70,7 +70,17 @@
         .btn-back { position: absolute; top: 15px; left: 20px; background: rgba(255,255,255,0.1); color: white; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; z-index: 100; transition: 0.2s; }
         .btn-back:hover { background: rgba(255,255,255,0.2); }
 
-    </style>
+    
+/* MOBILE_RESPONSIVE_PATCH */
+
+@media (max-width: 900px) {
+    body { height: auto !important; min-height: 100vh !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; flex-direction: column !important; }
+    .app-container { padding: 12px 10px !important; height: auto !important; }
+    .ph-scale-container { padding: 0 4px !important; }
+    .beaker-container { margin: 20px 0 !important; }
+}
+
+</style>
 
     
 </head>

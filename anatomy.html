@@ -166,7 +166,19 @@
         .btn-back { position: absolute; top: 20px; left: 420px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; z-index: 100; transition: 0.2s; }
         .btn-back:hover { background: rgba(255,255,255,0.2); border-color: #fff; }
 
-    </style>
+    
+/* MOBILE_RESPONSIVE_PATCH */
+
+@media (max-width: 900px) {
+    body { height: auto !important; min-height: 100vh !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; flex-direction: column !important; }
+    .header { position: relative !important; padding: 12px 14px !important; }
+    .header h1 { font-size: 20px !important; }
+    .dashboard { width: 100% !important; padding: 16px 14px !important; padding-top: 16px !important; border-right: none !important; border-bottom: 2px solid rgba(255,255,255,0.1) !important; }
+    .lab-scene { min-height: 550px !important; width: 100% !important; padding: 10px 0 !important; }
+    .patient { transform: scale(0.8); transform-origin: center top; height: 620px; }
+}
+
+</style>
 
     
 </head>

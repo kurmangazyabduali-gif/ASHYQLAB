@@ -34,6 +34,14 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(1.7rem,4vw,2.8rem);font-wei
 .arr{position:absolute;right:18px;bottom:18px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:var(--cc);font-size:.8rem;transition:.3s}
 .card:hover .arr{background:var(--cc);color:#000;transform:translateX(3px)}
 footer{position:relative;z-index:1;text-align:center;padding:16px;color:rgba(148,163,184,.3);font-size:.76rem;border-top:1px solid rgba(255,255,255,.05)}
+
+/* MOBILE_RESPONSIVE_PATCH */
+
+@media (max-width: 768px) {
+    .nav { padding: 12px 16px !important; flex-wrap: wrap !important; gap: 8px !important; }
+    .grid { grid-template-columns: 1fr !important; gap: 14px !important; padding: 14px 12px !important; }
+}
+
 </style>
 </head>
 <body>

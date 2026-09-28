@@ -45,7 +45,19 @@
 
         .btn-back { display: block; width: max-content; margin: 20px auto 0; background: rgba(255,255,255,0.1); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; transition: all 0.3s; }
         .btn-back:hover { background: rgba(255,255,255,0.2); }
-    </style>
+    
+/* MOBILE_RESPONSIVE_PATCH */
+
+@media (max-width: 768px) {
+    body { padding: 10px !important; }
+    .lab { padding: 16px 12px !important; }
+    .tabs { flex-wrap: wrap !important; gap: 6px !important; }
+    .tab { padding: 8px 12px !important; font-size: 13px !important; }
+    .letters-grid { grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)) !important; gap: 6px !important; }
+    .letter-btn { padding: 8px 4px !important; font-size: 16px !important; }
+}
+
+</style>
 
     
 </head>

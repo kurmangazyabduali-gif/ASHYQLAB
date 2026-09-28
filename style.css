@@ -4657,4 +4657,117 @@ input[type=checkbox] {
     background: #f1f5f9 !important;
     color: #0f172a !important;
     border-color: var(--theme-color) !important;
+}
+
+/* ══════════════════════════════════════════ */
+/*  UNIVERSAL RESPONSIVE LAB & TOOL SUITE     */
+/* ══════════════════════════════════════════ */
+@media (max-width: 900px) {
+    /* Standalone Tools & Labs */
+    .tool-header, .page-tool-header, .lab-header {
+        padding: 0.75rem 1rem !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        height: auto !important;
+        min-height: 52px !important;
+    }
+
+    .tool-container, .lab-container, .sim-container, .app-container {
+        padding: 1rem 0.75rem !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .tool-grid, .sim-grid, .lab-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+
+    .tool-card, .sim-card, .calc-card {
+        padding: 16px 14px !important;
+        border-radius: 16px !important;
+    }
+
+    /* Simulation Canvases */
+    canvas.sim-canvas, .canvas-container canvas, .interactive-canvas {
+        max-width: 100% !important;
+        height: auto !important;
+        touch-action: none;
+    }
+
+    /* Sliders and Form Inputs on Mobile */
+    .control-row, .slider-group {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+    }
+
+    input[type="range"] {
+        height: 24px !important;
+        touch-action: pan-y !important;
+    }
+
+    /* Modals & Overlays */
+    .modal, .dialog-box, .popup-card {
+        width: 94vw !important;
+        max-width: 94vw !important;
+        padding: 16px 14px !important;
+        border-radius: 18px !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+    }
+
+    /* Button and Interactive Tap Targets */
+    button, .btn, .qbtn, .oddbtn, .calc-btn, .choice-btn {
+        min-height: 42px !important;
+        touch-action: manipulation !important;
+    }
+
+    /* Quick Action Chips */
+    .chips-row, .presets-row, .filter-chips {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 6px !important;
+        padding-bottom: 4px;
+    }
+
+    .chips-row::-webkit-scrollbar,
+    .presets-row::-webkit-scrollbar,
+    .filter-chips::-webkit-scrollbar {
+        display: none;
+    }
+
+    .chip-btn, .preset-btn {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-back-home, .back-btn {
+        padding: 6px 10px !important;
+        font-size: 0.78rem !important;
+    }
+
+    .tool-header h1 {
+        font-size: 1.05rem !important;
+    }
+
+    .tool-header p {
+        font-size: 0.75rem !important;
+    }
+
+    .calc-buttons {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 6px !important;
+    }
+
+    .calc-btn {
+        font-size: 1rem !important;
+        min-height: 46px !important;
+        padding: 8px 4px !important;
+    }
 }

@@ -171,6 +171,16 @@ nav a:hover{background:rgba(56,189,248,.14);box-shadow:0 0 16px rgba(56,189,248,
 #toast.show{display:flex;opacity:1;transform:translateX(-50%) translateY(0);}
 #toast.ok{border:1px solid rgba(16,185,129,.5);background:rgba(16,185,129,.1);box-shadow:0 8px 30px rgba(16,185,129,.2);}
 #toast.info{border:1px solid rgba(56,189,248,.5);background:rgba(56,189,248,.1);box-shadow:0 8px 30px rgba(56,189,248,.2);}
+
+/* MOBILE_RESPONSIVE_PATCH */
+
+@media (max-width: 900px) {
+    body { height: auto !important; min-height: 100vh !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; flex-direction: column !important; }
+    .lab-container { flex-direction: column !important; height: auto !important; }
+    .controls { width: 100% !important; border-right: none !important; border-bottom: 2px solid #1e293b !important; padding: 16px !important; }
+    .microscope-stage { min-height: 380px !important; width: 100% !important; }
+}
+
 </style>
 </head>
 <body>

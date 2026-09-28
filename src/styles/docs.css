@@ -1405,3 +1405,276 @@ html, body {
         print-color-adjust: exact;
     }
 }
+
+/* ──────────────────────────────────────────────
+   9. COMPREHENSIVE MOBILE RESPONSIVE ENGINE
+─────────────────────────────────────────────── */
+@media (max-width: 992px) {
+    .docs-app {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .docs-header {
+        height: auto !important;
+        min-height: 56px;
+        padding: 8px 12px !important;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .header-left {
+        gap: 8px;
+    }
+
+    .brand-logo {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .brand-title {
+        font-size: 14.5px !important;
+    }
+
+    .brand-seal {
+        display: none !important;
+    }
+
+    .header-center {
+        order: 3;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 4px;
+        padding-top: 6px;
+        border-top: 1px solid rgba(226, 232, 240, 0.6);
+    }
+
+    .header-right {
+        order: 2;
+        gap: 4px;
+        flex-wrap: nowrap;
+    }
+
+    .header-link-btn {
+        padding: 5px 8px !important;
+        font-size: 11px !important;
+    }
+
+    .header-link-btn span {
+        display: none;
+    }
+
+    .header-link-btn.primary span,
+    #btn-open-history span {
+        display: inline !important;
+    }
+
+    .lang-segmented-control {
+        scale: 0.9;
+        transform-origin: right center;
+    }
+
+    .docs-main-container {
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: calc(100vh - 60px) !important;
+        overflow: visible !important;
+    }
+
+    .docs-sidebar {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        border-right: none !important;
+        border-bottom: 2px solid var(--doc-border) !important;
+    }
+
+    .sidebar-scroll-wrapper {
+        overflow-y: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        padding: 16px 14px !important;
+    }
+
+    .category-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 6px !important;
+        padding-bottom: 4px;
+    }
+
+    .category-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .cat-tab {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+    }
+
+    .docs-stage {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 700px !important;
+        overflow: visible !important;
+    }
+
+    .doc-toolbar {
+        padding: 0 10px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        gap: 8px !important;
+        scrollbar-width: none;
+    }
+
+    .doc-toolbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .wysiwyg-sub-ribbon {
+        padding: 0 10px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 6px !important;
+    }
+
+    .wysiwyg-sub-ribbon::-webkit-scrollbar {
+        display: none;
+    }
+
+    .smart-ai-action-bar {
+        padding: 0 10px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .smart-ai-action-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .a4-stage-scroller {
+        padding: 14px 8px 80px !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        background: #f1f5f9 !important;
+    }
+
+    .a4-paper-wrapper {
+        width: 100% !important;
+        padding-bottom: 40px !important;
+    }
+
+    .a4-sheet {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        min-height: auto !important;
+        padding: 18px 14px !important;
+        font-size: 11pt !important;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08) !important;
+        border-radius: 8px !important;
+    }
+
+    .doc-table-meta,
+    .doc-table-steps,
+    .doc-table-rubric,
+    .doc-table-variants,
+    .doc-table-data {
+        font-size: 9.5pt !important;
+        width: 100% !important;
+        table-layout: auto !important;
+    }
+
+    .doc-table-meta th, .doc-table-meta td,
+    .doc-table-steps th, .doc-table-steps td,
+    .doc-table-rubric th, .doc-table-rubric td,
+    .doc-table-variants th, .doc-table-variants td,
+    .doc-table-data th, .doc-table-data td {
+        padding: 4pt 4pt !important;
+        word-break: break-word !important;
+    }
+
+    .doc-signature-row {
+        flex-direction: column !important;
+        gap: 12px !important;
+        margin-top: 16pt !important;
+    }
+
+    .sig-block {
+        width: 100% !important;
+        text-align: left !important;
+    }
+
+    .doc-approval-stamp {
+        width: 100% !important;
+        justify-content: flex-start !important;
+    }
+
+    .stamp-content {
+        width: 100% !important;
+    }
+
+    .docs-modal-box {
+        max-width: 95vw !important;
+        margin: 10px !important;
+        max-height: 88vh !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .docs-header {
+        padding: 6px 10px !important;
+    }
+
+    .doc-title-badge {
+        font-size: 11.5px !important;
+    }
+
+    .edit-hint-badge {
+        display: none !important;
+    }
+
+    .tool-btn {
+        padding: 5px 8px !important;
+        font-size: 10.5px !important;
+    }
+
+    .tool-btn span {
+        display: none;
+    }
+
+    .tool-btn.docx span,
+    .tool-btn.pdf span {
+        display: inline !important;
+    }
+
+    .a4-sheet {
+        padding: 14px 10px !important;
+        font-size: 10pt !important;
+    }
+
+    .doc-main-title {
+        font-size: 12pt !important;
+    }
+
+    .doc-section-title {
+        font-size: 11pt !important;
+    }
+
+    .btn-generate-doc {
+        padding: 11px 14px !important;
+        font-size: 12.5px !important;
+    }
+}

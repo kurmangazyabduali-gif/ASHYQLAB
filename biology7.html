@@ -25,7 +25,16 @@
         .card-icon { font-size:2.5rem; color:#fff; margin-bottom:15px; z-index:2; position:relative; }
         .mission-card h2 { font-family:'Orbitron', sans-serif; font-size:1.3rem; margin:0 0 10px 0; z-index:2; position:relative;}
         .mission-card p { color:var(--text-sec); font-size:0.9rem; line-height:1.5; margin:0; z-index:2; position:relative;}
-    </style>
+    
+/* MOBILE_RESPONSIVE_PATCH */
+
+@media (max-width: 768px) {
+    .dash-header { padding: 14px 16px !important; flex-wrap: wrap !important; gap: 8px !important; }
+    .dash-content { padding: 16px 12px !important; }
+    .labs-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+}
+
+</style>
 </head>
 <body>
     <header class="dash-header">
