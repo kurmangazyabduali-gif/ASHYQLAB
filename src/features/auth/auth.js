@@ -644,7 +644,7 @@
                                 <label class="auth-label">Педагогтің Т.А.Ә. (ФИО)</label>
                                 <div class="auth-input-wrapper">
                                     <span class="auth-input-icon">👤</span>
-                                    <input type="text" id="authRegName" required placeholder="Абдуғали Құрманғазы" class="auth-input">
+                                    <input type="text" id="authRegName" required placeholder="Құрманғазы Абдуали" class="auth-input">
                                 </div>
                             </div>
 

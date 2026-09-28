@@ -1274,7 +1274,7 @@ function cleanSchoolName(name, isKazakh) {
 
 function cleanTeacherName(name, lang) {
     let clean = String(name || '').trim();
-    if (!clean) return lang === 'Қазақша' ? 'Абдуғали К. М.' : 'Абдугали К. М.';
+    if (!clean) return lang === 'Қазақша' ? 'Құрманғазы Абдуали' : 'Курмангазы Абдуали';
     return clean;
 }
 
