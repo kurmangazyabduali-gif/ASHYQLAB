@@ -1090,12 +1090,6 @@ input[type=checkbox] {
     box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
 }
 
-.badge-tilai {
-    background: linear-gradient(135deg, #4338ca, #6366f1);
-    color: #fff;
-    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
-}
-
 /* AI Assistant Navbar Trigger Button */
 .nav-ai-trigger-btn {
     background: #fff1f2 !important;
