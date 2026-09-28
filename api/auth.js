@@ -35,6 +35,7 @@ export default async function handler(req, res) {
                 school: String(user.school || '№ 1 мектеп-лицей').trim(),
                 subject: String(user.subject || 'Физика').trim(),
                 role: String(user.role || 'Мұғалім').trim(),
+                provider: 'local',
                 createdAt: user.createdAt || new Date().toISOString()
             };
 
@@ -50,6 +51,7 @@ export default async function handler(req, res) {
                     school: userRecord.school,
                     subject: userRecord.subject,
                     role: userRecord.role,
+                    provider: userRecord.provider,
                     createdAt: userRecord.createdAt
                 }
             });
@@ -85,6 +87,8 @@ export default async function handler(req, res) {
                     school: existingUser.school,
                     subject: existingUser.subject,
                     role: existingUser.role,
+                    avatar: existingUser.avatar,
+                    provider: existingUser.provider || 'local',
                     createdAt: existingUser.createdAt
                 },
                 docs: userDocs,
@@ -92,7 +96,58 @@ export default async function handler(req, res) {
             });
         }
 
-        // 3. GET USER
+        // 3. GOOGLE AUTH (ONE-CLICK SIGN-IN / REGISTER)
+        if (action === 'google_auth') {
+            const cleanEmail = String(email || user?.email || '').trim().toLowerCase();
+            if (!cleanEmail) {
+                return res.status(400).json({ error: 'Google поштасы көрсетілмеді' });
+            }
+
+            let existingUser = await db.getUserByEmail(cleanEmail);
+
+            if (!existingUser) {
+                // Auto-register Google user
+                const newUserRecord = {
+                    id: user?.id || ('usr_g_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+                    name: String(user?.name || cleanEmail.split('@')[0]).trim(),
+                    email: cleanEmail,
+                    school: String(user?.school || '№ 1 мектеп-лицей').trim(),
+                    subject: String(user?.subject || 'Физика').trim(),
+                    role: String(user?.role || 'Мұғалім').trim(),
+                    avatar: user?.avatar || user?.picture || '',
+                    provider: 'google',
+                    createdAt: new Date().toISOString()
+                };
+                await db.saveUser(newUserRecord);
+                existingUser = newUserRecord;
+            } else if (user?.avatar && !existingUser.avatar) {
+                existingUser.avatar = user.avatar;
+                await db.saveUser(existingUser);
+            }
+
+            const userDocs = await db.getUserDocs(existingUser.id);
+            const userGames = await db.getUserGames(existingUser.id);
+
+            return res.status(200).json({
+                status: 'ok',
+                message: 'Google арқылы сәтті кірдіңіз',
+                user: {
+                    id: existingUser.id,
+                    name: existingUser.name,
+                    email: existingUser.email,
+                    school: existingUser.school,
+                    subject: existingUser.subject,
+                    role: existingUser.role,
+                    avatar: existingUser.avatar,
+                    provider: 'google',
+                    createdAt: existingUser.createdAt
+                },
+                docs: userDocs,
+                games: userGames
+            });
+        }
+
+        // 4. GET USER
         if (action === 'get_user') {
             const cleanEmail = String(email || '').trim().toLowerCase();
             const existingUser = await db.getUserByEmail(cleanEmail);

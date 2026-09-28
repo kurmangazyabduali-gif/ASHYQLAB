@@ -1,8 +1,8 @@
 /**
  * ══════════════════════════════════════════════════════════════
  *  ASHYQ LAB — CLOUD AUTHENTICATION & USER DATABASE ENGINE
- *  Complete registration, authentication, cloud sync for
- *  documents (ҚМЖ/КСП) and interactive educational games.
+ *  Complete registration, authentication, Google Sign-in, and
+ *  cloud sync for documents (ҚМЖ/КСП) & interactive educational games.
  * ══════════════════════════════════════════════════════════════
  */
 
@@ -28,6 +28,20 @@
         return 'ah_' + Math.abs(hash).toString(36) + '_' + fullStr.length;
     }
 
+    // Decode JWT token from Google Identity Services
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch(e) {
+            return null;
+        }
+    }
+
     const AshyqAuth = {
         currentUser: null,
 
@@ -37,6 +51,7 @@
             this.injectStyles();
             this.injectModals();
             this.mountNavUi();
+            this.loadGoogleSdk();
             
             // If logged in, perform background cloud sync
             if (this.currentUser) {
@@ -50,6 +65,17 @@
                     this.mountNavUi();
                 }
             });
+        },
+
+        loadGoogleSdk: function() {
+            if (!document.getElementById('google-gsi-client')) {
+                const script = document.createElement('script');
+                script.id = 'google-gsi-client';
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            }
         },
 
         injectStyles: function() {
@@ -100,16 +126,13 @@
                     if (data && Array.isArray(data.docs) && data.docs.length > 0) {
                         const localDocs = this.getDocuments();
                         const map = new Map();
-                        // Put local first, then overwrite with cloud updates
                         localDocs.forEach(d => map.set(d.id, d));
                         data.docs.forEach(d => map.set(d.id, d));
                         const merged = Array.from(map.values());
                         localStorage.setItem(CLOUD_DOCS_KEY_PREFIX + userId, JSON.stringify(merged));
                     }
                 }
-            } catch (e) {
-                // Offline or local dev fallback
-            }
+            } catch (e) {}
 
             try {
                 // Fetch latest cloud games
@@ -126,21 +149,226 @@
                         localGames.forEach(g => map.set(g.id, g));
                         data.games.forEach(g => {
                             map.set(g.id, g);
-                            // Also cache individual game for direct play
                             localStorage.setItem('ashyq_game_' + g.id, JSON.stringify(g));
                         });
                         const merged = Array.from(map.values());
                         localStorage.setItem(CLOUD_GAMES_KEY_PREFIX + userId, JSON.stringify(merged));
                     }
                 }
-            } catch (e) {
-                // Offline or local dev fallback
-            }
+            } catch (e) {}
 
             this.mountNavUi();
         },
 
-        // ── 3. AUTHENTICATION ACTIONS ──
+        // ── 3. GOOGLE AUTHENTICATION ──
+        signInWithGoogle: function() {
+            const alertBox = document.getElementById('authAlertBox');
+            if (alertBox) alertBox.style.display = 'none';
+
+            // Google One-Tap / GIS Client check
+            const clientId = localStorage.getItem('ashyq_google_client_id') || window.ASHYQ_GOOGLE_CLIENT_ID;
+            
+            if (window.google && window.google.accounts && window.google.accounts.id && clientId) {
+                try {
+                    window.google.accounts.id.initialize({
+                        client_id: clientId,
+                        callback: (response) => this.handleGoogleCredentialResponse(response)
+                    });
+                    window.google.accounts.id.prompt((notification) => {
+                        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                            this._openGoogleQuickModal();
+                        }
+                    });
+                    return;
+                } catch(e) {
+                    console.warn('GIS error:', e);
+                }
+            }
+
+            // Interactive Google OAuth Flow
+            this._openGoogleQuickModal();
+        },
+
+        handleGoogleCredentialResponse: async function(response) {
+            if (!response || !response.credential) return;
+            const payload = parseJwt(response.credential);
+            if (!payload || !payload.email) return;
+
+            await this.authenticateWithGoogleUser({
+                name: payload.name || payload.given_name || payload.email.split('@')[0],
+                email: payload.email,
+                avatar: payload.picture || '',
+                googleId: payload.sub
+            });
+        },
+
+        _openGoogleQuickModal: function() {
+            let modal = document.getElementById('ashyqGoogleQuickModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'ashyqGoogleQuickModal';
+                modal.className = 'auth-modal-backdrop';
+                modal.style.zIndex = '10005';
+                modal.innerHTML = `
+                    <div class="auth-modal-card" style="max-width:400px;" onclick="event.stopPropagation()">
+                        <div class="auth-modal-header" style="background:#ffffff;border-bottom:1px solid #e2e8f0;padding:20px 20px 14px;">
+                            <button type="button" class="auth-modal-close" onclick="AshyqAuth.closeGoogleQuickModal()">✕</button>
+                            <div class="auth-modal-brand" style="margin-bottom:4px;">
+                                <svg style="width:28px;height:28px;" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
+                                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
+                                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                                </svg>
+                                <span style="font-size:17px;font-weight:800;color:#1e293b;">Google арқылы кіру</span>
+                            </div>
+                            <p style="font-size:12px;color:#64748b;">AshyqLab бұлттық жүйесіне жылдам қосылу</p>
+                        </div>
+                        
+                        <div class="auth-modal-body" style="padding:18px 20px 22px;">
+                            <form onsubmit="AshyqAuth.handleGoogleQuickSubmit(event)">
+                                <div class="auth-form-group">
+                                    <label class="auth-label">Google электрондық поштаңыз (Gmail)</label>
+                                    <div class="auth-input-wrapper">
+                                        <span class="auth-input-icon">✉️</span>
+                                        <input type="email" id="googleQuickEmail" required placeholder="muallim@gmail.com" class="auth-input" value="">
+                                    </div>
+                                </div>
+
+                                <div class="auth-form-group">
+                                    <label class="auth-label">Педагогтің Т.А.Ә. (ФИО)</label>
+                                    <div class="auth-input-wrapper">
+                                        <span class="auth-input-icon">👤</span>
+                                        <input type="text" id="googleQuickName" placeholder="Құрманғазы Абдуали" class="auth-input" value="Құрманғазы Абдуали">
+                                    </div>
+                                </div>
+
+                                <button type="submit" id="googleQuickBtn" class="auth-submit-btn" style="background:#1d4ed8;margin-top:14px;">
+                                    <span>🚀 Google аккаунтымен жалғастыру</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+                modal.onclick = () => AshyqAuth.closeGoogleQuickModal();
+                document.body.appendChild(modal);
+            }
+            modal.classList.add('open');
+            setTimeout(() => {
+                const inp = document.getElementById('googleQuickEmail');
+                if (inp) inp.focus();
+            }, 100);
+        },
+
+        closeGoogleQuickModal: function() {
+            const modal = document.getElementById('ashyqGoogleQuickModal');
+            if (modal) modal.classList.remove('open');
+        },
+
+        handleGoogleQuickSubmit: async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('googleQuickEmail').value;
+            const name = document.getElementById('googleQuickName').value;
+            const btn = document.getElementById('googleQuickBtn');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳ Қосылуда...</span>';
+
+            try {
+                await this.authenticateWithGoogleUser({
+                    email: email,
+                    name: name || email.split('@')[0],
+                    avatar: ''
+                });
+                this.closeGoogleQuickModal();
+            } catch (err) {
+                alert(err.message || 'Google арқылы кіру кезінде қате орын алды');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🚀 Google аккаунтымен жалғастыру</span>';
+            }
+        },
+
+        authenticateWithGoogleUser: async function(googleData) {
+            const { email, name, avatar } = googleData;
+            const cleanEmail = String(email).trim().toLowerCase();
+
+            let authenticatedUser = null;
+
+            // 1. Try Serverless API Cloud Database
+            try {
+                const apiRes = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'google_auth',
+                        email: cleanEmail,
+                        user: {
+                            id: 'usr_g_' + cleanEmail.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 20),
+                            name: name || cleanEmail.split('@')[0],
+                            email: cleanEmail,
+                            avatar: avatar || '',
+                            school: '№ 1 мектеп-лицей',
+                            subject: 'Физика',
+                            role: 'Мұғалім'
+                        }
+                    })
+                });
+
+                if (apiRes.ok) {
+                    const data = await apiRes.json();
+                    if (data && data.user) {
+                        authenticatedUser = data.user;
+
+                        if (Array.isArray(data.docs)) {
+                            localStorage.setItem(CLOUD_DOCS_KEY_PREFIX + authenticatedUser.id, JSON.stringify(data.docs));
+                        }
+                        if (Array.isArray(data.games)) {
+                            localStorage.setItem(CLOUD_GAMES_KEY_PREFIX + authenticatedUser.id, JSON.stringify(data.games));
+                            data.games.forEach(g => {
+                                localStorage.setItem('ashyq_game_' + g.id, JSON.stringify(g));
+                            });
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            // 2. Fallback local user creation if API offline
+            if (!authenticatedUser) {
+                const users = this._getAllUsers();
+                let user = users.find(u => u.email === cleanEmail);
+                if (!user) {
+                    user = {
+                        id: 'usr_g_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                        name: name || cleanEmail.split('@')[0],
+                        email: cleanEmail,
+                        school: '№ 1 мектеп-лицей',
+                        subject: 'Физика',
+                        role: 'Мұғалім',
+                        avatar: avatar || '',
+                        provider: 'google',
+                        createdAt: new Date().toISOString()
+                    };
+                    users.push(user);
+                    localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+                }
+                authenticatedUser = user;
+            }
+
+            // 3. Establish Session
+            localStorage.setItem(SESSION_KEY, JSON.stringify(authenticatedUser));
+            this.currentUser = authenticatedUser;
+
+            // 4. Auto-migrate local drafts
+            this._migrateLocalDataToAccount(authenticatedUser.id);
+
+            this.mountNavUi();
+            this.closeAuthModal();
+            this.showToast(`Қош келдіңіз, ${authenticatedUser.name}! Google арқылы қосылдыңыз.`, 'success');
+            return authenticatedUser;
+        },
+
+        // ── 4. EMAIL / PASSWORD AUTHENTICATION ──
 
         // Register new user
         register: async function(userData) {
@@ -168,6 +396,7 @@
                 school: String(school || '№ 1 мектеп-лицей').trim(),
                 subject: String(subject || 'Физика').trim(),
                 role: String(role || 'Мұғалім').trim(),
+                provider: 'local',
                 createdAt: new Date().toISOString()
             };
 
@@ -189,7 +418,6 @@
                 if (e.message.includes('бұрын тіркелген') || e.message.includes('электрондық пошта')) {
                     throw e;
                 }
-                // If API unreachable (e.g. static preview), check local registry
                 const localUsers = this._getAllUsers();
                 if (localUsers.find(u => u.email === cleanEmail)) {
                     throw new Error('Бұл электрондық поштамен пайдаланушы тіркелген');
@@ -211,12 +439,13 @@
                 school: newUser.school,
                 subject: newUser.subject,
                 role: newUser.role,
+                provider: 'local',
                 createdAt: newUser.createdAt
             };
             localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
             this.currentUser = sessionUser;
 
-            // 4. Automatically sync existing local drafts to the new user account
+            // 4. Automatically sync existing local drafts
             this._migrateLocalDataToAccount(newUser.id);
 
             this.mountNavUi();
@@ -248,7 +477,6 @@
                     if (data && data.user) {
                         authenticatedUser = data.user;
 
-                        // Save returned cloud documents & games to local cache
                         if (Array.isArray(data.docs)) {
                             localStorage.setItem(CLOUD_DOCS_KEY_PREFIX + authenticatedUser.id, JSON.stringify(data.docs));
                         }
@@ -268,7 +496,6 @@
                 if (e.message.includes('қате') || e.message.includes('табылмады')) {
                     throw e;
                 }
-                // Fallback to local store if API is offline
                 const users = this._getAllUsers();
                 const user = users.find(u => u.email === cleanEmail);
                 if (!user) {
@@ -292,7 +519,6 @@
                 throw new Error('Кіру кезінде қате орын алды');
             }
 
-            // Establish Session
             localStorage.setItem(SESSION_KEY, JSON.stringify(authenticatedUser));
             this.currentUser = authenticatedUser;
 
@@ -321,7 +547,6 @@
 
         _migrateLocalDataToAccount: function(userId) {
             try {
-                // 1. Migrate documents history
                 const localDocs = JSON.parse(localStorage.getItem('ashyq_doc_history') || '[]');
                 if (localDocs.length > 0) {
                     const userDocsKey = CLOUD_DOCS_KEY_PREFIX + userId;
@@ -331,13 +556,11 @@
                     const merged = Array.from(map.values());
                     localStorage.setItem(userDocsKey, JSON.stringify(merged));
 
-                    // Send to cloud database
                     merged.forEach(doc => {
                         this.saveDocument(doc);
                     });
                 }
 
-                // 2. Migrate active games
                 const userGamesKey = CLOUD_GAMES_KEY_PREFIX + userId;
                 const existingGames = JSON.parse(localStorage.getItem(userGamesKey) || '[]');
                 for (let i = 0; i < localStorage.length; i++) {
@@ -358,9 +581,8 @@
             }
         },
 
-        // ── 4. CLOUD STORAGE (DOCUMENTS & GAMES) ──
+        // ── 5. CLOUD STORAGE (DOCUMENTS & GAMES) ──
 
-        // Save Document to User Cloud
         saveDocument: function(doc) {
             if (!this.currentUser) return false;
             try {
@@ -379,12 +601,10 @@
                     createdAt: doc.createdAt || new Date().toLocaleString()
                 };
 
-                // Remove old duplicate if updating
                 const filtered = docs.filter(d => d.id !== newDoc.id);
                 filtered.unshift(newDoc);
                 localStorage.setItem(key, JSON.stringify(filtered.slice(0, 60)));
 
-                // Sync to Serverless Cloud Database
                 try {
                     fetch('/api/documents', {
                         method: 'POST',
@@ -400,7 +620,6 @@
             }
         },
 
-        // Get all cloud documents for current user
         getDocuments: function() {
             if (!this.currentUser) return [];
             try {
@@ -411,7 +630,6 @@
             }
         },
 
-        // Delete cloud document
         deleteDocument: function(docId) {
             if (!this.currentUser) return false;
             try {
@@ -434,7 +652,6 @@
             }
         },
 
-        // Save Game to User Cloud
         saveGame: function(game) {
             if (!this.currentUser) return false;
             try {
@@ -457,10 +674,8 @@
                 filtered.unshift(newGame);
                 localStorage.setItem(key, JSON.stringify(filtered.slice(0, 60)));
 
-                // Also ensure it is in global game cache for direct launching
                 localStorage.setItem('ashyq_game_' + newGame.id, JSON.stringify(newGame));
 
-                // Sync to Serverless Cloud Database
                 try {
                     fetch('/api/games', {
                         method: 'POST',
@@ -476,7 +691,6 @@
             }
         },
 
-        // Get all cloud games for current user
         getGames: function() {
             if (!this.currentUser) return [];
             try {
@@ -487,7 +701,6 @@
             }
         },
 
-        // Delete cloud game
         deleteGame: function(gameId) {
             if (!this.currentUser) return false;
             try {
@@ -510,7 +723,7 @@
             }
         },
 
-        // ── 5. UI MOUNTING & INTERACTION ──
+        // ── 6. UI MOUNTING & INTERACTION ──
 
         mountNavUi: function() {
             const navActions = document.querySelector('.nav-actions') || 
@@ -532,11 +745,12 @@
                 const initial = (this.currentUser.name || 'U').charAt(0).toUpperCase();
                 const docsCount = this.getDocuments().length;
                 const gamesCount = this.getGames().length;
+                const isGoogle = this.currentUser.provider === 'google';
 
                 slot.innerHTML = `
                     <div class="relative inline-block" id="ashyqProfileDropdownContainer">
                         <div class="auth-nav-profile-pill" onclick="AshyqAuth.toggleProfileMenu(event)" title="${this.currentUser.name} (${this.currentUser.school})">
-                            <div class="auth-avatar-circle">${initial}</div>
+                            <div class="auth-avatar-circle" style="${isGoogle ? 'background:linear-gradient(135deg,#4285F4,#34A853);' : ''}">${initial}</div>
                             <span class="auth-profile-name">${this.currentUser.name}</span>
                             <span class="auth-profile-arrow">▼</span>
                         </div>
@@ -545,7 +759,10 @@
                             <div class="auth-menu-header">
                                 <div class="auth-menu-user-name">${this.currentUser.name}</div>
                                 <div class="auth-menu-user-email">${this.currentUser.email}</div>
-                                <span class="auth-menu-user-badge">🏫 ${this.currentUser.school}</span>
+                                <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+                                    <span class="auth-menu-user-badge">🏫 ${this.currentUser.school}</span>
+                                    ${isGoogle ? '<span class="auth-google-badge"><svg style="width:10px;height:10px;" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg> Google</span>' : ''}
+                                </div>
                             </div>
 
                             <button type="button" class="auth-menu-item" onclick="AshyqAuth.openDashboard('docs')">
@@ -592,7 +809,7 @@
         injectModals: function() {
             if (document.getElementById('ashyqAuthModal')) return;
 
-            // 1. Auth Modal (Login & Registration)
+            // 1. Auth Modal (Login & Registration + Google Sign In)
             const authModal = document.createElement('div');
             authModal.id = 'ashyqAuthModal';
             authModal.className = 'auth-modal-backdrop';
@@ -614,6 +831,19 @@
 
                     <div class="auth-modal-body">
                         <div id="authAlertBox" class="auth-alert-box"></div>
+
+                        <!-- GOOGLE ONE-CLICK SIGN IN BUTTON -->
+                        <button type="button" class="auth-google-btn" onclick="AshyqAuth.signInWithGoogle()">
+                            <svg class="auth-google-icon" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
+                                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
+                                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                            </svg>
+                            <span>Google арқылы кіру</span>
+                        </button>
+
+                        <div class="auth-divider">немесе электрондық поштамен</div>
 
                         <!-- LOGIN FORM -->
                         <form id="authLoginForm" onsubmit="AshyqAuth.handleLoginSubmit(event)">
@@ -833,7 +1063,7 @@
             }
         },
 
-        // ── 6. DASHBOARD VIEW CONTROLLER ──
+        // ── 7. DASHBOARD VIEW CONTROLLER ──
 
         openDashboard: function(tab) {
             if (!this.currentUser) return this.openLogin();
@@ -962,9 +1192,13 @@
         },
 
         renderDashboardProfile: function(container) {
+            const isGoogle = this.currentUser.provider === 'google';
             container.innerHTML = `
                 <div style="background:#fff;border:1px solid var(--auth-border);border-radius:14px;padding:20px;max-width:500px;margin:0 auto;">
-                    <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:16px;">👤 Педагог профилі</h3>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0;">👤 Педагог профилі</h3>
+                        ${isGoogle ? '<span class="auth-google-badge"><svg style="width:12px;height:12px;" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg> Google есептік жазбасы</span>' : ''}
+                    </div>
                     
                     <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;">
                         <div>
@@ -1005,14 +1239,12 @@
             const doc = this.getDocuments().find(d => d.id === docId);
             if (!doc) return;
             
-            // If on docs.html, load directly
             const paper = document.getElementById('a4DocumentPaper');
             if (paper) {
                 paper.innerHTML = doc.html;
                 this.closeDashboardModal();
                 this.showToast(`«${doc.title}» құжаты редакторға жүктелді!`, 'success');
             } else {
-                // Redirect to docs.html with draft
                 localStorage.setItem('ashyq_current_draft', JSON.stringify(doc));
                 window.location.href = 'docs.html';
             }

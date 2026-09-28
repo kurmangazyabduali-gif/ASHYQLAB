@@ -440,6 +440,82 @@
     color: #15803d;
 }
 
+/* Google Sign-in Button & Divider */
+.auth-google-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background: #ffffff;
+    color: #1e293b;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    margin-bottom: 14px;
+}
+
+.auth-google-btn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
+}
+
+.auth-google-btn:active {
+    transform: scale(0.99);
+}
+
+.auth-google-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 14px 0;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.auth-divider:not(:empty)::before {
+    margin-right: 12px;
+}
+
+.auth-divider:not(:empty)::after {
+    margin-left: 12px;
+}
+
+.auth-google-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
 /* 3. CLOUD DASHBOARD MODAL ("ЖЕКЕ КАБИНЕТ / ЛИЧНЫЙ КАБИНЕТ") */
 .dashboard-modal-card {
     width: 100%;
