@@ -11,6 +11,20 @@
         
         /* CSS VARIABLES FOR THEMES */
         :root {
+            --theme-color: #00f3ff;       /* Medical Cyan for 3D */
+            --theme-glow: rgba(0,243,255,0.5);
+            --theme-bg: #031e2e;
+            --grid-color: rgba(0,243,255,0.2);
+        }
+
+        .theme-3d {
+            --theme-color: #00f3ff;
+            --theme-glow: rgba(0,243,255,0.5);
+            --theme-bg: #031e2e;
+            --grid-color: rgba(0,243,255,0.2);
+        }
+
+        .theme-mri {
             --theme-color: #f472b6;       /* Pink/Magenta for MRI */
             --theme-glow: rgba(244,114,182,0.5);
             --theme-bg: #831843;          /* Dark pink */
@@ -32,19 +46,24 @@
         }
 
         body { 
-            background: #020617; color: #fff; height: 100vh; display: flex; overflow: hidden;
+            background: #020617; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
             transition: all 0.5s;
         }
 
+        .main-layout {
+            flex: 1; display: flex; position: relative; overflow: hidden; height: 100%;
+        }
+
         /* HEADER */
-        .header { text-align: center; padding: 15px; background: rgba(0,0,0,0.5); z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.1); width: 100%; position: absolute; top:0; left:0; pointer-events: none; }
-        .header h1 { font-size: 30px; color: #fff; text-shadow: 0 0 15px var(--theme-color); transition: 0.5s; }
-        .header p { color: #94a3b8; font-size: 14px; }
+        .header { text-align: center; padding: 12px 15px; background: rgba(0,0,0,0.65); z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.1); width: 100%; position: absolute; top:0; left:0; pointer-events: none; backdrop-filter: blur(8px); }
+        .header h1 { font-size: 22px; color: #fff; text-shadow: 0 0 15px var(--theme-color); transition: 0.5s; }
+        .header p { color: #94a3b8; font-size: 13px; margin-top: 3px; }
 
         /* DASHBOARD (LEFT PANEL) */
         .dashboard { 
-            width: 400px; background: rgba(15,23,42,0.9); border-right: 2px solid rgba(255,255,255,0.1);
-            padding: 30px; display: flex; flex-direction: column; overflow-y: auto; z-index: 10; padding-top: 100px;
+            width: 400px; background: rgba(15,23,42,0.92); border-right: 2px solid rgba(255,255,255,0.1);
+            padding: 24px 28px; display: flex; flex-direction: column; overflow-y: auto; z-index: 10; padding-top: 85px;
+            backdrop-filter: blur(12px);
         }
         
         /* MODE SWITCHERS */
@@ -166,40 +185,245 @@
         .btn-back { position: absolute; top: 20px; left: 420px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; z-index: 100; transition: 0.2s; }
         .btn-back:hover { background: rgba(255,255,255,0.2); border-color: #fff; }
 
-    
+        /* 3D VIEWPORT STYLES */
+        .view-3d-wrap {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            overflow: hidden;
+        }
+
+        #anatomy3dCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            outline: none;
+            cursor: grab;
+        }
+
+        #anatomy3dCanvas:active {
+            cursor: grabbing;
+        }
+
+        .view-3d-loader {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(15,23,42,0.92) 0%, rgba(2,6,23,0.98) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+            transition: opacity 0.5s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .loader-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0,243,255,0.15);
+            border-top-color: #00f3ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 18px;
+            box-shadow: 0 0 25px rgba(0,243,255,0.4);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loader-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .loader-bar {
+            width: 250px;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .loader-bar-fill {
+            width: 5%;
+            height: 100%;
+            background: linear-gradient(90deg, #00f3ff, #38bdf8, #818cf8);
+            transition: width 0.15s ease;
+            box-shadow: 0 0 10px #00f3ff;
+        }
+
+        /* 3D HUD CONTROLS */
+        .view-3d-hud {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            padding: 7px 14px;
+            border-radius: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(12px);
+            z-index: 20;
+        }
+
+        .hud-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #e2e8f0;
+            padding: 7px 13px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: #00f3ff;
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+        }
+
+        .hud-btn.active {
+            background: rgba(0, 243, 255, 0.25);
+            border-color: #00f3ff;
+            color: #00f3ff;
+            box-shadow: inset 0 0 10px rgba(0, 243, 255, 0.4);
+        }
+
+        /* 3D REGION FOCUS BAR */
+        .view-3d-focus-bar {
+            position: absolute;
+            top: 75px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 12px;
+            backdrop-filter: blur(12px);
+            z-index: 20;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        .focus-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--theme-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .focus-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .focus-btn:hover {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--theme-color);
+            color: #fff;
+        }
+
+        .focus-btn.active {
+            background: rgba(0, 243, 255, 0.25);
+            border-color: var(--theme-color);
+            color: var(--theme-color);
+            font-weight: 700;
+        }
+
+        /* 3D INTERACTIVE HINT */
+        .view-3d-hint {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 4px 14px;
+            border-radius: 12px;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 15;
+            backdrop-filter: blur(6px);
+        }
+
 /* MOBILE_RESPONSIVE_PATCH */
 
 @media (max-width: 900px) {
-    body { height: auto !important; min-height: 100vh !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; flex-direction: column !important; }
+    body { height: auto !important; min-height: 100vh !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
+    .main-layout { flex-direction: column !important; height: auto !important; }
     .header { position: relative !important; padding: 12px 14px !important; }
-    .header h1 { font-size: 20px !important; }
+    .header h1 { font-size: 18px !important; }
     .dashboard { width: 100% !important; padding: 16px 14px !important; padding-top: 16px !important; border-right: none !important; border-bottom: 2px solid rgba(255,255,255,0.1) !important; }
-    .lab-scene { min-height: 550px !important; width: 100% !important; padding: 10px 0 !important; }
+    .lab-scene { min-height: 520px !important; height: 520px !important; width: 100% !important; padding: 10px 0 !important; }
     .patient { transform: scale(0.8); transform-origin: center top; height: 620px; }
+    .view-3d-hud { bottom: 12px; padding: 5px 8px; gap: 4px; }
+    .hud-btn { padding: 5px 8px; font-size: 11px; }
+    .view-3d-focus-bar { top: 10px; right: 10px; padding: 6px; gap: 4px; }
+    .focus-btn { padding: 4px 8px; font-size: 11px; }
+    .view-3d-hint { display: none; }
 }
 
 </style>
 
-    
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Three.js 3D Engine & Loaders for Human Anatomy Model -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="anatomy3d.js"></script>
 </head>
-<body class="theme-mri" id="bodyEl">
+<body class="theme-3d" id="bodyEl">
 
     <div class="header">
-        <h1>🩺 Мульти-Сканер Тела Человека V2</h1>
-        <p>Используйте панель слева для переключения режимов сканирования и наводите мышь на пациента.</p>
+        <h1 id="headerTitle">🧍 Адам анатомиясы (Интерактивті 3D модель)</h1>
+        <p id="headerSubtitle">3D модельді 360° бұрып зерттеңіз, ағзаларды басып, құрылысымен танысыңыз немесе 2D сканер режимдеріне ауысыңыз.</p>
     </div>
 
-    <!-- DASHBOARD -->
-    <div class="dashboard">
-        <a href="index.html" style="color:#94a3b8; text-decoration:none; margin-bottom:20px; font-weight:bold; font-size: 14px;">⬅ В меню</a>
+    <!-- MAIN APP LAYOUT WRAPPER -->
+    <div class="main-layout">
 
-        <div class="mode-container">
-            <button class="btn-mode active" id="btn-organs" onclick="setMode('organs')">🧠 МРТ</button>
-            <button class="btn-mode" id="btn-skeleton" onclick="setMode('skeleton')">🦴 Рентген</button>
-            <button class="btn-mode" id="btn-nervous" onclick="setMode('nervous')">⚡ Нервы</button>
-        </div>
+        <!-- DASHBOARD -->
+        <div class="dashboard">
+            <a href="index.html" style="color:#94a3b8; text-decoration:none; margin-bottom:18px; font-weight:bold; font-size: 14px; display:inline-flex; align-items:center; gap:6px;">⬅ <span id="backBtnText">Басты бетке</span></a>
+
+            <div class="mode-container">
+                <button class="btn-mode active" id="btn-3d" onclick="setMode('3d')">🧍 3D Модель</button>
+                <button class="btn-mode" id="btn-organs" onclick="setMode('organs')">🧠 МРТ (2D)</button>
+                <button class="btn-mode" id="btn-skeleton" onclick="setMode('skeleton')">🦴 Рентген (2D)</button>
+                <button class="btn-mode" id="btn-nervous" onclick="setMode('nervous')">⚡ Нервы (2D)</button>
+            </div>
 
         <div class="scan-header" id="scanHeaderTxt">СТАТУС: ОЖИДАНИЕ СКАНИРОВАНИЯ</div>
         <div id="scanCounter" style="color:var(--theme-color); font-weight:bold; font-size:14px; margin-bottom: 20px; text-align:right;">Найдено: 0 / 0</div>
@@ -493,54 +717,245 @@
         </div>
 
         <div class="lens-ring" id="lens"></div>
+
+        <!-- 3D VIEWPORT CONTAINER -->
+        <div id="view3dContainer" class="view-3d-wrap">
+            <canvas id="anatomy3dCanvas"></canvas>
+            
+            <!-- 3D LOADER -->
+            <div id="view3dLoader" class="view-3d-loader">
+                <div class="loader-spinner"></div>
+                <div class="loader-text" id="view3dLoadingText">3D Модель жүктелуде...</div>
+                <div class="loader-bar"><div class="loader-bar-fill" id="view3dBarFill"></div></div>
+            </div>
+
+            <!-- 3D HUD CONTROLS -->
+            <div class="view-3d-hud" id="view3dHUD">
+                <button class="hud-btn active" id="btnToggleRotate" title="Авто-айналуды қосу/өшіру"><i class="fa-solid fa-arrows-rotate"></i> <span>Айналдыру</span></button>
+                <button class="hud-btn" id="btnToggleXray" title="Рентген / Каркас режимі"><i class="fa-solid fa-bone"></i> <span>Рентген</span></button>
+                <button class="hud-btn active" id="btnTogglePins" title="Меткаларды көрсету/жасыру"><i class="fa-solid fa-location-dot"></i> <span>Меткалар</span></button>
+                <button class="hud-btn" id="btnResetCam" title="Қалпына келтіру"><i class="fa-solid fa-crosshairs"></i> <span>Сброс</span></button>
+            </div>
+
+            <!-- 3D REGION FOCUS BAR -->
+            <div class="view-3d-focus-bar">
+                <span class="focus-title"><i class="fa-solid fa-bullseye"></i> Фокус:</span>
+                <button class="focus-btn" onclick="focus3DRegion('head')">👤 Бас</button>
+                <button class="focus-btn" onclick="focus3DRegion('chest')">🫁 Кеуде</button>
+                <button class="focus-btn" onclick="focus3DRegion('abdomen')">🥣 Іш</button>
+                <button class="focus-btn" onclick="focus3DRegion('legs')">🦵 Аяқтар</button>
+                <button class="focus-btn active" onclick="focus3DRegion('full')">🧍 Барлығы</button>
+            </div>
+
+            <!-- INTERACTIVE HINT -->
+            <div class="view-3d-hint">
+                <i class="fa-solid fa-hand-pointer"></i> 360° бұру үшін тінтуірді тартыңыз • Дөңгелекпен масштабтаңыз • Орган туралы білу үшін нүктеге басыңыз
+            </div>
+        </div>
+
     </div>
+    <!-- /MAIN-LAYOUT -->
 
     <script>
+        function getAppLang() {
+            return localStorage.getItem('vsh-lang') || 'kk';
+        }
+
         const db = {
             // ORGANS
-            'brain': { name: 'Головной мозг', sys: 'Нервная система', latin: 'Cerebrum', func: 'Центральный компьютер тела. Обрабатывает информацию, управляет движениями, формирует память и эмоции.', fact: 'Мозг не чувствует собственной боли — в нем нет болевых рецепторов, поэтому операции на мозге могут делать пациенту в сознании.'},
-            'lungs': { name: 'Лёгкие', sys: 'Дыхательная система', latin: 'Pulmones', func: 'Обеспечивают газообмен: насыщают кровь кислородом из воздуха и выводят токсичный углекислый газ.', fact: 'Левое легкое чуть меньше правого, так как освобождает место в грудной клетке для сердца.'},
-            'heart': { name: 'Сердце', sys: 'Кровеносная система', latin: 'Cor', func: 'Мощный мышечный насос, который непрерывно гонит кровь по километрам сосудов, доставляя жизнь к каждой клетке.', fact: 'Если извлечь сердце из тела, оно может продолжать биться некоторое время, так как генерирует собственные электрические импульсы.'},
-            'liver': { name: 'Печень', sys: 'Пищеварительная система', latin: 'Hepar', func: 'Крупнейшая химическая лаборатория. Обезвреживает токсины, запасает энергию (гликоген) и вырабатывает желчь.', fact: 'Печень обладает уникальной суперсилой — она может регенерировать и восстановить свой полный размер, даже если потеряла 75% ткани.'},
-            'stomach': { name: 'Желудок', sys: 'Пищеварительная система', latin: 'Gaster', func: 'Резервуар с соляной кислотой, где пища дезинфицируется и начинает химически расщепляться.', fact: 'Кислота внутри настолько едкая, что желудок вынужден обновлять свою внутреннюю слизистую каждые 3-4 дня, иначе бы переварил сам себя.'},
-            'kidneys': { name: 'Почки', sys: 'Выделительная система', latin: 'Renes', func: 'Парный биофильтр тела. Ежесекундно очищают кровь от ядов и избытка воды, формируя мочу.', fact: 'Каждый день через этот маленький орган под давлением проходит около 180 литров крови для фильтрации.'},
-            'intestine': { name: 'Кишечник', sys: 'Пищеварительная система', latin: 'Intestinum', func: 'Здесь обработанная еда окончательно расщепляется и всасывается в кровь для питания клеток.', fact: 'Если извлечь и растянуть кишечник взрослого человека, он составит длину от 6 до 8 метров!'},
-            'bladder': { name: 'Мочевой пузырь', sys: 'Выделительная система', latin: 'Vesica urinaria', func: 'Эластичный резервуар для временного накопления и удержания отфильтрованной почками мочи.', fact: 'Его стенки могут феноменально растягиваться: от размера грецкого ореха до объема в 500-700 мл жидкости.'},
+            'brain': {
+                name: 'Головной мозг', name_kk: 'Бас миы',
+                sys: 'Нервная система', sys_kk: 'Жүйке жүйесі',
+                latin: 'Cerebrum / Encephalon',
+                func: 'Центральный компьютер тела. Обрабатывает информацию, управляет движениями, формирует память, мышление и эмоции.',
+                func_kk: 'Адам ағзасының басқару орталығы. Барлық ойлау, есте сақтау, сезімталдық пен қимыл-қозғалысты реттейді.',
+                fact: 'Мозг не чувствует собственной боли — в нем нет болевых рецепторов, поэтому сложные операции на мозге могут делать в полном сознании пациента.',
+                fact_kk: 'Бас миында ауырсыну рецепторлары мүлдем болмайды, сондықтан миға жасалатын күрделі оталарды науқас ояу кезде де жасай береді.'
+            },
+            'lungs': {
+                name: 'Лёгкие', name_kk: 'Өкпе',
+                sys: 'Дыхательная система', sys_kk: 'Тыныс алу жүйесі',
+                latin: 'Pulmones',
+                func: 'Обеспечивают газообмен: насыщают кровь кислородом из атмосферного воздуха и выводят углекислый газ.',
+                func_kk: 'Газ алмасу процесін атқарады: қанды оттекпен байытып, ағзадан улы көмірқышқыл газын сыртқа шығарады.',
+                fact: 'Левое легкое чуть меньше правого, так как освобождает место в грудной полости для верхушки сердца. Общая площадь альвеол равна теннисному корту!',
+                fact_kk: 'Сол жақ өкпе оң жақ өкпеден кішірек, өйткені кеуде қуысында жүрекке орын береді. Өкпе альвеолаларының жалпы ауданы үлкен теннис кортымен тең!'
+            },
+            'heart': {
+                name: 'Сердце', name_kk: 'Жүрек',
+                sys: 'Кровеносная система', sys_kk: 'Қанайналым жүйесі',
+                latin: 'Cor',
+                func: 'Мощный мышечный насос, непрерывно перекачивающий кровь по десяткам тысяч километров сосудов, доставляя питание к каждой клетке.',
+                func_kk: 'Қуатты бұлшықетті сорғы: қанды үздіксіз тамырлар бойымен айдап, барлық ұлпалар мен мүшелерді оттекпен және қорекпен қамтамасыз етеді.',
+                fact: 'Сердце человека за сутки делает около 100 000 ударов и перекачивает свыше 7000 литров крови, генерируя собственную биоэлектрическую активность.',
+                fact_kk: 'Адам жүрегі тәулігіне шамамен 100 000 рет соғып, 7 000 литрден астам қан айдайды және өзіндік электрлік импульстерді өндіреді.'
+            },
+            'liver': {
+                name: 'Печень', name_kk: 'Бауыр',
+                sys: 'Пищеварительная система', sys_kk: 'Ас қорыту жүйесі',
+                latin: 'Hepar',
+                func: 'Главная биохимическая лаборатория: обезвреживает токсины, синтезирует белки крови, запасает гликоген и вырабатывает желчь.',
+                func_kk: 'Ағзаның басты химиялық зертханасы: улы заттарды залалсыздандырады, гликоген қорын жинайды және майларды ыдырататын өт бөледі.',
+                fact: 'Печень — единственный внутренний орган, способный к поразительной регенерации: она может восстановить свой полный объем всего из 25% оставшейся ткани.',
+                fact_kk: 'Бауыр — ғажайып регенерацияға қабілетті жалғыз орган: оның 75%-ы зақымдалса да, қалған 25%-ынан қайта толық көлемін қалпына келтіре алады.'
+            },
+            'stomach': {
+                name: 'Желудок', name_kk: 'Асқазан',
+                sys: 'Пищеварительная система', sys_kk: 'Ас қорыту жүйесі',
+                latin: 'Gaster',
+                func: 'Резервуар с соляной кислотой и пепсином, где поступившая пища обеззараживается и подвергается первичному ферментативному расщеплению.',
+                func_kk: 'Тұз қышқылы мен пепсин сөлі арқылы тағамды микробтардан тазартып, ақуыздарды алғашқы химиялық ыдыратудан өткізетін қапшық тәрізді мүше.',
+                fact: 'Желудочный сок настолько концентрирован, что может растворить даже мелкие металлические предметы; поэтому слизистая желудка обновляется каждые 3-4 дня.',
+                fact_kk: 'Асқазан сөліндегі қышқыл өте өткір болғандықтан, асқазан өзін-өзі қорытып қоймас үшін ішкі кілегейлі қабығы әрбір 3-4 күн сайын жаңарып отырады.'
+            },
+            'kidneys': {
+                name: 'Почки', name_kk: 'Бүйректер',
+                sys: 'Выделительная система', sys_kk: 'Зәр шығару жүйесі',
+                latin: 'Renes',
+                func: 'Парный биофильтр тела: непрерывно очищают кровь от токсичных продуктов обмена, регулируют водно-солевой баланс и артериальное давление.',
+                func_kk: 'Жұп сүзгі мүше: тәулік бойы қанды шлактар мен улы заттардан тазартып, денедегі су-тұз тепе-теңдігі мен қан қысымын реттейді.',
+                fact: 'Каждые сутки почки фильтруют через миллионы нефронов около 1800 литров крови, образуя примерно 1.5 литра вторичной мочи.',
+                fact_kk: 'Тәулігіне бүйректердің 2 миллионнан астам нефрондары арқылы 1800 литр қан сүзіліп, нәтижесінде 1.5 литрдей екінші реттік зәр түзіледі.'
+            },
+            'intestine': {
+                name: 'Кишечник', name_kk: 'Ішектер',
+                sys: 'Пищеварительная система', sys_kk: 'Ас қорыту жүйесі',
+                latin: 'Intestinum',
+                func: 'Завершает расщепление белков, жиров и углеводов, обеспечивает всасывание питательных веществ и воды в кровь и лимфу.',
+                func_kk: 'Ас қоректік заттарды молекулалық деңгейде толық ыдыратып, қан мен лимфаға сіңіреді, сондай-ақ су алмасуын реттейді.',
+                fact: 'Общая длина кишечника взрослого человека достигает 7-8 метров, а внутри него обитает более 100 триллионов полезных симбиотических бактерий микробиома.',
+                fact_kk: 'Ересек адамның ішектерінің жалпы ұзындығы 7-8 метрге жетеді, ал оның ішінде 100 триллионнан астам пайдалы микробиома бактериялары өмір сүреді.'
+            },
+            'bladder': {
+                name: 'Мочевой пузырь', name_kk: 'Қуық',
+                sys: 'Выделительная система', sys_kk: 'Зәр шығару жүйесі',
+                latin: 'Vesica urinaria',
+                func: 'Эластичный мышечный резервуар для временного накопления и своевременной эвакуации отфильтрованной мочи.',
+                func_kk: 'Бүйректен бөлініп шыққан зәрді белгілі бір уақыт бойы жинақтап, сыртқа шығаруға арналған созылмалы бұлшықетті қуыс ағза.',
+                fact: 'Стенки мочевого пузыря способны растягиваться без повышения внутреннего давления, вмещая в норме до 500-700 мл жидкости.',
+                fact_kk: 'Қуық қабырғалары өте серпімді: бос күйінде шағын жаңғақтай ғана болса, толған кезде 500-700 мл сұйықтықты еш қысымсыз ұстап тұра алады.'
+            },
             // BONES
-            'skull': { name: 'Череп', sys: 'Скелетная система', latin: 'Cranium', func: 'Монолитный костный шлем головы. Образует бронированное вместилище для мозга и глаз.', fact: 'Череп взрослого человека состоит из 23-х сросшихся костей, из которых подвижна только одна — нижняя челюсть.' },
-            'spine': { name: 'Позвоночный Столб', sys: 'Скелетная система', latin: 'Columna vertebralis', func: 'Главная продольная ось тела. Могучий столб, удерживающий спину прямо и прячущий внутри хрупкий спинной мозг.', fact: 'Утром ваш рост примерно на 1-2 сантиметра больше, чем вечером, так как хрящевые диски позвоночника за день "стаптываются".' },
-            'ribs': { name: 'Грудная клетка', sys: 'Скелетная система', latin: 'Thorax', func: 'Надежная костная клетка, оберегающая жизненно важные органы: сердце и легкие. Двигается при дыхании.', fact: 'У человека 12 пар ребер. Две самые нижние пары называются "плавающими" — они вообще не крепятся к грудине.' },
-            'pelvis': { name: 'Кости Таза', sys: 'Скелетная система', latin: 'Pelvis', func: 'Массивная костная чаша в основании позвоночника. Связывает верхнюю часть туловища с двигательными осями ног.', fact: 'По строению таза археологи легче всего определяют пол скелета. У женщин таз шире и круглее — адаптация для деторождения.' },
-            'femur': { name: 'Бедренная кость', sys: 'Скелетная система', latin: 'Os femoris', func: 'Главная кость ноги, передающая всю массу туловища на голени. Самая тяжелая кость организма.', fact: 'Бедренная кость прочнее бетона! Она может выдержать статическую нагрузку на излом весом до 1.5 тонн (как легковой автомобиль).' },
-            'humerus': { name: 'Плечевая кость', sys: 'Скелетная система', latin: 'Humerus', func: 'Длинная трубчатая кость руки. В связке с лопаткой образует один из самых подвижных суставов тела.', fact: 'Популярное название "funny bone" (забавная кость) относится к нерву, струящемуся по её низу — удар по нерву вызывает характерное покалывание.' },
+            'skull': {
+                name: 'Череп', name_kk: 'Бас сүйек',
+                sys: 'Скелетная система', sys_kk: 'Тірек-қимыл жүйесі',
+                latin: 'Cranium',
+                func: 'Прочный костный каркас головы: защищает головной мозг и органы чувств от ударов, служит опорой для мимических и жевательных мышц.',
+                func_kk: 'Бастың сүйекті сауыты: бас миы мен сезім мүшелерін механикалық соққылардан қорғайды және шайнау бұлшықеттеріне тірек болады.',
+                fact: 'Череп взрослого человека состоит из 23 костей, соединенных неподвижными швами; подвижной является только нижняя челюсть.',
+                fact_kk: 'Ересек адамның бас сүйегі 23 сүйектен құралған, олар өзара қозғалмайтын жіктермен біріккен; жалғыз қозғалмалы сүйек — төменгі жақ.'
+            },
+            'spine': {
+                name: 'Позвоночный Столб', name_kk: 'Омыртқа бағанасы',
+                sys: 'Скелетная система', sys_kk: 'Тірек-қимыл жүйесі',
+                latin: 'Columna vertebralis',
+                func: 'Главная вертикальная ось скелета: обеспечивает прямохождение, амортизирует нагрузки при движении и защищает спинной мозг.',
+                func_kk: 'Дененің басты тірегі мен осі: тік жүруді қамтамасыз етеді, қозғалыс кезіндегі сілкіністерді бәсеңдетеді және жұлынды сақтайды.',
+                fact: 'Человеческий позвоночник имеет 4 плавных физиологических изгиба (лордозы и кифозы), работающих подобно упругой автомобильной рессоре.',
+                fact_kk: 'Адам омыртқасында 4 физиологиялық иілім бар (екі лордоз және екі кифоз), олар жүру, секіру кезінде күшті серіппе тәрізді жұмсартады.'
+            },
+            'ribs': {
+                name: 'Грудная клетка', name_kk: 'Кеуде қуысы (Қабырғалар)',
+                sys: 'Скелетная система', sys_kk: 'Тірек-қимыл жүйесі',
+                latin: 'Thorax / Costae',
+                func: 'Костно-хрящевой щит: защищает сердце, легкие и крупные магистральные сосуды, активно участвуя в акте дыхания.',
+                func_kk: 'Сүйекті-шеміршекті сауыт: жүрек, өкпе және ірі қантамырларды қорғайды, сонымен бірге тыныс алу кезінде көтеріліп-төмендейді.',
+                fact: 'У человека 12 пар ребер: первые 7 пар крепятся к грудине напрямую, 3 пары соединяются шемиршеком, а 2 нижние пары являются свободно "плавающими".',
+                fact_kk: 'Адамда 12 жұп қабырға болады: алғашқы 7 жұбы төссүйекке тікелей қосылады, 3 жұбы жалған, ал ең төменгі 2 жұбы еркін жүзетін қабырғалар делінеді.'
+            },
+            'pelvis': {
+                name: 'Кости Таза', name_kk: 'Жамбас сүйектері',
+                sys: 'Скелетная система', sys_kk: 'Тірек-қимыл жүйесі',
+                latin: 'Pelvis',
+                func: 'Массивный костный пояс: соединяет позвоночник со свободными нижними конечностями и защищает органы малого таза.',
+                func_kk: 'Мықты сүйекті белдеу: омыртқа мен аяқ сүйектерін жалғастырады, дене салмағын таратады және ішкі мүшелерді қорғайды.',
+                fact: 'Форма и угол тазовых костей — главный признак, по которому антропологи и криминалисты мгновенно отличают мужской скелет от женского.',
+                fact_kk: 'Жамбас сүйегінің пішіні мен ені — антропологтар мен сот сарапшыларына қаңқаның ер немесе әйел адамға тиесілі екенін анықтаудың басты белгісі.'
+            },
+            'femur': {
+                name: 'Бедренная кость', name_kk: 'Ортан жілік (Жамбас сүйегі)',
+                sys: 'Скелетная система', sys_kk: 'Тірек-қимыл жүйесі',
+                latin: 'Os femoris',
+                func: 'Самая крупная трубчатая кость: передает вес тела на голень и стопу, выдерживая колоссальные динамические нагрузки при беге и прыжках.',
+                func_kk: 'Адам ағзасындағы ең ұзын әрі ең берік түтікті сүйек: дене салмағын аяққа таратады және жүру, жүгіру қимылдарын орындайды.',
+                fact: 'Бедренная кость прочнее армированного бетона: на излом она способна выдержать статическую нагрузку до 1500 кг (вес легкового автомобиля)!',
+                fact_kk: 'Ортан жілік беріктігі жағынан темірбетоннан да асып түседі: ол бойлық қысымда 1.5 тоннаға дейінгі салмақты (жеңіл автокөлік салмағындай) көтере алады!'
+            },
+            'humerus': {
+                name: 'Плечевая кость', name_kk: 'Тоқпан жілік',
+                sys: 'Скелетная система', sys_kk: 'Тірек-қимыл жүйесі',
+                latin: 'Humerus',
+                func: 'Основа плечевого пояса руки: обеспечивает огромную свободу движений верхней конечности во всех трех плоскостях.',
+                func_kk: 'Қолдың жоғарғы түтікті сүйегі: жауырынмен және кәрі жілікпен байланысып, қолдың еркін қозғалысын қамтамасыз етеді.',
+                fact: 'Сустав между плечевой костью и лопаткой — самый подвижный шаровидный сустав в организме человека.',
+                fact_kk: 'Тоқпан жілік пен жауырын арасындағы иық буыны — адам денесіндегі барлық бағытта қозғала алатын ең мобильді шар тәрізді буын.'
+            },
             // NERVES
-            'brain_nerve': { name: 'Головной мозг (ЦНС)', sys: 'Нервная система', latin: 'Encephalon', func: 'Центр обработки всех нервных сигналов. Управляет рефлексами, мыслями и координацией.', fact: 'Нервные импульсы в мозге и от него могут перемещаться со скоростью до 400 км/ч.' },
-            'spinal_cord': { name: 'Спинной мозг', sys: 'Нервная система', latin: 'Medulla spinalis', func: 'Главный информационный кабель тела. Передает команды от мозга к мышцам и органам.', fact: 'Спинной мозг может самостоятельно принимать решения! Это называется "рефлекс" (например, отдергивание руки от огня).' },
-            'sciatic': { name: 'Седалищный нерв', sys: 'Нервная система', latin: 'Nervus ischiadicus', func: 'Самый длинный нерв в организме. Иннервирует всю ногу, от бедра до пальцев стопы.', fact: 'Его толщина может достигать толщины вашего большого пальца руки.' }
+            'brain_nerve': {
+                name: 'Головной мозг (ЦНС)', name_kk: 'Бас миы (ОЖЖ)',
+                sys: 'Нервная система', sys_kk: 'Жүйке жүйесі',
+                latin: 'Encephalon',
+                func: 'Центральный отдел нервной системы: координирует работу всех внутренних органов, рефлексы и интеллектуальную деятельность.',
+                func_kk: 'Жүйке жүйесінің жоғарғы бөлімі: барлық сезім, қимыл, рефлекстер мен ақыл-ой қызметін үйлестіреді.',
+                fact: 'Нервные импульсы распространяются по волокнам со скоростью до 120 м/с (более 430 км/ч), что быстрее болида Формулы-1.',
+                fact_kk: 'Жүйке талшықтары арқылы импульстер 120 м/с (сағатына 430 км-ден астам) жылдамдықпен өтеді, бұл Формула-1 көлігінен де жылдам.'
+            },
+            'spinal_cord': {
+                name: 'Спинной мозг', name_kk: 'Жұлын',
+                sys: 'Нервная система', sys_kk: 'Жүйке жүйесі',
+                latin: 'Medulla spinalis',
+                func: 'Главный проводящий ствол: передает двигательные сигналы от мозга к мышцам и чувствительные импульсы обратно в головной мозг.',
+                func_kk: 'Басты өткізгіш жол: бас миынан бұлшықеттерге бұйрықтарды жеткізіп, шеткі мүшелерден сезімдік сигналдарды миға өткізеді.',
+                fact: 'Спинной мозг может самостоятельно замыкать безусловные рефлекторные дуги без участия коры головного мозга (например, отдергивание пальца от огня).',
+                fact_kk: 'Жұлын шартсыз рефлекстерді бас миының қатысуынсыз өздігінен басқара алады (мысалы, ыстық заттан қолды бірден тартып алу).'
+            },
+            'sciatic': {
+                name: 'Седалищный нерв', name_kk: 'Шонданай жүйкесі',
+                sys: 'Нервная система', sys_kk: 'Жүйке жүйесі',
+                latin: 'Nervus ischiadicus',
+                func: 'Крупнейший периферический нерв: иннервирует мышцы бедра, голени и стопы, обеспечивая чувствительность и двигательную активность всей ноги.',
+                func_kk: 'Адам денесіндегі ең ұзын әрі ең жуан шеткі жүйке: сан, сирақ және табан бұлшықеттерін қозғалыс пен сезімталдықпен қамтамасыз етеді.',
+                fact: 'Седалищный нерв формируется из 5 спинномозговых корешков, а его диаметр в районе таза достигает толщины большого пальца руки.',
+                fact_kk: 'Шонданай жүйкесі жұлынның 5 түбірінен бастау алады және жамбас тұсындағы жуандығы адамның бас бармағындай болады.'
+            }
         };
 
-        let currentMode = 'organs';
+        let currentMode = '3d';
         let scanInterval = null;
         let scanProgress = 0;
         let isScanning = false;
         let currentTarget = null;
         let scannedItems = new Set();
-        let totalItemsInMode = 0;
-        
+        let totalItemsInMode = 12;
+
         function updateCounter() {
-            const currentOrgans = document.querySelectorAll('.mode-' + (currentMode==='organs'?'org':currentMode==='skeleton'?'bone':'nervous'));
-            totalItemsInMode = currentOrgans.length;
+            const isKk = getAppLang() === 'kk';
             let found = 0;
-            currentOrgans.forEach(el => {
-                if (scannedItems.has(el.getAttribute('data-id'))) found++;
-            });
-            document.getElementById('scanCounter').textContent = 'Найдено: ' + found + ' / ' + totalItemsInMode;
-            
-            if (found > 0 && found === totalItemsInMode) {
-                document.getElementById('scanCounter').textContent = '✅ СКАНИРОВАНИЕ ЗАВЕРШЕНО';
-                document.getElementById('scanCounter').style.color = '#10b981'; // green
+
+            if (currentMode === '3d') {
+                totalItemsInMode = window.ANATOMY_3D_COUNT || 12;
+                // Count scanned 3D items
+                const valid3D = ['brain', 'skull', 'lungs', 'heart', 'ribs', 'liver', 'stomach', 'kidneys', 'spine', 'intestine', 'pelvis', 'femur'];
+                valid3D.forEach(id => {
+                    if (scannedItems.has(id)) found++;
+                });
             } else {
-                document.getElementById('scanCounter').style.color = 'var(--theme-color)';
+                const currentOrgans = document.querySelectorAll('.mode-' + (currentMode==='organs'?'org':currentMode==='skeleton'?'bone':'nervous'));
+                totalItemsInMode = currentOrgans.length;
+                currentOrgans.forEach(el => {
+                    if (scannedItems.has(el.getAttribute('data-id'))) found++;
+                });
+            }
+
+            const counterEl = document.getElementById('scanCounter');
+            if (!counterEl) return;
+
+            if (found > 0 && found >= totalItemsInMode) {
+                counterEl.textContent = isKk ? '✅ БАРЛЫҚ АҒЗАЛАР ЗЕРТТЕЛДІ' : '✅ СКАНИРОВАНИЕ ЗАВЕРШЕНО';
+                counterEl.style.color = '#10b981';
+            } else {
+                counterEl.textContent = (isKk ? 'Зерттелді: ' : 'Найдено: ') + found + ' / ' + totalItemsInMode;
+                counterEl.style.color = 'var(--theme-color)';
             }
         }
 
@@ -549,98 +964,147 @@
         let audioCtx;
         
         function playSnd(type) {
-            if (!audioCtx) audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            if (type === 'tick') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.05);
-                gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-            } else if (type === 'success') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(880, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } else if (type === 'switch') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            try {
+                if (!audioCtx) audioCtx = new AudioContext();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                if (type === 'tick') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.05);
+                    gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+                } else if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'switch') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                }
+            } catch (e) {
+                // Ignore audio policy blocks
             }
         }
 
         function setMode(newMode) {
             playSnd('switch');
             currentMode = newMode;
-            document.getElementById('bodyEl').className = 'theme-' + (newMode === 'organs' ? 'mri' : newMode === 'skeleton' ? 'xray' : 'nervous');
+            const isKk = getAppLang() === 'kk';
+
+            // Theme class update
+            const bodyEl = document.getElementById('bodyEl');
+            if (newMode === '3d') {
+                bodyEl.className = 'theme-3d';
+            } else if (newMode === 'organs') {
+                bodyEl.className = 'theme-mri';
+            } else if (newMode === 'skeleton') {
+                bodyEl.className = 'theme-xray';
+            } else {
+                bodyEl.className = 'theme-nervous';
+            }
             
             // UI Toggle
             document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + newMode).classList.add('active');
+            const activeBtn = document.getElementById('btn-' + newMode);
+            if (activeBtn) activeBtn.classList.add('active');
 
-            // Reset dashboard
-            document.getElementById('scanHeaderTxt').textContent = 'СТАТУС: КАЛИБРОВКА НОВОГО РЕЖИМА...';
-            document.getElementById('dbName').textContent = 'Ожидание';
-            document.getElementById('dbSys').textContent = 'Наведите сканер';
+            const view3d = document.getElementById('view3dContainer');
+            const patientBox = document.getElementById('patientBox');
+            const lens = document.getElementById('lens');
+
+            if (newMode === '3d') {
+                if (view3d) view3d.style.display = 'block';
+                if (patientBox) patientBox.style.display = 'none';
+                if (lens) lens.style.display = 'none';
+
+                if (typeof window.initAnatomy3D === 'function') {
+                    window.initAnatomy3D();
+                }
+                if (typeof window.onWindowResize3D === 'function') {
+                    setTimeout(window.onWindowResize3D, 50);
+                }
+
+                document.getElementById('scanHeaderTxt').textContent = isKk ? 'КҮЙІ: 3D ИНТЕРАКТИВТІ МОДЕЛЬ' : 'РЕЖИМ: 3D ИНТЕРАКТИВНАЯ МОДЕЛЬ';
+                document.getElementById('dbName').textContent = isKk ? '3D Адам моделі' : '3D Модель Человека';
+                document.getElementById('dbSys').textContent = isKk ? 'Ағза нүктелерін басып зерттеңіз' : 'Кликайте по меткам органов';
+            } else {
+                if (view3d) view3d.style.display = 'none';
+                if (patientBox) patientBox.style.display = 'block';
+                if (lens) lens.style.display = 'flex';
+
+                document.getElementById('scanHeaderTxt').textContent = isKk ? 'КҮЙІ: СЕНСОРДЫ БАҒЫТТАҢЫЗ' : 'СТАТУС: НАВЕДИТЕ СКАНЕР';
+                document.getElementById('dbName').textContent = isKk ? 'Күту режімі' : 'Ожидание';
+                document.getElementById('dbSys').textContent = isKk ? 'Сканерді денеге бағыттаңыз' : 'Наведите сканер на орган';
+            }
+
             document.getElementById('cardFunc').style.display = 'none';
             document.getElementById('cardFact').style.display = 'none';
             stopScan();
+            updateCounter();
         }
 
-        // Mouse tracking for Scanner Lens
+        // Mouse tracking for 2D Scanner Lens
         const scene = document.getElementById('scene');
         const xray = document.getElementById('xray');
         const lens = document.getElementById('lens');
         const patientBox = document.getElementById('patientBox');
 
-        // Initial hide
-        xray.style.clipPath = `circle(0px at 0px 0px)`;
-        lens.style.opacity = '0';
+        if (xray && lens) {
+            xray.style.clipPath = `circle(0px at 0px 0px)`;
+            lens.style.opacity = '0';
+        }
 
         let hasInteracted = false;
 
-        scene.addEventListener('mousemove', (e) => {
-            if (!hasInteracted && audioCtx) {
-                audioCtx.resume();
-                hasInteracted = true;
-            }
-            lens.style.opacity = '1';
-            
-            // Position lens relative to scene (not viewport)
-            const sceneRect = scene.getBoundingClientRect();
-            lens.style.left = (e.clientX - sceneRect.left) + 'px';
-            lens.style.top = (e.clientY - sceneRect.top) + 'px';
+        if (scene) {
+            scene.addEventListener('mousemove', (e) => {
+                if (currentMode === '3d') return;
+                if (!hasInteracted && audioCtx) {
+                    audioCtx.resume();
+                    hasInteracted = true;
+                }
+                if (lens) lens.style.opacity = '1';
+                
+                const sceneRect = scene.getBoundingClientRect();
+                if (lens) {
+                    lens.style.left = (e.clientX - sceneRect.left) + 'px';
+                    lens.style.top = (e.clientY - sceneRect.top) + 'px';
+                }
 
-            // Coordinates relative to patient box for clip-path
-            const rect = patientBox.getBoundingClientRect();
-            let x = e.clientX - rect.left;
-            let y = e.clientY - rect.top;
+                if (patientBox && xray) {
+                    const rect = patientBox.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    let y = e.clientY - rect.top;
+                    const radius = 80;
+                    xray.style.clipPath = `circle(${radius}px at ${x}px ${y}px)`;
+                }
+            });
 
-            // X-Ray aperture radius — matches lens-ring size (80px radius = 160px diameter)
-            const radius = 80;
-            xray.style.clipPath = `circle(${radius}px at ${x}px ${y}px)`;
-        });
+            scene.addEventListener('mouseleave', () => {
+                if (currentMode === '3d') return;
+                if (xray) xray.style.clipPath = `circle(0px at 0px 0px)`;
+                if (lens) lens.style.opacity = '0';
+                stopScan();
+            });
+        }
 
-        scene.addEventListener('mouseleave', () => {
-            xray.style.clipPath = `circle(0px at 0px 0px)`;
-            lens.style.opacity = '0';
-            stopScan();
-        });
-
-        // Advanced Scan System
+        // 2D Scan Progress System
         function startScan(id) {
+            if (currentMode === '3d') return;
             if (!db[id]) return;
             if (scannedItems.has(id)) {
                 showData(id);
@@ -650,12 +1114,13 @@
             currentTarget = id;
             isScanning = true;
             scanProgress = 0;
+            const isKk = getAppLang() === 'kk';
             
             document.getElementById('scanBar').style.display = 'block';
             document.getElementById('scanFill').style.width = '0%';
-            document.getElementById('scanHeaderTxt').textContent = 'СТАТУС: ИДЕНТИФИКАЦИЯ ОБЪЕКТА...';
-            document.getElementById('dbName').textContent = 'Анализ...';
-            document.getElementById('dbSys').textContent = 'Пожалуйста, не отводите сканер';
+            document.getElementById('scanHeaderTxt').textContent = isKk ? 'КҮЙІ: НЫСАНДЫ ТАЛДАУ...' : 'СТАТУС: ИДЕНТИФИКАЦИЯ ОБЪЕКТА...';
+            document.getElementById('dbName').textContent = isKk ? 'Сканерлеу...' : 'Анализ...';
+            document.getElementById('dbSys').textContent = isKk ? 'Сканерді жылжытпаңыз' : 'Пожалуйста, не отводите сканер';
             document.getElementById('cardFunc').style.display = 'none';
             document.getElementById('cardFact').style.display = 'none';
 
@@ -667,13 +1132,12 @@
                 if (scanProgress >= 100) {
                     clearInterval(scanInterval);
                     scannedItems.add(id);
-                    // Mark all organs with this data-id as scanned
                     document.querySelectorAll(`[data-id="${id}"]`).forEach(el => el.classList.add('scanned'));
                     playSnd('success');
                     showData(id);
                     updateCounter();
                 }
-            }, 50); // Takes 0.5 seconds to scan
+            }, 50);
         }
 
         function stopScan() {
@@ -681,43 +1145,76 @@
                 clearInterval(scanInterval);
                 isScanning = false;
                 scanProgress = 0;
+                const isKk = getAppLang() === 'kk';
                 document.getElementById('scanBar').style.display = 'none';
-                document.getElementById('scanHeaderTxt').textContent = 'СТАТУС: СКАНИРОВАНИЕ ПРЕРВАНО';
-                document.getElementById('dbName').textContent = 'Ожидание';
-                document.getElementById('dbSys').textContent = 'Наведите сканер заново';
+                document.getElementById('scanHeaderTxt').textContent = isKk ? 'КҮЙІ: СКАНИРЛЕУ ТОҚТАТЫЛДЫ' : 'СТАТУС: СКАНИРОВАНИЕ ПРЕРВАНО';
+                document.getElementById('dbName').textContent = isKk ? 'Күтуде' : 'Ожидание';
+                document.getElementById('dbSys').textContent = isKk ? 'Сканерді қайта бағыттаңыз' : 'Наведите сканер заново';
             }
         }
 
-        // Display Data
+        // Display Data in Left Dashboard
         function showData(id) {
             if (!db[id]) return;
             const data = db[id];
+            const isKk = getAppLang() === 'kk';
             
             document.getElementById('scanBar').style.display = 'none';
-            document.getElementById('scanHeaderTxt').textContent = 'СТАТУС: ОБЪЕКТ ЗАФИКСИРОВАН ✓';
+            document.getElementById('scanHeaderTxt').textContent = isKk ? 'КҮЙІ: НЫСАН АНЫҚТАЛДЫ ✓' : 'СТАТУС: ОБЪЕКТ ЗАФИКСИРОВАН ✓';
             
-            document.getElementById('dbName').textContent = data.name;
-            document.getElementById('dbSys').textContent = `${data.sys} | ${data.latin}`;
+            document.getElementById('dbName').textContent = (isKk && data.name_kk) ? data.name_kk : data.name;
+            document.getElementById('dbSys').textContent = `${(isKk && data.sys_kk) ? data.sys_kk : data.sys} | ${data.latin}`;
             
             document.getElementById('cardFunc').style.display = 'block';
-            document.getElementById('dbFunc').textContent = data.func;
+            document.getElementById('dbFunc').textContent = (isKk && data.func_kk) ? data.func_kk : data.func;
             
             document.getElementById('cardFact').style.display = 'block';
-            document.getElementById('dbFact').textContent = data.fact;
+            document.getElementById('dbFact').textContent = (isKk && data.fact_kk) ? data.fact_kk : data.fact;
         }
 
-        updateCounter();
-        
-        // Start Audio Context on First Click to respect browser policies
+        // Global Language Update Handler (called by ashyq-nav.js)
+        window.setLang = function(lang) {
+            localStorage.setItem('vsh-lang', lang);
+            const isKk = lang === 'kk';
+
+            // Update Header & Dashboard UI strings
+            const titleEl = document.getElementById('headerTitle');
+            const subEl = document.getElementById('headerSubtitle');
+            const backEl = document.getElementById('backBtnText');
+
+            if (titleEl) titleEl.textContent = isKk ? '🧍 Адам анатомиясы (Интерактивті 3D модель)' : '🧍 Анатомия человека (Интерактивная 3D модель)';
+            if (subEl) subEl.textContent = isKk 
+                ? '3D модельді 360° бұрып зерттеңіз, ағзаларды басып, құрылысымен танысыңыз немесе 2D сканер режимдеріне ауысыңыз.' 
+                : 'Исследуйте 3D модель на 360°, изучайте органы и кости кликом по меткам или переключайтесь в режимы 2D сканирования.';
+            if (backEl) backEl.textContent = isKk ? 'Басты бетке' : 'На главную';
+
+            // Refresh 3D pin billboard labels
+            if (typeof window.refresh3DPinLabels === 'function') {
+                window.refresh3DPinLabels();
+            }
+
+            // Refresh current displayed organ
+            if (currentTarget && db[currentTarget]) {
+                showData(currentTarget);
+            }
+            updateCounter();
+        };
+
+        // Start Audio Context on First Click to respect browser policy
         document.body.addEventListener('click', () => {
             if (!audioCtx) audioCtx = new AudioContext();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             hasInteracted = true;
         }, { once: true });
 
+        // Initialize 3D Mode on startup
+        window.addEventListener('DOMContentLoaded', () => {
+            setMode('3d');
+        });
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setMode('3d');
+        }
     </script>
-
-
 
     <script src="ashyq-nav.js"></script>
 </body>

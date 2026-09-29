@@ -706,11 +706,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             initPresentationState(rawData, intel);
 
-            if (imageSourceMode === 'web') {
-                btnGenText.textContent = 'Поиск реальных фото в Википедии и Сети...';
-                setGenProgress(85, 'Загрузка реальных фотографий...');
-                await autoAttachRealWebPhotos(presentationState, topic);
-            }
+            btnGenText.textContent = 'Поиск реальных фото в Википедии и Сети...';
+            setGenProgress(85, 'Загрузка реальных фотографий...');
+            await autoAttachRealWebPhotos(presentationState, topic);
 
             setGenProgress(100, '✅ Готово!');
             await sleep(300);
@@ -1089,40 +1087,44 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    editImgPrompt.addEventListener('input', function(e) {
-        const slide = getCurrentSlide();
-        if (!slide) return;
-        slide.imagePrompt = e.target.value;
-        renderLiveSlidePreview();
-        saveToLocalStorage();
-    });
+    if (editImgPrompt) {
+        editImgPrompt.addEventListener('input', function(e) {
+            const slide = getCurrentSlide();
+            if (!slide) return;
+            slide.imagePrompt = e.target.value;
+            renderLiveSlidePreview();
+            saveToLocalStorage();
+        });
+    }
 
-    btnRefreshImg.addEventListener('click', function() {
-        const slide = getCurrentSlide();
-        if (!slide) return;
-        
-        if (editImgPrompt && editImgPrompt.value.trim()) {
-            slide.imagePrompt = editImgPrompt.value.trim();
-        }
-        
-        slide.seed = Math.floor(Math.random() * 10000000);
-        slide.imageUrl = ''; // switch to AI generated on explicit button press
-        if (editImgUrl) editImgUrl.value = '';
-        showToast('Генерация нового 3D варианта через ИИ...', 'info');
-        
-        const originalHtml = btnRefreshImg.innerHTML;
-        btnRefreshImg.disabled = true;
-        btnRefreshImg.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Генерация нового фото...';
-        
-        renderLiveSlidePreview();
-        saveToLocalStorage();
-        
-        setTimeout(() => {
-            btnRefreshImg.disabled = false;
-            btnRefreshImg.innerHTML = originalHtml;
-            showToast('3D фото успешно обновлено!', 'success');
-        }, 1000);
-    });
+    if (btnRefreshImg) {
+        btnRefreshImg.addEventListener('click', function() {
+            const slide = getCurrentSlide();
+            if (!slide) return;
+            
+            if (editImgPrompt && editImgPrompt.value.trim()) {
+                slide.imagePrompt = editImgPrompt.value.trim();
+            }
+            
+            slide.seed = Math.floor(Math.random() * 10000000);
+            slide.imageUrl = ''; // switch to AI generated on explicit button press
+            if (editImgUrl) editImgUrl.value = '';
+            showToast('Генерация нового 3D варианта через ИИ...', 'info');
+            
+            const originalHtml = btnRefreshImg.innerHTML;
+            btnRefreshImg.disabled = true;
+            btnRefreshImg.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Генерация нового фото...';
+            
+            renderLiveSlidePreview();
+            saveToLocalStorage();
+            
+            setTimeout(() => {
+                btnRefreshImg.disabled = false;
+                btnRefreshImg.innerHTML = originalHtml;
+                showToast('3D фото успешно обновлено!', 'success');
+            }, 1000);
+        });
+    }
 
     // ── Slide Management Toolbar ──────────────────────────────
     btnAddSlide.addEventListener('click', function() {
@@ -1448,1062 +1450,937 @@ function generateOfflineSmartDeck(topic, sourceContext = '', intel = null, optio
     let isEnglish = requestedLang === 'en';
     if (requestedLang === 'auto' || !requestedLang) {
         isKazakh = /[әіңғүұқөһӘІҢҒҮҰҚӨҺ]/i.test((topic || '') + ' ' + (sourceContext || '')) || 
-                   /\b(сабақ|жоспары|мақсаты|физика|химия|биология|зертханалық|тақырыбы|сынып|оқушы|тұлға|өмірбаян|қазақ|тарих|баяндама|жетістік|шедевр)\b/i.test((topic || '') + ' ' + (sourceContext || ''));
+                   /(сабақ|жоспары|мақсаты|физика|химия|биология|зертханалық|тақырыбы|сынып|оқушы|тұлға|өмірбаян|қазақ|тарих|баяндама|жетістік|шедевр)/i.test((topic || '') + ' ' + (sourceContext || ''));
         isEnglish = /^[a-zA-Z0-9\s.,!?:;\-_'"]+$/.test((topic || '').trim()) && !/[а-яА-ЯёЁ]/.test(topic || '');
     }
 
     const cleanTopic = (topic || (isKazakh ? 'Ғылыми зерттеу' : (isEnglish ? 'Scientific Research' : 'Научное исследование'))).trim();
     const activeIntel = intel || detectTopicIntelligence(cleanTopic, sourceContext);
+    const targetSlideCount = parseInt((options && options.slideCount) || 7, 10);
+    const lower = cleanTopic.toLowerCase();
 
     let slides = [];
 
-    // CASE 1: Source Context is provided (Grounded RAG generation)
-    if (sourceContext && sourceContext.trim()) {
-        const combined = `${cleanTopic} ${sourceContext}`.toLowerCase();
-        const isLab = /лаборатор|зертхана|мақсат|прибор|жабдық|оборудован|өлшеу|измерен|тәжірибе|опыт|резистор|амперметр|вольтметр/i.test(combined);
-        const isPerson = /димаш|dimash|құдайберген|кудайберген|кто такой|кто такая|ким ол|певец|әнші|композитор|жазушы|ақын|ғалым|тұлға|өмірбаян|биография|персона|абай|шоқан|әл-фараби|пушкин|эйнштейн|ньютон|маск|джобс|актер|лауреат/i.test(combined);
+    // Helper to generate unique distinct bullets for extra slides
+    function buildExtraSlides(domainName, count) {
+        const extraList = [];
+        const extraTypes = [
+            {
+                titleKk: 'Тәжірибелік қолдану және өмірмен байланысы',
+                titleRu: 'Практическое применение в реальной жизни и технологиях',
+                titleEn: 'Practical Applications and Real-World Impact',
+                layout: 'cards-grid',
+                imgPrompt: 'modern practical technology application laboratory setup 3d render',
+                pointsKk: [
+                    'Күнделікті өмірде және өндірістік процестерде тиімді қолданылуы',
+                    'Заманауи құрылғылар мен автоматтандырылған кешендердегі рөлі',
+                    'Экономикалық және әлеуметтік тиімділікті арттыру көрсеткіштері',
+                    'Инновациялық шешімдердің қауіпсіздігі мен сенімділігі'
+                ],
+                pointsRu: [
+                    'Широкое применение в производственных процессах и повседневной практике',
+                    'Интеграция в современные автоматизированные комплексы и приборы',
+                    'Повышение экономической эффективности и оптимизация затрат',
+                    'Надежность и высокие стандарты безопасности внедряемых систем'
+                ],
+                pointsEn: [
+                    'Wide implementation in industrial workflows and everyday practice',
+                    'Integration into cutting-edge automated systems and instruments',
+                    'Measurable boost in operational and economic efficiency',
+                    'Robust safety standards and long-term sustainability'
+                ],
+                notesKk: 'Бұл слайдта тақырыптың нақты өмірдегі практикалық маңызы мен өндірістік пайдасы талданады.',
+                notesRu: 'Разберите конкретные прикладные сценарии и реальную пользу темы в промышленности.',
+                notesEn: 'Highlight real-world implementations and practical benefits.'
+            },
+            {
+                titleKk: 'Таңқаларлық фактілер мен қызықты мәліметтер',
+                titleRu: 'Удивительные факты, рекорды и ключевые открытия',
+                titleEn: 'Fascinating Facts, Records and Key Milestones',
+                layout: 'stat',
+                statVal: '★ 100%',
+                imgPrompt: 'glowing golden crystal discovery achievement eureka trophy 3d render',
+                pointsKk: [
+                    'Ғылым мен тарихта бұрын-соңды тіркелген сирек кездесетін феномендер',
+                    'Көпшілік біле бермейтін қызықты ғылыми тәжірибелер мен нәтижелер',
+                    'Зерттеушілердің жаңалық ашу жолындағы табандылығы мен ізденісі'
+                ],
+                pointsRu: [
+                    'Редкие феномены и рекорды, зафиксированные учеными и практиками',
+                    'Малоизвестные детали и неожиданные экспериментальные результаты',
+                    'Исторические открытия, изменившие фундаментальные представления о мире'
+                ],
+                pointsEn: [
+                    'Rare phenomena and record-breaking benchmarks discovered by researchers',
+                    'Lesser-known nuances and unexpected empirical discoveries',
+                    'Pioneering breakthroughs that transformed modern scientific understanding'
+                ],
+                notesKk: 'Тыңдаушыларды қызықтыратын беймәлім фактілер мен рекордтарға тоқталу.',
+                notesRu: 'Озвучьте самые яркие и неожиданные факты, чтобы вовлечь аудиторию.',
+                notesEn: 'Share captivating facts and milestones to engage the audience.'
+            },
+            {
+                titleKk: 'Заманауи зерттеулер мен жаңа технологиялар',
+                titleRu: 'Современные исследования, тренды и передовые открытия',
+                titleEn: 'Current Trends, Breakthroughs and Cutting-Edge Innovations',
+                layout: 'split-right',
+                imgPrompt: 'futuristic cyber science technology innovation hologram 3d render',
+                pointsKk: [
+                    'Жасанды интеллект және цифрлық модельдеу әдістерін пайдалану',
+                    'Халықаралық ғылыми зертханалардың соңғы жылдардағы тұжырымдары',
+                    'Жаңа буын материалдары мен тиімділігі жоғары тәсілдер'
+                ],
+                pointsRu: [
+                    'Применение искусственного интеллекта и цифровых двойников для анализа',
+                    'Выводы ведущих международных исследовательских центров последних лет',
+                    'Материалы нового поколения и высокоточные измерительные технологии'
+                ],
+                pointsEn: [
+                    'Application of artificial intelligence and digital twins for deep analysis',
+                    'Recent findings from world-class international scientific centers',
+                    'Next-generation smart materials and ultra-precise measurement tools'
+                ],
+                notesKk: 'Ғылымның бүгінгі таңдағы ең соңғы жаңалықтары мен инновациялық трендтері.',
+                notesRu: 'Опишите передовой край науки и самые свежие разработки по теме.',
+                notesEn: 'Discuss cutting-edge research trends and emerging solutions.'
+            },
+            {
+                titleKk: 'Интерактивті викторина: Өз біліміңді тексер',
+                titleRu: 'Интерактивный опрос: Проверь свои знания по теме',
+                titleEn: 'Interactive Check: Test Your Knowledge',
+                layout: 'insight',
+                imgPrompt: 'interactive classroom quiz glowing light bulb question marks 3d render',
+                pointsKk: [
+                    '1-сұрақ: Қарастырылған құбылыстың басты заңдылығы мен мәні неде?',
+                    'A) Тәжірибелік дәлелденген іргелі қағида (Дұрыс жауап)',
+                    'B) Өзгермейтін тұрақты жорамал',
+                    'C) Кездейсоқ пайда болатын уақытша процесс'
+                ],
+                pointsRu: [
+                    'Вопрос 1: В чем заключается фундаментальный принцип изучаемой темы?',
+                    'A) Экспериментально подтвержденный научный закон (Правильный ответ)',
+                    'B) Теоретическая гипотеза без доказательств',
+                    'C) Случайное временное отклонение'
+                ],
+                pointsEn: [
+                    'Question 1: What is the core fundamental principle of this topic?',
+                    'A) Experimentally verified scientific law (Correct Answer)',
+                    'B) Unproven speculative assumption',
+                    'C) Temporary random fluctuation'
+                ],
+                notesKk: 'Оқушылармен кері байланыс орнатып, сұрақтар бойынша пікірталас өткізу.',
+                notesRu: 'Проведите интерактивное закрепление материала с залом и проверьте усвоение.',
+                notesEn: 'Engage audience in quick interactive check to reinforce key takeaways.'
+            },
+            {
+                titleKk: 'Болашақ даму перспективалары мен қорытынды',
+                titleRu: 'Стратегические горизонты, вызовы и взгляд в будущее',
+                titleEn: 'Strategic Horizons, Future Outlook and Key Conclusions',
+                layout: 'insight',
+                imgPrompt: 'inspiring future horizon glowing sunrise innovation crystal globe 3d',
+                pointsKk: [
+                    'Келесі онжылдықтағы даму векторлары мен күтілетін серпілістер',
+                    'Жас мамандар мен оқушыларға арналған ғылыми бағыт-бағдар',
+                    '«Үздіксіз білім мен жаңашылдық — табысты болашақтың кепілі»'
+                ],
+                pointsRu: [
+                    'Векторы развития и ожидаемые технологические прорывы на 10 лет вперед',
+                    'Практические ориентиры для нового поколения исследователей и практиков',
+                    '«Постоянный поиск знаний и открытость инновациям определяют успех»'
+                ],
+                pointsEn: [
+                    'Strategic development vectors and anticipated breakthroughs for the next decade',
+                    'Actionable guideposts for young researchers, students and professionals',
+                    '«Continuous curiosity and innovative thinking are the catalysts for progress»'
+                ],
+                notesKk: 'Баяндаманы шабыттандыратын оймен түйіндеп, тыңдаушылардың сұрақтарына жауап беру.',
+                notesRu: 'Подведите вдохновляющий итог и пригласите аудиторию к открытой дискуссии.',
+                notesEn: 'Wrap up with inspiring closing remarks and invite open discussion.'
+            }
+        ];
 
-        // Extract meaningful clean sentences (length between 20 and 240 characters)
-        const sentences = sourceContext
-            .replace(/\r?\n+/g, ' ')
-            .split(/(?<=[.!?])\s+/)
-            .map(s => s.trim().replace(/^[-•*–]\s*/, ''))
-            .filter(s => s.length > 20 && s.length < 240);
-
-        const getSlice = (startIdx, count, fallbackArr) => {
-            const part = sentences.slice(startIdx, startIdx + count);
-            return part.length > 0 ? part : fallbackArr;
-        };
-
-        if (isPerson) {
-            const bioSentences = sentences.filter(s => /род\.|туған|родился|детств|балалық|отбасы|семья|оқу|учился|колледж|университет|академи|білім|город|қала/i.test(s));
-            const statSentences = sentences.filter(s => /диапазон|октав|преми|наград|лауреат|чемпион|жүлде|атақ|звание|артист|рекорд|популяр|танымал|әлемдік|мировой/i.test(s));
-            const stepSentences = sentences.filter(s => /жылы|году|концерт|альбом|тур|бағдарлама|проект|жоба|шоу|байқау|конкурс|выступлен|победа|жеңіс/i.test(s));
-            const legacySentences = sentences.filter(s => /мұра|наследие|үлес|вклад|дипломати|халықаралық|мировое|мәдениет|культура|миссия|қайырымдылық/i.test(s));
-
-            // Extract numeric or record highlight for stat slide
-            let statVal = isKazakh ? '№ 1' : 'Топ';
-            const statMatch = sourceContext.match(/(\d+\s*октав[а-я]*|\d+[\d.,]*%?|\b\d{4}\s*ж[ыл]*|\b\d{4}\s*год[а-я]*|\b\d+\s*(?:млн|млрд|стран|ел|преми[йя]))/i);
-            if (statMatch) statVal = statMatch[1];
-
-            slides.push({
-                title: cleanTopic,
-                points: sentences.slice(0, 1),
-                layout: 'cover',
-                imagePrompt: `${cleanTopic} portrait photography masterpiece, elegant stage lighting, 8k cinematic`,
-                speakerNotes: isKazakh ? `Бүгінгі баяндамамыз: ${cleanTopic}.` : `Приветствие. Тема сегодняшнего выступления: ${cleanTopic}.`
+        for (let i = 0; i < count; i++) {
+            const item = extraTypes[i % extraTypes.length];
+            extraList.push({
+                title: isKazakh ? item.titleKk : (isEnglish ? item.titleEn : item.titleRu),
+                points: isKazakh ? item.pointsKk : (isEnglish ? item.pointsEn : item.pointsRu),
+                layout: item.layout,
+                statVal: item.statVal,
+                imagePrompt: `${cleanTopic} ${item.imgPrompt}`,
+                speakerNotes: isKazakh ? item.notesKk : (isEnglish ? item.notesEn : item.notesRu),
+                seed: Math.floor(Math.random() * 10000000) + (i + 8) * 11111
             });
+        }
+        return extraList;
+    }
 
-            slides.push({
-                title: isKazakh ? 'Өмірбаяны және шығармашылық бастауы' : 'Биография и становление личности',
-                points: bioSentences.length ? bioSentences.slice(0, 3) : getSlice(0, 3, isKazakh ? [
-                    'Белгілі өнер мен мәдениет қайраткерінің отбасылық тағылымы',
-                    'Кәсіби музыкалық және академиялық білім алу жолы',
-                    'Алғашқы шығармашылық ізденістері мен ерте танылған дарыны'
+    // ── SPECIFIC DOMAIN 1: ANATOMY & BIOLOGY ───────────────────
+    if (/анатом|человек|адам|орган|жүрек|сердце|өкпе|легкие|мозг|ми|бауыр|печень|қаңқа|скелет|почки|бүйрек|клетка|жасуша|днк|dna|cell|biology|биолог/i.test(lower)) {
+        slides = [
+            {
+                title: isKazakh ? `${cleanTopic}: Адам ағзасының керемет құрылымы` : (isEnglish ? `${cleanTopic}: Architecture of the Human Body` : `${cleanTopic}: Архитектура и тайны организма человека`),
+                points: isKazakh ? [
+                    'Адам денесі — миллиондаған жылдар бойы кемелденген ғажайып биологиялық кешен',
+                    'Жасушалық деңгейден бастап біртұтас жүйелерге дейінгі мінсіз үйлесім'
+                ] : (isEnglish ? [
+                    'The human body is an extraordinary biological marvel refined over millennia',
+                    'Flawless coordination from microscopic cellular structures to integrated organ systems'
                 ] : [
-                    'Семейные традиции, истоки мастерства и воспитание',
-                    'Профессиональное образование и формирование мировоззрения',
-                    'Ранние годы деятельности, раскрытие уникального природного таланта'
+                    'Организм человека — совершенная биологическая система, развивавшаяся миллионы лет',
+                    'Гармоничная взаимосвязь от клеточного уровня до сложнейших функциональных систем'
+                ]),
+                layout: 'cover',
+                imagePrompt: 'human anatomy medical illustration 3d cinematic glowing organs transparent body octane 8k',
+                speakerNotes: isKazakh ? `Құрметті достар, бүгін біз «${cleanTopic}» тақырыбы бойынша адам ағзасының ғажайып сырларын ашамыз.` : `Приветствие. Сегодня мы совершим путешествие по анатомии человека: ${cleanTopic}.`,
+                seed: 10101
+            },
+            {
+                title: isKazakh ? 'Тірек-қимыл жүйесі: Сүйектер мен бұлшықеттер' : (isEnglish ? 'Musculoskeletal System: Bones and Muscles' : 'Опорно-двигательный аппарат: Скелет и мышцы'),
+                points: isKazakh ? [
+                    'Ересек адамның қаңқасы 206 сүйектен тұрады және денені мығым ұстайды',
+                    'Сүйек тіні граниттен де берік келеді және орасан зор жүктемелерге төтеп береді',
+                    '600-ден астам бұлшықеттер ағзаның барлық қозғалысын жүзеге асырады'
+                ] : (isEnglish ? [
+                    'The adult human skeleton consists of 206 bones providing structural integrity',
+                    'Bone tissue possesses tensile strength superior to concrete and granite',
+                    'More than 600 skeletal muscles coordinate every graceful physical movement'
+                ] : [
+                    'Скелет взрослого человека включает 206 костей, образующих защитный каркас',
+                    'Костная ткань прочнее бетона и выдерживает статическую нагрузку свыше тонны',
+                    'Более 600 мышц слаженно обеспечивают все виды двигательной активности'
                 ]),
                 layout: 'split-left',
-                imagePrompt: `${cleanTopic} early years portrait archive photography 3d render`,
-                speakerNotes: isKazakh ? 'Тұлғаның өмірбаяны, білім алу жолы мен алғашқы қадамдары.' : 'Расскажите о детстве, первых шагах и получении образования.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Феноменалды жетістіктері мен мәртебесі' : 'Уникальные достижения и статус',
-                statVal: statVal,
-                points: statSentences.length ? statSentences.slice(0, 4) : getSlice(3, 4, isKazakh ? [
-                    'Бірегей кәсіби шеберлік және сирек кездесетін орындау техникасы',
-                    'Қазақстанның Халық әртісі құрметті мемлекеттік мәртебесі',
-                    'Әлемнің жетекші сахналарындағы үздік орындаушы ретінде мойындалуы'
+                imagePrompt: 'human skeleton and muscular anatomy glowing neon bones 3d render',
+                speakerNotes: isKazakh ? 'Қаңқа мен бұлшықеттердің құрылысы, қозғалыс биомеханикасы мен қорғаныш қызметі.' : 'Опорно-двигательная система: прочность костей и работа мышечных групп.',
+                seed: 10202
+            },
+            {
+                title: isKazakh ? 'Қанайналым және жүрек: Өмір қозғалтқышы' : (isEnglish ? 'Cardiovascular Engine: Heart and Blood Vessels' : 'Сердечно-сосудистая система: Мотор жизни'),
+                statVal: '100 000 км',
+                points: isKazakh ? [
+                    'Адам денесіндегі барлық қантамырлардың жалпы ұзындығы 100 000 км-ге жетеді (жер шарын 2.5 рет орауға жетеді)',
+                    'Жүрек тәулігіне 100 000 рет соғып, шамамен 7 500 литр қанды айдайды',
+                    'Қан әрбір жасушаны оттекпен және қоректік заттармен үздіксіз қамтамасыз етеді'
+                ] : (isEnglish ? [
+                    'The total length of blood vessels in the human body exceeds 100,000 km',
+                    'The heart beats roughly 100,000 times per day, pumping over 7,500 liters of blood',
+                    'Delivers essential oxygen and nutrients to trillions of living cells every second'
                 ] : [
-                    'Уникальный профессиональный диапазон и виртуозное мастерство',
-                    'Высокие государственные звания и международное признание критиков',
-                    'Триумфальные выступления на главных мировых площадках'
+                    'Общая протяженность кровеносных сосудов человека превышает 100 000 км',
+                    'Сердце совершает около 100 000 ударов в сутки, перекачивая 7 500 литров крови',
+                    'Непрерывно доставляет кислород и ценные питательные вещества к каждой клетке'
                 ]),
                 layout: 'stat',
-                imagePrompt: 'achievement victory glowing golden award trophy 3d render',
-                speakerNotes: isKazakh ? 'Тұлғаның басты рекордтары мен кәсіби мүмкіндіктері.' : 'Озвучьте рекордные показатели и профессиональные регалии.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Негізгі белестері мен даму кезеңдері' : 'Хронология и ключевые вехи признания',
-                points: stepSentences.length ? stepSentences.slice(0, 3) : getSlice(7, 3, isKazakh ? [
-                    '1-кезең: Республикалық және халықаралық байқаулардағы жеңістер',
-                    '2-кезең: Әлемдік деңгейдегі сенсация және миллиондаған жанкүйерлер',
-                    '3-кезең: Жеке стадиондық концерттік турлар мен халықаралық шоулар'
+                imagePrompt: 'anatomical human heart beating glowing blood vessels cardiology 3d render',
+                speakerNotes: isKazakh ? 'Жүрек соғысы, үлкен және кіші қанайналым шеңберлерінің маңызы.' : 'Работа сердца как непрерывного биологического насоса и сосудистая сеть.',
+                seed: 10303
+            },
+            {
+                title: isKazakh ? 'Тыныс алу және газ алмасу үдерісі' : (isEnglish ? 'Respiratory System and Gas Exchange' : 'Дыхательная система и газообмен'),
+                points: isKazakh ? [
+                    '1-кезең: Тыныс алу жолдары арқылы ауа тазартылып, жылытылып өкпеге өтеді',
+                    '2-кезең: Өкпедегі 500 миллион альвеолалар арқылы оттек қанға сіңеді',
+                    '3-кезең: Қаннан көмірқышқыл газы сыртқа шығарылып, газ тепе-теңдігі сақталады'
+                ] : (isEnglish ? [
+                    'Stage 1: Inhaled air is filtered, humidified, and conducted into bronchial pathways',
+                    'Stage 2: 500 million alveoli facilitate rapid diffusion of oxygen into the bloodstream',
+                    'Stage 3: Carbon dioxide is expelled outwards, maintaining strict pH balance'
                 ] : [
-                    'Этап 1: Победы на престижных национальных и международных конкурсах',
-                    'Этап 2: Всемирное признание и завоевание сердец глобальной аудитории',
-                    'Этап 3: Масштабные сольные проекты и аншлаги на мировых аренах'
+                    'Этап 1: Воздух очищается, согревается в носоглотке и поступает в бронхиальное дерево',
+                    'Этап 2: Через 500 миллионов альвеол легких кислород мгновенно диффундирует в кровь',
+                    'Этап 3: Углекислый газ эвакуируется наружу, сохраняя биохимический баланс'
                 ]),
                 layout: 'steps',
-                imagePrompt: 'grand concert stadium stage lights fireworks show 3d render',
-                speakerNotes: isKazakh ? 'Шығармашылық жолдың негізгі кезеңдері.' : 'Хронологический разбор ключевых этапов творческого пути.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Шедеврлері, жобалары мен марапаттары' : 'Главные произведения, признание и награды',
-                points: getSlice(10, 4, isKazakh ? [
-                    'Әлемдік беделді сыйлықтар мен халықаралық марапаттар',
-                    'Көптілді репертуар және халықаралық ынтымақтастық жобалары',
-                    'Жаһандық жанкүйерлер қауымдастығы және фан-клубтар',
-                    'Ұлттық мәдениет пен өнерді жаһанға таныту'
+                imagePrompt: 'human respiratory system lungs alveoli glowing oxygen particles 3d render',
+                speakerNotes: isKazakh ? 'Өкпенің тыныс алу механизмі мен альвеолалардың қызметі.' : 'Пошаговый процесс дыхания и микроскопический газообмен в альвеолах.',
+                seed: 10404
+            },
+            {
+                title: isKazakh ? 'Ішкі мүшелер: Асқорыту және сүзу орталығы' : (isEnglish ? 'Internal Organs: Digestion and Metabolism' : 'Внутренние органы: Пищеварение и фильтрация'),
+                points: isKazakh ? [
+                    'Асқазан: тағамды соля қышқылы мен ферменттер арқылы химиялық қорыту',
+                    'Бауыр: 500-ден астам өмірлік маңызды функцияларды атқаратын биохимиялық зертхана',
+                    'Бүйректер: тәулігіне 180 литр қанды сүзіп, токсиндерді сыртқа шығарады',
+                    'Ішек жолы: ұзындығы 6-8 метрге дейін жететін қоректік заттарды сіңіру аймағы'
+                ] : (isEnglish ? [
+                    'Stomach: Chemical breakdown of food through hydrochloric acid and enzymes',
+                    'Liver: Massive biochemical laboratory carrying out over 500 vital metabolic functions',
+                    'Kidneys: Biological filters processing 180 liters of blood daily to eliminate toxins',
+                    'Intestines: A 6-8 meter labyrinth ensuring complete nutrient absorption into blood'
                 ] : [
-                    'Престижные награды ведущих премий и фестивалей',
-                    'Широкий репертуар на множестве языков и международные коллаборации',
-                    'Всемирное сообщество поклонников и культурные инициативы',
-                    'Популяризация национальной культуры на международной арене'
+                    'Желудок: Химическое расщепление пищи соляной кислотой и активными ферментами',
+                    'Печень: Крупнейшая биохимическая лаборатория тела, выполняющая свыше 500 функций',
+                    'Почки: Парный биофильтр, перерабатывающий 180 литров крови в день',
+                    'Кишечник: 7-метровый тракт, обеспечивающий максимальное всасывание питательных веществ'
                 ]),
                 layout: 'cards-grid',
-                imagePrompt: 'golden music trophy awards glowing crystals 3d render',
-                speakerNotes: isKazakh ? 'Негізгі марапаттары мен халықаралық жобалары.' : 'Обзор главных наград и масштаба фан-сообщества.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Мәдениетке қосқан үлесі мен ықпалы' : 'Вклад в мировую культуру и признание',
-                points: getSlice(14, 4, isKazakh ? [
-                    'Классикалық шеберлік пен ұлттық мұраның үйлесімді синтезі',
-                    'Қазақстанның әлемдік өнер кеңістігіндегі мәдени елшісі мәртебесі',
-                    'Жас буынға үлгі боларлық кәсібилік пен еңбекқорлық',
-                    'Мәдениетаралық диалог пен бейбітшілікті нығайту'
+                imagePrompt: 'internal digestive organs liver kidneys stomach medical 3d render',
+                speakerNotes: isKazakh ? 'Бауыр, асқазан және бүйректің өмірлік функциялары.' : 'Взаимодействие пищеварительной и выделительной систем организма.',
+                seed: 10505
+            },
+            {
+                title: isKazakh ? 'Жүйке жүйесі және ми: Басқару орталығы' : (isEnglish ? 'Nervous System: Brain and Synapses' : 'Нервная система и головной мозг'),
+                points: isKazakh ? [
+                    'Адам миында 86 миллиард нейрон және триллиондаған синапстық байланыстар бар',
+                    'Нерв импульстері сағатына 400 км жылдамдықпен найзағайдай зулайды',
+                    'Орталық жүйке жүйесі барлық рефлекстерді, сезімдер мен сананы басқарады'
+                ] : (isEnglish ? [
+                    'The human brain contains 86 billion neurons interconnected by trillions of synapses',
+                    'Nerve impulses travel at breathtaking velocities exceeding 400 km/h',
+                    'Central nervous system orchestrates all reflexes, cognitive thought, and emotional depth'
                 ] : [
-                    'Гармоничный синтез классического мастерства и традиционного фольклора',
-                    'Статус культурного посла на мировой арене',
-                    'Высокий профессионализм, самоотдача и ориентир для нового поколения',
-                    'Укрепление глобального межкультурного диалога и взаимопонимания'
+                    'Головной мозг объединяет 86 миллиардов нейронов с триллионами синаптических связей',
+                    'Электрические нервные импульсы мчатся по волокнам со скоростью до 400 км/ч',
+                    'ЦНС контролирует произвольные движения, вегетативные функции и мышление'
+                ]),
+                layout: 'split-left',
+                imagePrompt: 'human brain neural network glowing cybernetic synapses 3d render',
+                speakerNotes: isKazakh ? 'Мидың құрылысы, нейрондар мен жүйке жүйесінің жылдамдығы.' : 'Архитектура мозга, синапсы и скорость передачи нервных сигналов.',
+                seed: 10606
+            },
+            {
+                title: isKazakh ? 'Ағзаны сақтау: Денсаулық пен ұзақ өмір' : (isEnglish ? 'Body Harmony: Health, Immunity and Vitality' : 'Гармония организма: Здоровье и долголетие'),
+                points: isKazakh ? [
+                    '«Адам денесі — табиғаттың ең керемет және күрделі туындысы»',
+                    'Тұрақты дене белсенділігі, дұрыс тамақтану мен ұйқы — ұзақ өмірдің кепілі',
+                    'Иммундық жүйе тәулік бойы денені сыртқы қауіптерден сенімді қорғайды'
+                ] : (isEnglish ? [
+                    '«The human body is the most sophisticated and resilient ecosystem in nature»',
+                    'Consistent physical activity, wholesome nutrition, and restorative rest ensure vitality',
+                    'Adaptive immune system maintains constant vigilance against pathogenic threats'
+                ] : [
+                    '«Человеческое тело — самый совершенный и гармоничный шедевр природы»',
+                    'Физическая активность, здоровое питание и режим сна — фундамент активного долголетия',
+                    'Иммунная система круглосуточно оберегает внутреннюю стабильность организма'
+                ]),
+                layout: 'insight',
+                imagePrompt: 'human vitality glowing health dna medical cross protection 3d render',
+                speakerNotes: isKazakh ? 'Салауатты өмір салты мен ағзаны күту бойынша қорытынды ойлар.' : 'Подведение итогов: ценность здоровья и бережное отношение к организму.',
+                seed: 10707
+            }
+        ];
+
+    // ── SPECIFIC DOMAIN 2: PERSON / BIOGRAPHY (Dimash, Abai, Shokan, etc.) ───
+    } else if (/димаш|dimash|құдайберген|кудайберген|абай|шоқан|әл-фараби|пушкин|эйнштейн|ньютон|маск|джобс|тұлға|өмірбаян|биография|персона|әнші|жазушы|ғалым/i.test(lower)) {
+        const isDimash = /димаш|dimash|құдайберген|кудайберген/i.test(lower);
+        const name = isDimash ? (isKazakh ? 'Димаш Құдайберген' : (isEnglish ? 'Dimash Qudaibergen' : 'Димаш Кудайберген')) : cleanTopic;
+        slides = [
+            {
+                title: name,
+                points: isKazakh ? [
+                    'Әлемдік музыка кеңістігіндегі феноменалды қазақ дауысы',
+                    'Қазақстанның Халық әртісі, миллиондаған жанкүйерлердің сүйікті әншісі'
+                ] : (isEnglish ? [
+                    'Phenomenal vocal virtuoso conquering global music stages',
+                    'People\'s Artist of Kazakhstan with a multi-million worldwide fandom'
+                ] : [
+                    'Феноменальный вокалист, покоривший ведущие мировые сцены',
+                    'Народный артист Казахстана, кумир миллионов слушателей на всех континентах'
+                ]),
+                layout: 'cover',
+                imagePrompt: `${name} concert stage lighting portrait golden awards 3d cinematic`,
+                speakerNotes: isKazakh ? `Құрметті тыңдармандар! Бүгінгі баяндамамыз қазақтың мақтанышы: ${name}.` : `Приветствие. Тема сегодняшнего выступления посвящена выдающейся личности: ${name}.`,
+                seed: 20101
+            },
+            {
+                title: isKazakh ? 'Өмірбаяны және шығармашылық бастауы' : (isEnglish ? 'Origins, Education and Musical Roots' : 'Биография и творческие истоки'),
+                points: isKazakh ? [
+                    'Өнерлі отбасында дүниеге келіп, бала кезінен музыкалық дарынымен танылды',
+                    'Ақтөбедегі А. Жұбанов колледжі мен Қазақ ұлттық өнер университетінде кәсіби білім алды',
+                    'Фортепиано, домбыра, барабан және басқа да аспаптарды еркін меңгерген мультиаспапшы'
+                ] : (isEnglish ? [
+                    'Raised in a musical family, exhibiting rare pitch and vocal gifts from early childhood',
+                    'Completed classical education at Zhubanov Music College and Kazakh National University of Arts',
+                    'Master multi-instrumentalist proficient in piano, dombyra, percussion, and keyboards'
+                ] : [
+                    'Родился в музыкальной семье, с раннего детства проявляя абсолютный слух',
+                    'Окончил музыкальный колледж им. Жубанова и Казахский национальный университет искусств',
+                    'Виртуозный мультиинструменталист: играет на фортепиано, домбре, ударных и клавишных'
+                ]),
+                layout: 'split-left',
+                imagePrompt: `${name} acoustic grand piano concert hall warm stage lighting 3d render`,
+                speakerNotes: isKazakh ? 'Балалық шағы, музыкалық білімі мен талантының қалыптасуы.' : 'Детские годы, фундаментальное академическое образование и освоение инструментов.',
+                seed: 20202
+            },
+            {
+                title: isKazakh ? 'Феноменалды вокал диапазоны: 6 октава' : (isEnglish ? 'Phenomenal 6-Octave Vocal Range' : 'Уникальный диапазон: Свыше 6 октав'),
+                statVal: '6+ октава',
+                points: isKazakh ? [
+                    'Бас регистрінен бастап ысқырық регистріне (whistle register) дейінгі сирек кездесетін шеберлік',
+                    'Белканто, опера, поп-музыка, фольклор мен рок жанрларын еркін үйлестіруі',
+                    'Әлемдік деңгейдегі жетекші вокал сарапшылары мен сыншыларының жоғары бағасы'
+                ] : (isEnglish ? [
+                    'Stretches from resonant bass notes to ethereal whistle register with total control',
+                    'Seamlessly bridges classical bel canto, dramatic opera, pop balladry, and rock',
+                    'Acclaimed by premier international vocal analysts and critics worldwide'
+                ] : [
+                    'Охватывает от глубокого баса до свисткового регистра (whistle register) с идеальным контролем',
+                    'Легко объединяет академическое бельканто, оперу, рок, фолк и современную эстраду',
+                    'Признан феноменом ведущими вокальными экспертами и педагогами мира'
+                ]),
+                layout: 'stat',
+                imagePrompt: 'golden microphone musical soundwaves sparkling spectrum stage lights 3d render',
+                speakerNotes: isKazakh ? 'Дауыс ерекшелігі, 6 октавалық диапазон және вокалдық техникасы.' : 'Технические характеристики голоса, диапазон и виртуозный контроль дыхания.',
+                seed: 20303
+            },
+            {
+                title: isKazakh ? 'Халықаралық триумф және әлемдік белестер' : (isEnglish ? 'International Triumphs and Key Milestones' : 'Хронология триумфа на мировой арене'),
+                points: isKazakh ? [
+                    '2015 жыл: «Славян базары» гран-приінің иегері атанып, халықаралық деңгейде мойындалды',
+                    '2017 жыл: Қытайдағы «I Am a Singer» жобасында феноменге айналып, жаһандық даңққа бөленді',
+                    '2019 жыл: АҚШ-тың Нью-Йорк қаласындағы Barclays Center стадионындағы аншлаг жеке концерті'
+                ] : (isEnglish ? [
+                    '2015: Grand Prix victory at Slavianski Bazaar, initiating international recognition',
+                    '2017: Sensational breakthrough on China\'s «I Am a Singer», sparking global fandom',
+                    '2019: Sold-out solo arena concert at New York\'s legendary Barclays Center'
+                ] : [
+                    '2015 год: Триумфальная победа и Гран-при на конкурсе «Славянский базар»',
+                    '2017 год: Сенсация на проекте «I Am a Singer» в Китае, взрыв популярности на планете',
+                    '2019 год: Полный аншлаг на сольном концерте в Нью-Йорке на арене Barclays Center'
+                ]),
+                layout: 'steps',
+                imagePrompt: 'grand stadium concert spotlight arena cheering fans confetti 3d render',
+                speakerNotes: isKazakh ? 'Славян базары, Қытайдағы Singer жобасы және АҚШ-тағы жеке концерті.' : 'Главные победы: Slavianski Bazaar, I Am a Singer и арены США.',
+                seed: 20404
+            },
+            {
+                title: isKazakh ? 'Хиттері, шедеврлері және көптілді өнері' : (isEnglish ? 'Signature Masterpieces and Repertoire' : 'Главные шедевры и репертуар'),
+                points: isKazakh ? [
+                    '«SOS d\'un terrien en détresse» — әлемді таңқалдырған тарихи вокалдық шедевр',
+                    '«Дайдидау», «Самалтау» — қазақтың ұлттық халық әндерін әлемге таныту',
+                    '«Story of One Sky», «Stranger» — бейбітшілік пен гуманизмді дәріптейтін авторлық туындылар',
+                    'Қазақ, ағылшын, француз, қытай, итальян, испан және орыс тілдеріндегі репертуар'
+                ] : (isEnglish ? [
+                    '«SOS d\'un terrien en détresse» — iconic vocal performance captivating global audiences',
+                    '«Daididau», «Samaltau» — elevating rich Kazakh folk heritage to world recognition',
+                    '«Story of One Sky», «Stranger» — cinematic masterpieces advocating global unity and peace',
+                    'Repertoire spanning Kazakh, English, French, Chinese, Italian, Spanish, and Russian'
+                ] : [
+                    '«SOS d\'un terrien en détresse» — историческое исполнение, потрясшее миллионы',
+                    '«Дайдидау», «Самалтау» — триумф казахского национального фольклора на мировых сценах',
+                    '«Story of One Sky», «Stranger» — масштабные авторские гимны миру и человечности',
+                    'Многоязычный репертуар на казахском, английском, французском, китайском и других языках'
+                ]),
+                layout: 'cards-grid',
+                imagePrompt: 'golden record music album awards sparkling trophies spotlights 3d render',
+                speakerNotes: isKazakh ? 'Ең үздік әндері мен көптілді орындау шеберлігі.' : 'Обзор ключевых музыкальных композиций и разнообразие жанров.',
+                seed: 20505
+            },
+            {
+                title: isKazakh ? 'Dears жанкүйерлері және мәдени елші' : (isEnglish ? 'Global Dears Community and Cultural Ambassadorship' : 'Сообщество Dears и культурная миссия'),
+                points: isKazakh ? [
+                    'Әлемнің 150-ден астам елінде ресми «Dears» фан-клубтары жұмыс істейді',
+                    'Жүздеген мың шетелдік жанкүйерлер әндерін тыңдау үшін қазақ тілін үйренуде',
+                    'Қазақстанның бай тарихы мен мәдениетін жаһанға паш етуші нағыз мәдени елші'
+                ] : (isEnglish ? [
+                    'Official «Dears» fan clubs active across more than 150 countries worldwide',
+                    'Thousands of international fans actively learning Kazakh to sing his lyrics authentically',
+                    'A cultural ambassador carrying the soul of Kazakhstan to international stages'
+                ] : [
+                    'Официальные фан-клубы «Dears» открыты более чем в 150 странах мира',
+                    'Тысячи иностранных поклонников вдохновенно изучают казахский язык ради его песен',
+                    'Полномочный посол казахской культуры, открывший величие родной земли миру'
                 ]),
                 layout: 'compare',
-                imagePrompt: 'cultural harmony peace globe golden musical rays 3d render',
-                speakerNotes: isKazakh ? 'Тұлғаның өнері мен ұлттық мәдениетке қосқан үлесі.' : 'Значение творчества личности для культуры и общества.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Мәдени мұрасы мен тарихи миссиясы' : 'Историческая миссия и наследие',
-                points: legacySentences.length ? legacySentences.slice(0, 3) : (isKazakh ? [
-                    '«Өнер — шекараны білмейтін және халықтардың жүрегін біріктіретін ұлы күш»',
-                    'Ұлттық рух пен өркениеттік мақтаныштың асқақ көрінісі',
-                    'Болашақ ұрпаққа қалдырған өнегелі шығармашылық жолы'
+                imagePrompt: 'global unity world map golden threads musical notes connecting people 3d render',
+                speakerNotes: isKazakh ? 'Dears жанкүйерлер қозғалысы мен қазақ мәдениетінің таралуы.' : 'Масштаб фан-сообщества Dears и популяризация языка и культуры.',
+                seed: 20606
+            },
+            {
+                title: isKazakh ? 'Мұрасы мен тарихи миссиясы' : (isEnglish ? 'Legacy, Inspiration and Vision' : 'Историческая миссия и наследие'),
+                points: isKazakh ? [
+                    '«Өнер — шекара мен тілге қарамастан, адамдардың жүрегін біріктіретін ұлы күш»',
+                    'Қазақстан өнерінің әлемдік мәдениет төріндегі биік белесі',
+                    'Жас ұрпаққа үлгі боларлық еңбекқорлық, қарапайымдылық пен патриотизм'
+                ] : (isEnglish ? [
+                    '«Music is an eternal bridge connecting souls across borders and languages»',
+                    'A monumental era of Kazakh presence in world musical history',
+                    'A shining example of dedication, humility, and patriotism for rising generations'
                 ] : [
-                    '«Истинное величие личности измеряется пользой, принесенной человечеству»',
-                    'Яркое воплощение национального духа и культурной гордости',
-                    'Вдохновляющий жизненный путь и ориентир для будущих поколений'
+                    '«Музыка — универсальный язык мира, стирающий границы между народами»',
+                    'Золотая эпоха признания казахстанского искусства на мировой карте',
+                    'Вдохновляющий пример трудолюбия, скромности и преданности Родине'
                 ]),
                 layout: 'insight',
-                imagePrompt: 'golden eternal glowing light inspiration wisdom 3d render',
-                speakerNotes: isKazakh ? 'Баяндаманы қорытындылап, негізгі ойды түйіндеу.' : 'Подведение итогов выступления.'
-            });
+                imagePrompt: 'golden laurel wreath crystal dove peace eternal stage lights 3d render',
+                speakerNotes: isKazakh ? 'Баяндаманы қорытындылап, негізгі мәдени миссияны атап өту.' : 'Заключительный аккорд о значении творчества для общества и культуры.',
+                seed: 20707
+            }
+        ];
 
-        } else if (isLab) {
-            // Lab Practicums
-            const lines = sourceContext.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const findLines = (regex, max = 3) => {
-                const found = lines.filter(l => regex.test(l) && l.length > 8 && l.length < 180);
-                return found.slice(0, max);
-            };
-
-            const objectiveLines = findLines(/мақсат|цел|міндет|задач/i, 3);
-            const theoryLines    = findLines(/теория|негіз|заң|закон|формул|анықтама|определен/i, 3);
-            const equipLines     = findLines(/құрал|жабдық|прибор|материал|оборудован/i, 3);
-            const stepLines      = findLines(/барысы|ход|қадам|тәжірибе|опыт|этап/i, 4);
-            const conclLines     = findLines(/қорытынды|вывод|нәтиже|результат|талдау/i, 3);
-
-            slides.push({
+    // ── SPECIFIC DOMAIN 3: PHYSICS & QUANTUM ──────────────────
+    } else if (/физик|ньютон|ом|ток|электр|квант|механик|энерги|термодинамик|оптика|physics/i.test(lower)) {
+        slides = [
+            {
                 title: cleanTopic,
-                points: [],
-                layout: 'cover',
-                imagePrompt: `${cleanTopic} scientific research laboratory poster, cinematic 3d render 8k`,
-                speakerNotes: isKazakh ? `Құрметті әріптестер мен оқушылар, бүгінгі зертханалық жұмыс: ${cleanTopic}.` : `Приветствие аудитории. Лабораторный практикум по теме: ${cleanTopic}.`
-            });
-
-            slides.push({
-                title: isKazakh ? 'Зерттеудің мақсаты мен міндеттері' : 'Цели и задачи исследования',
-                points: objectiveLines.length ? objectiveLines : (isKazakh ? [
-                    'Жұмыстың негізгі теориялық және практикалық негіздерін зерттеу',
-                    'Құбылыстың заңдылықтары мен формулаларын практикада анықтау',
-                    'Алынған нәтижелерге ғылыми талдау жасау'
+                points: isKazakh ? [
+                    'Әлемнің іргелі заңдылықтары мен табиғат құбылыстарын зерттеу',
+                    'Теориялық дәлелдеулерден заманауи өндіріс пен технологияларға дейін'
+                ] : (isEnglish ? [
+                    'Exploring fundamental laws that govern the physical universe',
+                    'From theoretical equations to revolutionary technology'
                 ] : [
-                    'Изучение ключевых теоретических и практических аспектов темы',
-                    'Определение взаимосвязей и закономерностей в ходе исследования',
-                    'Анализ и систематизация полученных практических результатов'
+                    'Исследование фундаментальных законов мироздания и материи',
+                    'От строгих математических формул к передовым инженерным технологиям'
+                ]),
+                layout: 'cover',
+                imagePrompt: `${cleanTopic} physics quantum equations glowing optics laboratory 3d render 8k`,
+                speakerNotes: isKazakh ? `Физика пәні бойынша дәрісімізді бастаймыз: ${cleanTopic}.` : `Приветствие. Разбираем тему по физике: ${cleanTopic}.`,
+                seed: 30101
+            },
+            {
+                title: isKazakh ? 'Негізгі ұғымдар мен физикалық мәні' : (isEnglish ? 'Core Physical Concepts and Fundamentals' : 'Физическая сущность и ключевые понятия'),
+                points: isKazakh ? [
+                    'Зерттелетін құбылыстың табиғи мәні және оны сипаттайтын негізгі шамалар',
+                    'Халықаралық бірліктер жүйесіндегі (SI) өлшем бірліктері',
+                    'Тәжірибелік бақылаулар мен күнделікті тұрмыстағы көріністері'
+                ] : (isEnglish ? [
+                    'Intrinsic nature of the observed phenomenon and measurable parameters',
+                    'Standard International (SI) units of measurement and relationships',
+                    'Everyday manifestations and observable empirical physical phenomena'
+                ] : [
+                    'Физическая сущность изучаемого эффекта и базовые величины',
+                    'Единицы измерения в Международной системе СИ и размерности',
+                    'Наглядные проявления в природе, технике и повседневной жизни'
                 ]),
                 layout: 'split-left',
-                imagePrompt: 'educational target goals strategy vision, glowing futuristic 3d icon',
-                speakerNotes: isKazakh ? 'Бұл слайдта жұмыстың алға қойған негізгі мақсаттары мен міндеттері көрсетілген.' : 'Озвучьте цели и практическую значимость исследования.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Теориялық негіздер және заңдылықтар' : 'Теоретические основы и закономерности',
-                points: theoryLines.length ? theoryLines : (isKazakh ? [
-                    'Тақырыпқа байланысты іргелі ғылыми ұғымдар мен терминдер',
-                    'Негізгі формулалар мен математикалық байланыстар',
-                    'Құбылыстың физикалық-математикалық табиғаты'
+                imagePrompt: 'abstract physics atom glowing orbits particles force fields 3d render',
+                speakerNotes: isKazakh ? 'Құбылыстың физикалық табиғаты мен негізгі терминдері.' : 'Объяснение физической сути и базовых расчетных единиц.',
+                seed: 30202
+            },
+            {
+                title: isKazakh ? 'Фундаменталды формула және математикалық байланыс' : (isEnglish ? 'Fundamental Formulas and Mathematical Models' : 'Фундаментальные законы и формулы'),
+                statVal: 'F = m·a',
+                points: isKazakh ? [
+                    'Шамалар арасындағы тура және кері пропорционалды математикалық тәуелділік',
+                    'Формулаға кіретін тұрақты шамалар (константалар) және олардың мәні',
+                    'Заңның орындалу шарттары мен қолданылу аясының шектері'
+                ] : (isEnglish ? [
+                    'Direct and inverse mathematical dependencies between key quantities',
+                    'Role of universal constants and dimensional proportionality coefficients',
+                    'Boundary conditions and rigorous limits of formula applicability'
                 ] : [
-                    'Фундаментальные научные понятия и терминология по материалам источника',
-                    'Ключевые формулы и математические взаимосвязи',
-                    'Физико-математическое и прикладное описание изучаемого процесса'
+                    'Прямая и обратная математическая зависимость между величинами',
+                    'Физический смысл постоянных величин и коэффициентов пропорциональности',
+                    'Границы применимости формулы и строгие условия выполнения закона'
                 ]),
                 layout: 'stat',
-                imagePrompt: 'scientific formulas quantum equations glowing on black glass, 3d render',
-                speakerNotes: isKazakh ? 'Теориялық бөлімде басты формулалар мен ғылыми қағидаларға назар аударамыз.' : 'Раскройте теоретическую модель и основные математические соотношения.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Құрал-жабдықтар мен эксперименттік база' : 'Оборудование и методология работы',
-                points: equipLines.length ? equipLines : (isKazakh ? [
-                    'Зертханалық кешен мен өлшеуіш аспаптардың сипаттамасы',
-                    'Қауіпсіздік ережелері мен эксперимент шарттары',
-                    'Өлшеу дәлдігі мен қателіктерді есепке алу'
+                imagePrompt: 'mathematical physics formulas glowing on dark glass board 3d render',
+                speakerNotes: isKazakh ? 'Формуланы есептер шығаруда қолдану тәсілдері.' : 'Разбор формулы, вывод соотношений и размерности величин.',
+                seed: 30303
+            },
+            {
+                title: isKazakh ? 'Тәжірибелік зерттеу және өлшеу барысы' : (isEnglish ? 'Laboratory Experimentation and Method' : 'Экспериментальная методика и этапы опыта'),
+                points: isKazakh ? [
+                    '1-қадам: Зертханалық қондырғыны жинақтау және датчиктерді қосу',
+                    '2-қадам: Параметрлерді жүйелі түрде өзгертіп, өлшеулер сериясын жүргізу',
+                    '3-қадам: Алынған нәтижелер бойынша тәуелділік графигін тұрғызу'
+                ] : (isEnglish ? [
+                    'Step 1: Assembling experimental apparatus and calibrating sensory probes',
+                    'Step 2: Conducting controlled measurement iterations under varying conditions',
+                    'Step 3: Plotting parametric response curves and calculating uncertainty margins'
                 ] : [
-                    'Лабораторный комплекс и измерительные приборы по материалам источника',
-                    'Соблюдение регламента и техники безопасности при проведении работы',
-                    'Калибровка и учет погрешностей измерений'
+                    'Шаг 1: Сборка лабораторного стенда и подключение контрольных датчиков',
+                    'Шаг 2: Проведение серии контрольных измерений при изменяемых параметрах',
+                    'Шаг 3: Построение графиков зависимостей и вычисление погрешностей'
+                ]),
+                layout: 'steps',
+                imagePrompt: 'laser physics optical experiment glowing prisms glass sensors 3d render',
+                speakerNotes: isKazakh ? 'Зертханалық жұмыстың орындалу алгоритмі мен қателіктерді есептеу.' : 'Пошаговый алгоритм лабораторного эксперимента и построение графиков.',
+                seed: 30404
+            },
+            {
+                title: isKazakh ? 'Заманауи техника мен өндірісте қолданылуы' : (isEnglish ? 'Industrial and Engineering Applications' : 'Практическое применение в технологиях'),
+                points: isKazakh ? [
+                    'Энергетикалық жүйелер, электр желілері мен жаңартылатын қуат көздері',
+                    'Микроэлектроника, компьютерлік чиптер және жоғары дәлдікті сенсорлар',
+                    'Авиация, көлік қауіпсіздігі және ғарыштық аппараттар'
+                ] : (isEnglish ? [
+                    'Power distribution networks, power electronics, and renewable energy grids',
+                    'Semiconductor fabrication, microchips, and precision sensory instrumentation',
+                    'Aerospace systems, structural mechanics, and high-speed transportation'
+                ] : [
+                    'Энергетические комплексы, электросети и возобновляемая генерация',
+                    'Полупроводниковая микроэлектроника, процессоры и прецизионные датчики',
+                    'Аэрокосмические аппараты, машиностроение и транспортная безопасность'
                 ]),
                 layout: 'cards-grid',
-                imagePrompt: 'modern scientific laboratory equipment instruments apparatus, photorealistic 3d',
-                speakerNotes: isKazakh ? 'Тәжірибелік база мен қолданылған өлшеу құралдарының жұмыс істеу принципі.' : 'Опишите используемую аппаратную базу и методику проведения работы.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Жұмыстың орындалу барысы' : 'Порядок выполнения и алгоритм',
-                points: stepLines.length ? stepLines : (isKazakh ? [
-                    '1-қадам: Құрылғыларды дайындау және бастапқы параметрлерді өлшеу',
-                    '2-қадам: Эксперимент жүргізу және көрсеткіштерді тіркеу',
-                    '3-қадам: Алынған мәліметтер бойынша есептеулер жүргізу'
+                imagePrompt: 'futuristic industrial turbine microchips electronics engineering 3d render',
+                speakerNotes: isKazakh ? 'Бұл физикалық заңның өндіріс пен технологиядағы маңызы.' : 'Реальное воплощение физических принципов в современной промышленности.',
+                seed: 30505
+            },
+            {
+                title: isKazakh ? 'Салыстырмалы талдау және артықшылықтар' : (isEnglish ? 'Comparative Analysis and Theoretical Scope' : 'Сравнительный анализ моделей'),
+                points: isKazakh ? [
+                    'Классикалық физикалық түсініктер мен кванттық көзқарастардың салыстырмасы',
+                    'Энергияны үнемдеу және жүйенің пайдалы әсер коэффициентін (ПӘК) арттыру',
+                    'Ғылыми зерттеулердегі дәлдік пен болжау сенімділігі'
+                ] : (isEnglish ? [
+                    'Comparison of classical Newtonian mechanics with quantum interpretations',
+                    'Efficiency optimization and maximizing coefficient of performance',
+                    'Predictive precision in cutting-edge simulation and research'
                 ] : [
-                    'Этап 1: Подготовка исследовательской установки и ввод исходных параметров',
-                    'Этап 2: Проведение серии контрольных измерений и фиксация данных',
-                    'Этап 3: Математическая обработка и расчет искомых величин'
+                    'Сопоставление классических законов с квантово-релятивистскими моделями',
+                    'Оптимизация потерь энергии и повышение коэффициента полезного действия',
+                    'Точность прогнозирования динамики физических систем в расчетах'
                 ]),
-                layout: 'steps',
-                imagePrompt: 'step by step engineering process workflow roadmap, 3d isometric neon',
-                speakerNotes: isKazakh ? 'Жұмыстың кезең-кезеңімен орындалу алгоритмін түсіндіреміз.' : 'Прокомментируйте пошаговый алгоритм выполнения практической части.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Нәтижелерді талдау және қорытынды' : 'Анализ результатов и выводы',
-                points: conclLines.length ? conclLines : (isKazakh ? [
-                    'Тәжірибе барысында алынған нәтижелер теориямен толық сәйкес келді',
-                    'Зерттеу мақсаты толығымен орындалды',
-                    'Алынған нәтижелерді практикалық есептерде қолдануға болады'
+                layout: 'compare',
+                imagePrompt: 'comparative balance scales energy physics glowing dual forces 3d render',
+                speakerNotes: isKazakh ? 'Классикалық және заманауи тәсілдерді салыстыру.' : 'Сопоставление теоретических рамок и пределов применимости.',
+                seed: 30606
+            },
+            {
+                title: isKazakh ? 'Қорытынды және ғылыми тұжырымдар' : (isEnglish ? 'Summary and Conceptual Takeaways' : 'Итоги и научные выводы'),
+                points: isKazakh ? [
+                    '«Табиғат заңдарын білу — адамзат өркениетінің даму қозғалтқышы»',
+                    'Теориялық білімдер есептер шығару мен өнертабыстар жасауға негіз болады',
+                    'Физикалық құбылыстарды терең түсіну тың жаңалықтарға жол ашады'
+                ] : (isEnglish ? [
+                    '«Understanding the laws of nature fuels human technological civilization»',
+                    'Theoretical mastery forms the bedrock for innovative engineering breakthroughs',
+                    'Grounded physics literacy unlocks deeper insights into universal phenomena'
                 ] : [
-                    'Экспериментальные данные подтверждают теоретическую модель',
-                    'Цели исследовательской работы достигнуты в полном объеме',
-                    'Практические рекомендации и перспективы дальнейшего применения'
+                    '«Постижение законов физики — главный двигатель научно-технического прогресса»',
+                    'Теоретическая база служит ключом к решению инженерных задач и открытиям',
+                    'Глубокое понимание физических законов открывает путь в будущее'
                 ]),
                 layout: 'insight',
-                imagePrompt: 'scientific breakthrough discovery glowing trophy light bulb, 3d render',
-                speakerNotes: isKazakh ? 'Қорытынды жасап, тыңдаушылардың сұрақтарына жауап беру.' : 'Подведите итоги выступления и перейдите к сессии вопросов и ответов.'
-            });
+                imagePrompt: 'glowing futuristic crystal trophy innovation scientific breakthrough 3d render',
+                speakerNotes: isKazakh ? 'Сабақты қорытындылап, негізгі формуланы бекіту.' : 'Обобщение рассмотренного материала и финальные тезисы выступления.',
+                seed: 30707
+            }
+        ];
 
-        } else {
-            // General Scientific / Encyclopedic / Historical Topic from SourceContext
-            slides.push({
+    // ── SPECIFIC DOMAIN 4: STARTUP / TECH HUB / ECOSYSTEM ─────
+    } else if (/хаб|hub|стартап|startup|инкуба|бизнес|жоба|кызылорда|kyzylorda|astana|астана|акселера|инвест|pitch/i.test(lower)) {
+        slides = [
+            {
                 title: cleanTopic,
-                points: sentences.slice(0, 1),
-                layout: 'cover',
-                imagePrompt: `${cleanTopic} conceptual scientific presentation cover 3d render 8k`,
-                speakerNotes: isKazakh ? `Бүгінгі тақырыбымыз: ${cleanTopic}.` : `Приветствие участников. Тема: ${cleanTopic}.`
-            });
-
-            slides.push({
-                title: isKazakh ? `Кіріспе және негізгі ұғымдар: ${cleanTopic}` : `Введение и ключевые понятия: ${cleanTopic}`,
-                points: getSlice(0, 3, isKazakh ? [
-                    `${cleanTopic} — заманауи ғылым мен білімдегі өзекті тақырыптардың бірі`,
-                    'Тақырыпқа қатысты іргелі ғылыми ұғымдар мен негізгі терминдер',
-                    'Зерттеу бағыттары мен қарастырылатын басты сұрақтар'
+                points: isKazakh ? [
+                    'Инновациялық идеяларды қолдау, цифрлық дағдылар мен кәсіпкерлікті дамыту',
+                    'Жастар стартаптарын өсіріп, халықаралық нарықтарға шығару экожүйесі'
+                ] : (isEnglish ? [
+                    'Empowering innovative ideas, digital entrepreneurship and venture growth',
+                    'Ecosystem fostering startups from ideation to international scaling'
                 ] : [
-                    `${cleanTopic} — актуальное направление в современной науке и практике`,
-                    'Фундаментальные понятия, определения и структура понятийного аппарата',
-                    'Ключевые предпосылки и главные рассматриваемые аспекты темы'
+                    'Поддержка инновационных идей, развитие цифровых навыков и венчурного бизнеса',
+                    'Экосистема ускоренного роста стартапов от идеи до международного масштабирования'
+                ]),
+                layout: 'cover',
+                imagePrompt: `${cleanTopic} modern innovation hub coworking office team 3d render 8k`,
+                speakerNotes: isKazakh ? `Құрметті инвесторлар мен стартаптар, бүгінгі таныстырылымымыз: ${cleanTopic}.` : `Приветствие инвесторов и партнеров. Презентация: ${cleanTopic}.`,
+                seed: 40101
+            },
+            {
+                title: isKazakh ? `${cleanTopic} бизнес-инкубациялау орталығы` : (isEnglish ? `${cleanTopic} Ecosystem & Key Services` : `${cleanTopic} — Экосистема развития стартапов`),
+                tagline: isKazakh ? 'Жастардың инновациялық идеяларын қолдап, кәсіпкерлікке жол ашамыз' : 'Создаем условия для развития инновационных идей и привлечения инвестиций',
+                centerTitle: isKazakh ? 'Hub қызметтері' : 'Ключевые сервисы',
+                layout: 'hub-ecosystem',
+                leftMetrics: isKazakh ? [
+                    { icon: 'fa-graduation-cap', val: '145', lbl: 'резидент түлектер' },
+                    { icon: 'fa-users', val: '1 750', lbl: 'қатысушы жоба' },
+                    { icon: 'fa-gear', val: '52', lbl: 'іске асқан стартап' }
+                ] : [
+                    { icon: 'fa-graduation-cap', val: '145', lbl: 'выпускников резидентов' },
+                    { icon: 'fa-users', val: '1 750', lbl: 'участников проектов' },
+                    { icon: 'fa-gear', val: '52', lbl: 'запущенных стартапов' }
+                ],
+                rightMetrics: isKazakh ? [
+                    { icon: 'fa-people-group', val: '15 500', lbl: 'жастар қамтылды' },
+                    { icon: 'fa-chart-line', val: '111 500 000 ₸', lbl: 'инвестиция тартылды' }
+                ] : [
+                    { icon: 'fa-people-group', val: '15 500', lbl: 'охват молодежи' },
+                    { icon: 'fa-chart-line', val: '111 500 000 ₸', lbl: 'привлечено инвестиций' }
+                ],
+                spokes: isKazakh ? [
+                    { title: 'Инкубация', icon: 'fa-rocket' },
+                    { title: 'Фестивальдер', icon: 'fa-trophy' },
+                    { title: 'Консультация', icon: 'fa-comments' },
+                    { title: 'Demo Day', icon: 'fa-chart-pie' },
+                    { title: 'Инвестициялар', icon: 'fa-seedling' },
+                    { title: 'Маркетинг', icon: 'fa-bullhorn' },
+                    { title: 'IT курстар', icon: 'fa-book-open' },
+                    { title: 'Байқаулар', icon: 'fa-award' },
+                    { title: 'Хакатондар', icon: 'fa-code' },
+                    { title: '0% салықтар', icon: 'fa-file-invoice' }
+                ] : [
+                    { title: 'Инкубация', icon: 'fa-rocket' },
+                    { title: 'Фестивали', icon: 'fa-trophy' },
+                    { title: 'Трекинг', icon: 'fa-comments' },
+                    { title: 'Demo Day', icon: 'fa-chart-pie' },
+                    { title: 'Инвестиции', icon: 'fa-seedling' },
+                    { title: 'PR & Маркетинг', icon: 'fa-bullhorn' },
+                    { title: 'IT курсы', icon: 'fa-book-open' },
+                    { title: 'Конкурсы', icon: 'fa-award' },
+                    { title: 'Хакатоны', icon: 'fa-code' },
+                    { title: '0% налогов', icon: 'fa-file-invoice' }
+                ],
+                points: isKazakh ? [
+                    '145 резидент түлектер мен 52 сәтті іске қосылған жоба',
+                    '111 500 000 ₸ көлемінде тартылған инвестициялар'
+                ] : [
+                    '145 резидентов выпускников и 52 запущенных проекта',
+                    '111 500 000 ₸ привлеченных венчурных инвестиций'
+                ],
+                imagePrompt: 'modern tech startup hub coworking center team collaboration 3d render',
+                speakerNotes: isKazakh ? 'Хабтың 10 негізгі бағыты мен қол жеткізген нәтижелері.' : 'Обзор 10 направлений поддержки резидентов и ключевых метрик.',
+                seed: 40202
+            },
+            {
+                title: isKazakh ? 'KPI Дашборд: Негізгі экономикалық көрсеткіштер' : (isEnglish ? 'KPI Dashboard: Economic Growth & Traction' : 'KPI Дашборд: Ключевые показатели роста'),
+                layout: 'kpi-grid',
+                kpis: isKazakh ? [
+                    { icon: 'fa-chart-line', val: '111 500 000 ₸', lbl: 'Тартылған инвестициялар мен гранттар', delta: '+48%' },
+                    { icon: 'fa-people-group', val: '15 500+', lbl: 'Іс-шаралармен қамтылған жастар', delta: '+35%' },
+                    { icon: 'fa-graduation-cap', val: '145', lbl: 'Инкубация түлектері', delta: '+28%' },
+                    { icon: 'fa-code', val: '1 750', lbl: 'Хакатондар қатысушылары', delta: '+62%' },
+                    { icon: 'fa-gear', val: '52', lbl: 'Іске асқан стартаптар', delta: '+19%' },
+                    { icon: 'fa-trophy', val: '98.4%', lbl: 'Резиденттердің қанағаттануы', delta: '+4.2%' }
+                ] : [
+                    { icon: 'fa-chart-line', val: '111 500 000 ₸', lbl: 'Привлеченные инвестиции и гранты', delta: '+48%' },
+                    { icon: 'fa-people-group', val: '15 500+', lbl: 'Охват молодежи в мероприятиях', delta: '+35%' },
+                    { icon: 'fa-graduation-cap', val: '145', lbl: 'Выпускников инкубационных программ', delta: '+28%' },
+                    { icon: 'fa-code', val: '1 750', lbl: 'Участников хакатонов и батлов', delta: '+62%' },
+                    { icon: 'fa-gear', val: '52', lbl: 'Действующих технологических стартапов', delta: '+19%' },
+                    { icon: 'fa-trophy', val: '98.4%', lbl: 'Индекс удовлетворенности резидентов', delta: '+4.2%' }
+                ],
+                points: isKazakh ? [
+                    'Жыл сайынғы инвестициялық тартымдылықтың 48%-ға артуы',
+                    'Өңір жастарының цифрлық сауаттылығын еселеп көтеру'
+                ] : [
+                    'Рост объема инвестиций резидентов на 48% год к году',
+                    'Масштабное вовлечение молодежи в технологические проекты'
+                ],
+                imagePrompt: 'glowing financial startup KPI metrics dashboard graphs 3d render',
+                speakerNotes: isKazakh ? 'Негізгі экономикалық көрсеткіштер мен қаржылық нәтижелер.' : 'Разбор финансовых показателей и операционной эффективности.',
+                seed: 40303
+            },
+            {
+                title: isKazakh ? 'Инкубациялаудың 4 кезеңі' : (isEnglish ? '4-Stage Incubation & Acceleration Roadmap' : '4 этапа инкубации и акселерации проектов'),
+                points: isKazakh ? [
+                    '1-кезең: Идеяны іріктеу және scoring (Ideation & Selection)',
+                    '2-кезең: 8 апталық қарқынды оқыту мен менторлық (Intensive Tracking)',
+                    '3-кезең: MVP жасау және алғашқы сатылымдар (Product Traction)',
+                    '4-кезең: Demo Day, питчинг және венчурлік инвестиция тарту'
+                ] : [
+                    'Этап 1: Отбор и валидация гипотезы (Ideation & Scoring)',
+                    'Этап 2: 8 недель интенсивного трекинга и менторства',
+                    'Этап 3: Запуск MVP и первые коммерческие продажи (Traction)',
+                    'Этап 4: Финальный Demo Day и закрытие раунда финансирования'
+                ],
+                layout: 'steps',
+                imagePrompt: 'startup development acceleration roadmap milestones glowing 3d isometric',
+                speakerNotes: isKazakh ? 'Стартаптың идеядан инвестицияға дейінгі өсу алгоритмі.' : 'Пошаговая методология доведения идеи до первых продаж.',
+                seed: 40404
+            },
+            {
+                title: isKazakh ? 'Резиденттерге берілетін мүмкіндіктер' : (isEnglish ? 'Resident Benefits & Infrastructure' : 'Инфраструктура и преференции резидентов'),
+                points: isKazakh ? [
+                    'Startup Garage: жабдықталған заманауи коворкинг және жедел интернет',
+                    'Менторлық пул: салалық сарапшылардан апта сайынғы жеке бағыт-бағдар',
+                    'Seed Money: прототип әзірлеуге арналған қайтарымсыз қаржылай гранттар',
+                    'Салықтық жеңілдіктер: 0% КТС, 0% ЖТС (Astana Hub серіктестігі)'
+                ] : [
+                    'Startup Garage: комфортный коворкинг, серверные мощности и рабочие места',
+                    'Менторский пул: еженедельный трекинг от топ-предпринимателей рынка',
+                    'Seed Money: предпосевные безвозмездные гранты лучшим проектам',
+                    'Налоговые преференции: 0% КПН, 0% ИПН в партнерстве с технопарком'
+                ],
+                layout: 'cards-grid',
+                imagePrompt: 'modern startup coworking open space innovation hub 3d render',
+                speakerNotes: isKazakh ? 'Резиденттерге жасалған жағдайлар мен материалдық көмек.' : 'Материальные и налоговые преимущества участия в экосистеме.',
+                seed: 40505
+            },
+            {
+                title: isKazakh ? 'Дәстүрлі бизнес пен стартаптың айырмашылығы' : (isEnglish ? 'Traditional Business vs Scalable Tech Startup' : 'Традиционный бизнес и Tech-стартапы'),
+                points: isKazakh ? [
+                    'Шектеусіз жаһандық масштабталу әлеуеті және цифрлық өнім',
+                    'Инновациялық технологиялар арқылы нарықтағы көшбасшылық',
+                    'Венчурлік капитал мен халықаралық акселерациялық бағдарламалар',
+                    'Тәуекелдерді тез бағалап, жаңа бағытқа бейімделу икемділігі'
+                ] : [
+                    'Высокий потенциал глобального масштабирования цифрового продукта',
+                    'Создание технологического преимущества за счет собственного софта и ИИ',
+                    'Привлечение венчурных раундов и выход на международные рынки',
+                    'Гибкость бизнес-модели и быстрая проверка продуктовых гипотез'
+                ],
+                layout: 'compare',
+                imagePrompt: 'startup growth rocket versus traditional balance scales 3d render',
+                speakerNotes: isKazakh ? 'Стартаптардың артықшылығы мен өсу әлеуеті.' : 'Ключевые отличия масштабируемого стартапа от классического бизнеса.',
+                seed: 40606
+            },
+            {
+                title: isKazakh ? 'Миссиясы мен стратегиялық болашағы' : (isEnglish ? 'Strategic Vision and Future Horizons' : 'Стратегическое видение и миссия'),
+                points: isKazakh ? [
+                    'Өңірдегі ең ірі цифрлық инновациялық қауымдастықты қалыптастыру',
+                    'Отандық стартаптарды жаһандық венчурлік нарықтарға шығару',
+                    'Келесі 3 жылда 500+ жаңа жоғары ақылы жұмыс орнын ашу'
+                ] : [
+                    'Формирование ведущего IT-сообщества и кузницы технологических лидеров',
+                    'Масштабирование проектов на рынки Центральной Азии и мира',
+                    'Создание 500+ квалифицированных рабочих мест в сфере высоких технологий'
+                ],
+                layout: 'insight',
+                imagePrompt: 'futuristic tech trophy innovation crystal globe rocket 3d render',
+                speakerNotes: isKazakh ? 'Болашақ жоспарлар мен әріптестікке шақыру.' : 'Стратегическое видение развития инноваций в регионе.',
+                seed: 40707
+            }
+        ];
+
+    // ── SPECIFIC DOMAIN 5: GENERAL EDUCATIONAL / TOPIC SYNTHESIZER ──
+    } else {
+        slides = [
+            {
+                title: cleanTopic,
+                points: isKazakh ? [
+                    `«${cleanTopic}» тақырыбы бойынша кешенді ғылыми-танымдық баяндама`,
+                    'Іргелі негіздері, даму кезеңдері мен заманауи практикалық маңызы'
+                ] : (isEnglish ? [
+                    `Comprehensive analytical study and review: «${cleanTopic}»`,
+                    'Theoretical foundations, developmental stages, and modern practical impact'
+                ] : [
+                    `Комплексный аналитический обзор по теме: «${cleanTopic}»`,
+                    'Фундаментальные основы, этапы развития и ключевое практическое значение'
+                ]),
+                layout: 'cover',
+                imagePrompt: `${cleanTopic} conceptual presentation cover illustration masterpiece 3d octane render 8k`,
+                speakerNotes: isKazakh ? `Құрметті қатысушылар, бүгінгі тақырыбымыз: ${cleanTopic}.` : `Приветствие участников. Тема нашего выступления: ${cleanTopic}.`,
+                seed: 50101
+            },
+            {
+                title: isKazakh ? `Кіріспе және негізгі ұғымдар: ${cleanTopic}` : (isEnglish ? `Introduction & Key Concepts: ${cleanTopic}` : `Введение и базовые понятия: ${cleanTopic}`),
+                points: isKazakh ? [
+                    `${cleanTopic} — заманауи ғылым мен өмірдегі маңызды бағыттардың бірі`,
+                    `Тақырыптың өзектілігі мен қарастырылатын негізгі сұрақтары`,
+                    `Құбылыстың табиғи мәні мен негізгі ғылыми анықтамалары`
+                ] : (isEnglish ? [
+                    `${cleanTopic} represents a crucial field in modern science and practical application`,
+                    'Core rationale, foundational definitions, and prime investigative objectives',
+                    'Key structural components that define the operational essence of the subject'
+                ] : [
+                    `${cleanTopic} — актуальное и значимое направление в современной науке и практике`,
+                    'Базовые определения, структура понятийного аппарата и предмет изучения',
+                    'Предпосылки возникновения и фундаментальная роль в современной системе знаний'
                 ]),
                 layout: 'split-left',
-                imagePrompt: `${cleanTopic} glowing concept theory 3d render octane`,
-                speakerNotes: isKazakh ? 'Тақырыптың өзектілігі мен негізгі ұғымдарын түсіндіру.' : 'Обоснуйте актуальность темы и сформулируйте базовые понятия.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Негізгі көрсеткіштер мен ғылыми деректер' : 'Главные параметры, показатели и факты',
+                imagePrompt: `${cleanTopic} theory glowing concept abstract 3d render`,
+                speakerNotes: isKazakh ? 'Тақырыптың өзектілігі мен негізгі түсініктерін түсіндіру.' : 'Обоснуйте актуальность темы и сформулируйте базовые понятия.',
+                seed: 50202
+            },
+            {
+                title: isKazakh ? 'Негізгі көрсеткіштер мен ғылыми деректер' : (isEnglish ? 'Key Quantitative Metrics and Empirical Facts' : 'Главные параметры, показатели и метрики'),
                 statVal: '★ Топ',
-                points: getSlice(3, 3, isKazakh ? [
-                    'Негізгі сандық және сапалық көрсеткіштердің жүйелі сипаттамасы',
+                points: isKazakh ? [
+                    `${cleanTopic} бойынша тіркелген басты сандық және сапалық көрсеткіштер`,
                     'Құбылыстың басты қасиеттері мен заңдылық байланыстары',
-                    'Практикалық зерттеулердегі дәлдік пен нәтижелілік'
+                    'Практикалық зерттеулердегі өлшеу дәлдігі мен сенімділік деңгейі'
+                ] : (isEnglish ? [
+                    'Systematic qualitative and quantitative benchmarks established in research',
+                    'Measurable parameters, functional correlations, and empirical metrics',
+                    'Rigorous precision and predictive consistency in real-world observations'
                 ] : [
-                    'Системный анализ ключевых качественных и количественных характеристик',
-                    'Фундаментальные закономерности, принципы взаимодействия и метрики',
-                    'Аналитические данные и результаты контрольных наблюдений'
+                    'Ключевые качественные и количественные параметры, подтвержденные исследованиями',
+                    'Фундаментальные закономерности, взаимосвязи и контрольные метрики',
+                    'Высокая точность и воспроизводимость результатов в практических испытаниях'
                 ]),
                 layout: 'stat',
-                imagePrompt: `${cleanTopic} infographic data metrics analytics glowing 3d render`,
-                speakerNotes: isKazakh ? 'Негізгі көрсеткіштер мен деректерге назар аудару.' : 'Представьте ключевые параметры и прокомментируйте главные метрики.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Даму кезеңдері мен орындалу алгоритмі' : 'Хронология и ключевые этапы развития',
-                points: getSlice(6, 3, isKazakh ? [
-                    '1-кезең: Бастапқы зерттеу және концептуалды негіздеме қалыптастыру',
-                    '2-кезең: Негізгі үдерісті жүзеге асыру және тәжірибелік тексеру',
+                imagePrompt: `${cleanTopic} metrics analytics infographic glowing data 3d render`,
+                speakerNotes: isKazakh ? 'Негізгі сандық көрсеткіштер мен фактілерге назар аудару.' : 'Прокомментируйте ключевые показатели и аналитические метрики.',
+                seed: 50303
+            },
+            {
+                title: isKazakh ? 'Даму кезеңдері мен орындалу алгоритмі' : (isEnglish ? 'Chronological Stages & Implementation Roadmap' : 'Хронология и ключевые этапы развития'),
+                points: isKazakh ? [
+                    '1-кезең: Бастапқы зерттеу, мақсат қою және концептуалды негіздеме',
+                    '2-кезең: Негізгі үдерісті іске асыру және тәжірибелік тексеру',
                     '3-кезең: Қорытынды нәтижелерді шығару және тәжірибеге енгізу'
+                ] : (isEnglish ? [
+                    'Stage 1: Foundational research, goal definition, and conceptual framework',
+                    'Stage 2: Implementation of core methodologies and empirical verification',
+                    'Stage 3: Analytical synthesis of findings and practical scaling'
                 ] : [
-                    'Этап 1: Исследование исходных условий и концептуальное проектирование',
-                    'Этап 2: Практическая реализация ключевых процессов и мониторинг',
-                    'Этап 3: Формирование итоговых результатов и масштабирование'
+                    'Этап 1: Формирование концептуальной базы и постановка исследовательских задач',
+                    'Этап 2: Практическая реализация ключевых процессов и контрольное тестирование',
+                    'Этап 3: Подведение итоговых результатов, валидация и масштабирование'
                 ]),
                 layout: 'steps',
-                imagePrompt: `${cleanTopic} timeline progression steps roadmap glowing 3d isometric`,
-                speakerNotes: isKazakh ? 'Даму кезеңдерін рет-ретімен баяндау.' : 'Опишите пошаговую методологию и ключевые стадии реализации.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Құрылымы, бағыттары және маңызы' : 'Структура, компоненты и практическая ценность',
-                points: getSlice(9, 4, isKazakh ? [
-                    'Құрамдас бөліктер мен ішкі жүйелердің өзара байланысы',
-                    'Отандық және халықаралық тәжірибедегі үздік шешімдер',
-                    'Заманауи технологиялар мен тиімді тәсілдерді қолдану',
-                    'Тиімділікті арттыруға бағытталған практикалық ұсыныстар'
+                imagePrompt: `${cleanTopic} progression steps milestones roadmap isometric 3d render`,
+                speakerNotes: isKazakh ? 'Даму кезеңдерін рет-ретімен түсіндіру.' : 'Опишите пошаговую методологию и ключевые стадии реализации.',
+                seed: 50404
+            },
+            {
+                title: isKazakh ? 'Құрылымы, компоненттері және бағыттары' : (isEnglish ? 'Structural Architecture and Core Components' : 'Структура, компоненты и практическая ценность'),
+                points: isKazakh ? [
+                    'Құрамдас бөліктер мен ішкі элементтердің өзара үйлесімді байланысы',
+                    'Отандық және халықаралық тәжірибедегі озық үлгілер мен стандарттар',
+                    'Заманауи цифрлық технологиялар мен тиімді тәсілдерді қолдану',
+                    'Нәтижелілікті арттыруға бағытталған практикалық шешімдер'
+                ] : (isEnglish ? [
+                    'Interconnection between structural components and underlying operational subsystems',
+                    'Best domestic and international standards applied in the field',
+                    'Utilization of modern high-tech tools and data-driven methodologies',
+                    'Actionable recommendations designed to maximize overall efficiency'
                 ] : [
-                    'Взаимосвязь ключевых структурных элементов и внутренних систем',
-                    'Передовые отечественные и международные практики применения',
-                    'Использование современных технологических инструментов',
-                    'Практические сценарии внедрения и прикладная отдача'
+                    'Взаимосвязь ключевых структурных модулей и внутренних процессов',
+                    'Передовые отечественные и международные практики внедрения',
+                    'Использование современных технологических инструментов и методик',
+                    'Практические сценарии применения с измеримой прикладной отдачей'
                 ]),
                 layout: 'cards-grid',
                 imagePrompt: `${cleanTopic} modular structure network connected blocks 3d render`,
-                speakerNotes: isKazakh ? 'Құрылымдық ерекшеліктер мен тәжірибелік қолдану мысалдары.' : 'Разберите архитектуру системы и реальные примеры практического применения.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Салыстырмалы талдау және артықшылықтары' : 'Сравнительный анализ и преимущества',
-                points: getSlice(13, 4, isKazakh ? [
-                    'Дәстүрлі тәсілдерге қарағанда жоғары тиімділік пен сенімділік',
-                    'Үдерістерді оңтайландыру және уақыт пен ресурсты үнемдеу',
-                    'Инновациялық шешімдердің ұзақ мерзімді нәтижелілігі',
+                speakerNotes: isKazakh ? 'Құрылымдық элементтер мен олардың өзара байланысы.' : 'Разберите архитектуру системы и реальные примеры практического применения.',
+                seed: 50505
+            },
+            {
+                title: isKazakh ? 'Салыстырмалы талдау және артықшылықтары' : (isEnglish ? 'Comparative Analysis and Distinct Advantages' : 'Сравнительный анализ и преимущества'),
+                points: isKazakh ? [
+                    'Дәстүрлі тәсілдерге қарағанда айтарлықтай жоғары тиімділік пен сенімділік',
+                    'Үдерістерді оңтайландыру және уақыт пен ресурстарды үнемдеу мүмкіндігі',
+                    'Инновациялық шешімдердің ұзақ мерзімді тұрақтылығы',
                     'Жаңа мүмкіндіктер мен болашақ өсу әлеуеті'
+                ] : (isEnglish ? [
+                    'Substantially higher efficiency and reliability compared to traditional baselines',
+                    'Process optimization delivering measurable time and resource savings',
+                    'Long-term durability and systemic sustainability of modern solutions',
+                    'Opening expansive horizons for future growth and scalability'
                 ] : [
-                    'Высокая надежность и результативность по сравнению с базовыми аналогами',
-                    'Оптимизация процессов, экономия ключевых ресурсов и повышение точности',
-                    'Долгосрочные системные преимущества внедряемых решений',
-                    'Открытие новых перспектив для дальнейшего масштабирования'
+                    'Значительное повышение эффективности и надежности по сравнению с аналогами',
+                    'Оптимизация ключевых процессов, экономия времени и материальных ресурсов',
+                    'Долгосрочная системная устойчивость внедряемых решений',
+                    'Открытие широких возможностей для дальнейшего прогресса и масштабирования'
                 ]),
                 layout: 'compare',
-                imagePrompt: `${cleanTopic} comparative analysis balance scales 3d render`,
-                speakerNotes: isKazakh ? 'Салыстырмалы талдау жасап, басты артықшылықтарды көрсету.' : 'Сопоставьте ключевые подходы и подчеркните главные преимущества.'
-            });
-
-            slides.push({
-                title: isKazakh ? 'Қорытынды, тұжырымдар мен болашағы' : 'Стратегические выводы и перспективы',
-                points: getSlice(17, 3, isKazakh ? [
-                    `«${cleanTopic} — ғылым мен қоғам дамуындағы серпінді қадам»`,
-                    'Қарастырылған мәліметтер негізінде жасалған басты тұжырымдар',
+                imagePrompt: `${cleanTopic} comparative balance scales contrast 3d render`,
+                speakerNotes: isKazakh ? 'Салыстырмалы талдау жасап, негізгі артықшылықтарды атап өту.' : 'Сопоставьте ключевые подходы и подчеркните главные преимущества.',
+                seed: 50606
+            },
+            {
+                title: isKazakh ? 'Қорытынды, тұжырымдар мен болашағы' : (isEnglish ? 'Strategic Conclusions and Future Vision' : 'Стратегические выводы и перспективы'),
+                points: isKazakh ? [
+                    `«${cleanTopic} — ғылым мен білім дамуындағы серпінді қадам»`,
+                    'Қарастырылған ғылыми деректер негізінде жасалған басты тұжырымдар',
                     'Болашақтағы даму векторлары мен жаңа мүмкіндіктер'
+                ] : (isEnglish ? [
+                    `«${cleanTopic} represents a transformative catalyst for knowledge and progress»`,
+                    'Core analytical conclusions distilled from comprehensive theoretical study',
+                    'Strategic forward-looking directions and emerging research horizons'
                 ] : [
-                    `«${cleanTopic} — стратегический драйвер научно-технического прогресса»`,
-                    'Обобщение рассмотренного материала и ключевые аналитические выводы',
-                    'Перспективные векторы развития и направления для дальнейших исследований'
+                    `«${cleanTopic} — мощный драйвер научно-технического прогресса»`,
+                    'Обобщение рассмотренного материала и ключевые выводы исследования',
+                    'Перспективные направления развития и открытые исследовательские горизонты'
                 ]),
                 layout: 'insight',
-                imagePrompt: `${cleanTopic} glowing light crystal vision future 3d render`,
-                speakerNotes: isKazakh ? 'Баяндаманы қорытындылап, сұрақ-жауап кезеңіне өту.' : 'Подведите итоги выступления и перейдите к открытой дискуссии.'
-            });
-        }
-
-    } else {
-        // CASE 2: Topic-only intelligent curriculum synthesis
-        const lower = cleanTopic.toLowerCase();
-
-        // 0. TECH HUB / STARTUP ECOSYSTEM / BUSINESS INCUBATOR (Kyzylorda Hub, Astana Hub, etc.)
-        if (/kyzylorda|хаб|hub|стартап|startup|инкуба|инноваци|кәсіпкер|бизнес|жоба|астана хаб|акселера|инвест|pitch/i.test(lower)) {
-            slides = [
-                {
-                    title: cleanTopic,
-                    points: [isKazakh ? 'Жастардың инновациялық идеяларын қолдап, кәсіпкерлік және цифрлық дағдыларын дамыту' : 'Поддержка молодежных стартапов, развитие цифровых навыков и акселерация бизнеса'],
-                    layout: 'cover',
-                    imagePrompt: `${cleanTopic} modern innovation technology hub coworking office, high tech 3d render cinematic 8k`,
-                    speakerNotes: isKazakh ? `Құрметті қатысушылар, бүгінгі таныстырылымымыз: ${cleanTopic}.` : `Приветствие участников и инвесторов. Презентация: ${cleanTopic}.`
-                },
-                {
-                    title: isKazakh ? `${cleanTopic} бизнес-инкубациялау орталығы` : `${cleanTopic} — Экосистема развития стартапов`,
-                    tagline: isKazakh ? 'Жастардың инновациялық идеяларын қолдап, кәсіпкерлік және цифрлық дағдыларын дамытуға жағдай жасаймыз.' : 'Создаем условия для развития инновационных идей, цифровых навыков и привлечения венчурных инвестиций.',
-                    centerTitle: isKazakh ? `${cleanTopic.length > 18 ? 'Hub' : cleanTopic} қызметтері` : 'Ключевые сервисы',
-                    layout: 'hub-ecosystem',
-                    leftMetrics: isKazakh ? [
-                        { icon: 'fa-graduation-cap', val: '145', lbl: 'резидент түлектер' },
-                        { icon: 'fa-users', val: '1 750', lbl: 'қатысушы жоба' },
-                        { icon: 'fa-gear', val: '52', lbl: 'жоба саны' }
-                    ] : [
-                        { icon: 'fa-graduation-cap', val: '145', lbl: 'выпускников резидентов' },
-                        { icon: 'fa-users', val: '1 750', lbl: 'участников проектов' },
-                        { icon: 'fa-gear', val: '52', lbl: 'запущенных стартапов' }
-                    ],
-                    rightMetrics: isKazakh ? [
-                        { icon: 'fa-people-group', val: '15 500', lbl: 'жастар қамтылды' },
-                        { icon: 'fa-chart-line', val: '111 500 000 ₸', lbl: 'инвестиция тартылды' }
-                    ] : [
-                        { icon: 'fa-people-group', val: '15 500', lbl: 'охват молодежи' },
-                        { icon: 'fa-chart-line', val: '111 500 000 ₸', lbl: 'привлечено инвестиций' }
-                    ],
-                    spokes: isKazakh ? [
-                        { title: 'Инкубациялық бағдарламалар', icon: 'fa-rocket' },
-                        { title: 'Жобалар фестивальдері', icon: 'fa-trophy' },
-                        { title: 'Консультациялық қызметтер', icon: 'fa-comments' },
-                        { title: 'Demo Day', icon: 'fa-chart-pie' },
-                        { title: 'Инвестициялар', icon: 'fa-seedling' },
-                        { title: 'Маркетинг қызметтері', icon: 'fa-bullhorn' },
-                        { title: 'Білім курстары', icon: 'fa-book-open' },
-                        { title: 'Байқаулар', icon: 'fa-award' },
-                        { title: 'Хакатондар', icon: 'fa-code' },
-                        { title: 'Салықтық преференциялар', icon: 'fa-file-invoice' }
-                    ] : [
-                        { title: 'Программы инкубации', icon: 'fa-rocket' },
-                        { title: 'Фестивали проектов', icon: 'fa-trophy' },
-                        { title: 'Консультации и трекинг', icon: 'fa-comments' },
-                        { title: 'Demo Day & Питчинг', icon: 'fa-chart-pie' },
-                        { title: 'Венчурные инвестиции', icon: 'fa-seedling' },
-                        { title: 'Маркетинг и PR', icon: 'fa-bullhorn' },
-                        { title: 'Tech Academy курсы', icon: 'fa-book-open' },
-                        { title: 'Грантовые конкурсы', icon: 'fa-award' },
-                        { title: 'Хакатоны 24/7', icon: 'fa-code' },
-                        { title: 'Налоговые льготы 0%', icon: 'fa-file-invoice' }
-                    ],
-                    points: [
-                        isKazakh ? '145 резидент түлектер мен 52 сәтті іске қосылған жоба' : '145 резидентов выпускников и 52 запущенных проекта',
-                        isKazakh ? '111 500 000 ₸ көлемінде тартылған инвестициялар' : '111 500 000 ₸ привлеченных венчурных инвестиций'
-                    ],
-                    imagePrompt: 'modern tech startup hub coworking center team collaboration, clean 3d render 8k',
-                    speakerNotes: isKazakh ? 'Орталықтың негізгі 10 қызметі мен қол жеткізген негізгі көрсеткіштері.' : 'Обзор 10 сервисных направлений хаба и ключевых показателей эффективности.'
-                },
-                {
-                    title: isKazakh ? 'Негізгі экономикалық көрсеткіштер (KPI Дашборд)' : 'Ключевые показатели эффективности (KPI Dashboard)',
-                    layout: 'kpi-grid',
-                    kpis: isKazakh ? [
-                        { icon: 'fa-chart-line', val: '111 500 000 ₸', lbl: 'Тартылған инвестициялар мен гранттар', delta: '+48%' },
-                        { icon: 'fa-people-group', val: '15 500+', lbl: 'Іс-шаралармен қамтылған жастар', delta: '+35%' },
-                        { icon: 'fa-graduation-cap', val: '145', lbl: 'Инкубациялық бағдарлама түлектері', delta: '+28%' },
-                        { icon: 'fa-code', val: '1 750', lbl: 'Хакатондар мен байқаулар қатысушылары', delta: '+62%' },
-                        { icon: 'fa-gear', val: '52', lbl: 'Жүзеге асқан цифрлық стартап жобалар', delta: '+19%' },
-                        { icon: 'fa-trophy', val: '98.4%', lbl: 'Резиденттердің жобалық тиімділігі', delta: '+4.2%' }
-                    ] : [
-                        { icon: 'fa-chart-line', val: '111 500 000 ₸', lbl: 'Привлеченные инвестиции и гранты', delta: '+48%' },
-                        { icon: 'fa-people-group', val: '15 500+', lbl: 'Охват молодежи в мероприятиях', delta: '+35%' },
-                        { icon: 'fa-graduation-cap', val: '145', lbl: 'Выпускников инкубационных программ', delta: '+28%' },
-                        { icon: 'fa-code', val: '1 750', lbl: 'Участников хакатонов и батлов', delta: '+62%' },
-                        { icon: 'fa-gear', val: '52', lbl: 'Действующих технологических стартапов', delta: '+19%' },
-                        { icon: 'fa-trophy', val: '98.4%', lbl: 'Индекс удовлетворенности резидентов', delta: '+4.2%' }
-                    ],
-                    points: [
-                        isKazakh ? 'Инвестициялар көлемі: 111 500 000 ₸' : 'Общий объем инвестиций: 111 500 000 ₸',
-                        isKazakh ? 'Қамтылған жастар саны: 15 500+' : 'Охват аудитории: 15 500+ участников'
-                    ],
-                    imagePrompt: 'glowing financial startup KPI metrics dashboard 3d render',
-                    speakerNotes: isKazakh ? 'Инкубациялық кезеңдегі өсім мен қаржылық нәтижелер.' : 'Разбор ключевых финансовых и операционных метрик роста.'
-                },
-                {
-                    title: isKazakh ? 'Стартапты инкубациялау кезеңдері' : 'Этапы инкубации и акселерации проектов',
-                    points: isKazakh ? [
-                        '1-кезең: Іріктеу және идеяны бағалау (Ideation & Selection)',
-                        '2-кезең: Қарқынды инкубация (8 апталық оқыту және менторлық)',
-                        '3-кезең: MVP әзірлеу және алғашқы сатылымдар (Traction & Product)',
-                        '4-кезең: Demo Day және венчурлік инвестиция тарту'
-                    ] : [
-                        'Этап 1: Отбор и валидация продуктовой гипотезы (Ideation & Scoring)',
-                        'Этап 2: Интенсивная инкубация (8 недель трекинга и менторства)',
-                        'Этап 3: Запуск MVP и первые коммерческие продажи (Traction)',
-                        'Этап 4: Финальный Demo Day и закрытие инвестиционного раунда'
-                    ],
-                    layout: 'steps',
-                    imagePrompt: 'startup development acceleration roadmap milestones glowing 3d isometric',
-                    speakerNotes: isKazakh ? 'Стартаптың идеядан инвестицияға дейінгі өсу жолы.' : 'Пошаговая методология сопровождения резидентов от идеи до инвестиций.'
-                },
-                {
-                    title: isKazakh ? 'Негізгі бағдарламалар мен мүмкіндіктер' : 'Флагманские программы и экосистемные льготы',
-                    points: isKazakh ? [
-                        'Startup Garage: жаңадан бастаушыларға арналған коворкинг пен жабдықтар',
-                        'Hackathon & Ideathon: 24 сағаттық код жазу және шешім табу алаңы',
-                        'Seed Money: алғашқы прототип жасауға арналған қайтарымсыз гранттар',
-                        'Салықтық жеңілдіктер: 0% КТС, 0% ЖТС (Astana Hub серіктестігі)'
-                    ] : [
-                        'Startup Garage: оборудованный коворкинг, серверные мощности и менторский пул',
-                        'Hackathon 24/7: хакатоны для поиска талантов и создания прототипов',
-                        'Seed Money: грантовое предпосевное финансирование для лучших команд',
-                        'Налоговые льготы: 0% КПН, 0% ИПН в рамках партнерства с технопарком'
-                    ],
-                    layout: 'cards-grid',
-                    imagePrompt: 'modern startup coworking open space innovation hub 3d render',
-                    speakerNotes: isKazakh ? 'Резиденттерге берілетін материалдық және салықтық преференциялар.' : 'Подробный обзор инфраструктурной и налоговой поддержки резидентов.'
-                },
-                {
-                    title: isKazakh ? 'Миссиясы мен даму стратегиясы' : 'Миссия и стратегические ориентиры',
-                    points: isKazakh ? [
-                        'Өңірдегі ең ірі цифрлық және инновациялық қауымдастықты қалыптастыру',
-                        'Жергілікті стартаптарды халықаралық нарықтарға шығару (Silkway Accelerator)',
-                        'Келесі 3 жылда 500+ жаңа жұмыс орнын ашу'
-                    ] : [
-                        'Формирование ведущего инновационного и IT-сообщества региона',
-                        'Масштабирование проектов на международные рынки (Silkway Accelerator)',
-                        'Создание 500+ высокотехнологичных рабочих мест в течение 3 лет'
-                    ],
-                    layout: 'insight',
-                    imagePrompt: 'futuristic glowing tech trophy innovation crystal globe 3d',
-                    speakerNotes: isKazakh ? 'Болашақ жоспарлар мен әріптестікке шақыру.' : 'Стратегическое видение и приглашение к долгосрочному партнерству.'
-                }
-            ];
-        } else if (/димаш|dimash|құдайберген|кудайберген|әнші|певец|singer|вокал|vocal|музыкант|композитор|абай|шоқан|әл-фараби|тұлға|биография|персона/i.test(lower)) {
-            const isDimash = /димаш|dimash|құдайберген|кудайберген/i.test(lower);
-            if (isDimash) {
-                slides = [
-                    {
-                        title: isKazakh ? 'Димаш Құдайберген — Әлемдік вокал феномені' : 'Димаш Кудайберген — Феномен мировой музыки',
-                        points: [
-                            isKazakh ? 'Қазақстанның Халық әртісі, композитор және бірегей вокал шебері' : 'Народный артист Казахстана, мультиинструменталист и певец мирового уровня'
-                        ],
-                        layout: 'cover',
-                        imageUrl: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Kudaibergen_at_New_Wave_in_2019.jpg/1280px-Kudaibergen_at_New_Wave_in_2019.jpg',
-                        imagePrompt: 'Dimash Kudaibergen singing on stage with dramatic stage lighting, elegant performance, photorealistic 8k',
-                        speakerNotes: isKazakh ? 'Бүгінгі таныстырылымымыз қазақтың мақтанышы, әлемге әйгілі әнші Димаш Құдайбергенге арналады.' : 'Приветствие. Сегодня мы познакомимся с творчеством и феноменальным успехом Димаша Кудайбергена.'
-                    },
-                    {
-                        title: isKazakh ? 'Өмірбаяны және шығармашылық бастауы' : 'Биография и ранние годы творчества',
-                        points: isKazakh ? [
-                            '1994 жылы 24 мамырда Ақтөбе қаласында өнерлі отбасында дүниеге келген',
-                            'Ата-анасы — Қанат және Светлана Айтбаевтар, белгілі қазақстандық өнер қайраткерлері',
-                            'А. Жұбанов атындағы музыкалық колледж бен ҚазҰӨУ («Шабыт») академиясын үздік тәмамдаған'
-                        ] : [
-                            'Родился 24 мая 1994 года в городе Актобе в известной музыкальной семье',
-                            'Родители — Канат и Светлана Айтбаевы, заслуженные деятели культуры Казахстана',
-                            'Профессиональное образование: Музыкальный колледж им. Жубанова и КазНУИ («Шабыт»)'
-                        ],
-                        layout: 'split-left',
-                        imageUrl: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Kudaibergen_at_New_Wave_in_2019.jpg/1280px-Kudaibergen_at_New_Wave_in_2019.jpg',
-                        imagePrompt: 'young musical prodigy piano studio elegant concert hall 3d render',
-                        speakerNotes: isKazakh ? 'Димаштың балалық шағы, отбасындағы тәрбиесі мен кәсіби білім алу жолы.' : 'Расскажите о детстве, первых выступлениях и музыкальном образовании артиста.'
-                    },
-                    {
-                        title: isKazakh ? 'Феноменалды вокалдық мүмкіндіктер' : 'Уникальный вокальный диапазон и техника',
-                        statVal: '6 октава',
-                        points: isKazakh ? [
-                            'Диапазон: 6 октава (D2-ден D8-ге дейін — баритоннан колоратуралық сопраноға дейін)',
-                            'Ысқырықты регистр (whistle register), бельканто және академиялық вокал техникасын шебер меңгерген',
-                            'Әлемнің 15-тен астам тілінде (қазақ, қытай, француз, ағылшын, итальян, т.б.) еркін ән шырқайды',
-                            'Домбыра, фортепиано, маримба, барабан сынды көптеген аспаптарда шебер ойнайды'
-                        ] : [
-                            'Диапазон: 6 октав (от D2 до D8 — от глубокого баритона до колоратурного сопрано)',
-                            'Владение сложнейшим свистковым регистром (whistle register) и стилем бельканто',
-                            'Исполнение композиций на более чем 15 языках мира (казахский, китайский, французский, итальянский)',
-                            'Виртуозное владение домброй, фортепиано, барабанами и клавишными'
-                        ],
-                        layout: 'stat',
-                        imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1000&auto=format&fit=crop&q=80',
-                        imagePrompt: 'vocal sound waves glowing musical spectrum concert stage, 3d cinematic lighting',
-                        speakerNotes: isKazakh ? 'Димаштың сирек кездесетін 6 октавалық дауыс диапазоны мен вокалдық ерекшелігі.' : 'Объясните уникальность 6-октавного диапазона и сложность применяемых вокальных техник.'
-                    },
-                    {
-                        title: isKazakh ? 'Әлемдік танымалдылық пен негізгі белестер' : 'Триумф на мировой арене и главные вехи',
-                        points: isKazakh ? [
-                            '«Славянский базар 2015» (Витебск): Гран-при жеңіп, халықаралық сахнаға жол ашты',
-                            '«I Am a Singer 2017» (Қытай): Қытай мен Азияны бағындырып, әлемдік деңгейдегі сенсацияға айналды',
-                            'Стадиондық шоулар: Нью-Йорктегі Barclays Center («Arnau»), Лондон O2 Arena, Алматы стадионы («Stranger»)'
-                        ] : [
-                            '«Славянский базар 2015» (Витебск): Триумфальный Гран-при и международное признание',
-                            '«I Am a Singer 2017» (Китай): Грандиозная сенсация и обретение миллионов поклонников (Dears)',
-                            'Мировые сольники: Аншлаги в Barclays Center (Нью-Йорк), O2 Arena (Лондон) и тур «Stranger»'
-                        ],
-                        layout: 'steps',
-                        imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1000&auto=format&fit=crop&q=80',
-                        imagePrompt: 'grand concert stadium stage fireworks laser show cheering crowd, 3d photorealistic',
-                        speakerNotes: isKazakh ? 'Димаштың халықаралық байқаулардағы жеңістері мен әлемдік стадиондардағы жеке концерттері.' : 'Хронология главных побед артиста и ключевые стадионные аншлаги.'
-                    },
-                    {
-                        title: isKazakh ? 'Жетістіктері, марапаттары мен Dears қауымдастығы' : 'Награды, статус и фан-клуб Dears',
-                        points: isKazakh ? [
-                            'Қазақстанның Халық әртісі құрметті атағының иегері (2023 ж.)',
-                            '«Top Chinese Music Award» — Самый популярный зарубежный певец',
-                            '«Dears» — әлемнің 100-ден астам елінде ресми құрылған жанкүйерлер қауымдастығы',
-                            'Қазақтың ұлттық мәдениеті мен домбыра өнерін әлемге танытушы елші'
-                        ] : [
-                            'Почетное звание «Халық әртісі» (Народный артист Казахстана, 2023)',
-                            'Победы в престижных премиях: Top Chinese Music Awards, MTV Global Artist',
-                            'Глобальное фан-сообщество «Dears», объединяющее поклонников в 100+ странах мира',
-                            'Культурная дипломатия: популяризация казахской народной музыки и домбры во всем мире'
-                        ],
-                        layout: 'cards-grid',
-                        imageUrl: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=1000&auto=format&fit=crop&q=80',
-                        imagePrompt: 'golden music award trophy glowing crystal stars, 3d render 8k',
-                        speakerNotes: isKazakh ? 'Димаштың алған мемлекеттік марапаттары мен Dears халықаралық қауымдастығының маңызы.' : 'Расскажите о всемирном фан-движении Dears и роли Димаша как культурного посла Казахстана.'
-                    },
-                    {
-                        title: isKazakh ? 'Мәдени мұра және өнердегі миссиясы' : 'Миссия в искусстве и культурное наследие',
-                        points: isKazakh ? [
-                            '«Музыка — шекара мен тілге бағынбайтын, бүкіл әлем халықтарының жүрегін біріктіретін ұлы күш»',
-                            'Қазақ әні мен ұлттық рухты жаһандық деңгейге көтерген дара тұлға',
-                            'Бейбітшілік пен достықтың жаршысы ретіндегі қайырымдылық жобалары'
-                        ] : [
-                            '«Музыка не знает границ и языковых барьеров — она объединяет сердца людей по всему миру»',
-                            'Синтез классической оперы, казахского традиционного фольклора и современного поп-рока',
-                            'Благотворительные инициативы и вклад в укрепление глобального межкультурного диалога'
-                        ],
-                        layout: 'insight',
-                        imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1000&auto=format&fit=crop&q=80',
-                        imagePrompt: 'golden microphone musical light rays harmony peace globe, 3d render',
-                        speakerNotes: isKazakh ? 'Баяндаманы қорытындылап, Димаш өнерінің ұлт пен әлем үшін мәнін атап өту.' : 'Подведите итоги и подчеркните вклад артиста в мировую культуру.'
-                    }
-                ];
-            } else {
-                slides = [
-                    {
-                        title: cleanTopic,
-                        points: [isKazakh ? 'Тарихи тұлғаның өмірі, шығармашылығы мен ұлттық мұрасы' : 'Жизненный путь, выдающийся вклад и наследие выдающейся личности'],
-                        layout: 'cover',
-                        imagePrompt: `${cleanTopic} historical heritage portrait museum archive cinematic lighting`,
-                        speakerNotes: isKazakh ? `Бүгінгі тақырыбымыз: ${cleanTopic}.` : `Приветствие. Тема выступления: ${cleanTopic}.`
-                    },
-                    {
-                        title: isKazakh ? 'Өмірбаяны және қалыптасу кезеңі' : 'Биография и становление личности',
-                        points: isKazakh ? [
-                            'Туып-өскен ортасы және отбасылық тағылымы',
-                            'Білім алу жолы мен көзқарасының қалыптасуы',
-                            'Қоғамдық-мәдени ортаның әсері мен алғашқы еңбектері'
-                        ] : [
-                            'Исторический контекст, семья и воспитание',
-                            'Образовательный путь и формирование мировоззрения',
-                            'Ранние труды и начало общественно-культурной деятельности'
-                        ],
-                        layout: 'split-left',
-                        imagePrompt: 'ancient library books vintage manuscript historical study 3d render',
-                        speakerNotes: isKazakh ? 'Тұлғаның өмірбаяны мен дүниетанымының қалыптасуы.' : 'Расскажите о детстве и предпосылках формирования взглядов.'
-                    },
-                    {
-                        title: isKazakh ? 'Негізгі еңбектері мен тарихи мұрасы' : 'Главные труды и фундаментальное наследие',
-                        statVal: '№ 1',
-                        points: isKazakh ? [
-                            'Ұлт руханияты мен әлемдік мәдениетке қосқан өлшеусіз үлесі',
-                            'Басты шығармалары мен философиялық идеялары',
-                            'Қазіргі заман үшін өзектілігі мен тағылымы'
-                        ] : [
-                            'Фундаментальный вклад в национальную и мировую сокровищницу мысли',
-                            'Ключевые произведения, научные открытия и трактаты',
-                            'Актуальность и непреходящая ценность идей в XXI веке'
-                        ],
-                        layout: 'stat',
-                        imagePrompt: 'golden quill feather ink parchment ancient philosophical wisdom 3d',
-                        speakerNotes: isKazakh ? 'Басты шығармалары мен философиялық еңбектері.' : 'Анализ ключевых трудов и их значения.'
-                    },
-                    {
-                        title: isKazakh ? 'Шығармашылық және қоғамдық кезеңдері' : 'Основные этапы жизненного и творческого пути',
-                        points: isKazakh ? [
-                            '1-кезең: Ізденіс және алғашқы бастамалар',
-                            '2-кезең: Кемелдену және басты туындыларын дүниеге әкелу',
-                            '3-кезең: Халықтық танымалдылық және мектеп қалыптастыру'
-                        ] : [
-                            'Этап 1: Период ученичества и поиска собственного стиля',
-                            'Этап 2: Творческий расцвет и создание программных трудов',
-                            'Этап 3: Всенародное признание и формирование научной/литературной школы'
-                        ],
-                        layout: 'steps',
-                        imagePrompt: 'historical timeline steps parchment scrolls golden lights 3d',
-                        speakerNotes: isKazakh ? 'Тұлғаның кемелдену кезеңдері.' : 'Хронологические этапы творческой эволюции.'
-                    },
-                    {
-                        title: isKazakh ? 'Мәдени және ғылыми құндылығы' : 'Значение для национальной и мировой культуры',
-                        points: isKazakh ? [
-                            'Ұлттық код пен рухани жаңғырудың бастауы',
-                            'Әлемдік деңгейдегі ғалымдар мен жазушылардың жоғары бағасы',
-                            'Келер ұрпаққа қалдырған өсиеті мен өнегесі'
-                        ] : [
-                            'Фундамент национальной идентичности и духовного возрождения',
-                            'Высокая оценка мыслителей и ученых мирового масштаба',
-                            'Нравственные ориентиры и уроки для будущих поколений'
-                        ],
-                        layout: 'cards-grid',
-                        imagePrompt: 'golden statue memorial cultural monument 3d render',
-                        speakerNotes: isKazakh ? 'Тұлғаның тарихтағы орны.' : 'Культурная и историческая значимость наследия.'
-                    },
-                    {
-                        title: isKazakh ? 'Тарихи тағылым мен қорытынды' : 'Наследие и непреходящие ценности',
-                        points: isKazakh ? [
-                            '«Ұлы тұлғалардың өнегесі — мәңгілік шамшырақ»',
-                            'Ұлттық мақтаныш пен тарихи сабақтастық',
-                            'Есімін ұлықтау және мұрасын зерделеу жалғасады'
-                        ] : [
-                            '«Истинное величие личности измеряется пользой, принесенной человечеству»',
-                            'Живая преемственность поколений и национальная гордость',
-                            'Сохранение и популяризация культурного наследия'
-                        ],
-                        layout: 'insight',
-                        imagePrompt: 'eternal flame memory torch glowing wisdom 3d cinematic',
-                        speakerNotes: isKazakh ? 'Баяндаманы түйіндеп, сұрақ-жауапқа көшу.' : 'Подведение итогов выступления.'
-                    }
-                ];
+                imagePrompt: `${cleanTopic} futuristic glowing crystal idea light bulb vision 3d render`,
+                speakerNotes: isKazakh ? 'Баяндаманы қорытындылап, сұрақ-жауап кезеңіне көшу.' : 'Подведите итоги выступления и перейдите к сессии вопросов и ответов.',
+                seed: 50707
             }
-        } else if (/космос|ғарыш|планет|астроном|марс|юпитер|звезд|галактик|orbit|space/i.test(lower)) {
-            slides = [
-                {
-                    title: cleanTopic,
-                    points: [],
-                    layout: 'cover',
-                    imagePrompt: `${cleanTopic} deep space cosmic galaxy planets nebula, cinematic 8k 3d render`,
-                    speakerNotes: isKazakh ? `Ғарыш әлеміне арналған баяндамамызды бастаймыз: ${cleanTopic}.` : `Приветствие. Сегодня мы исследуем захватывающую космическую тему: ${cleanTopic}.`
-                },
-                {
-                    title: isKazakh ? 'Ғарышты зерттеудің маңызы мен мақсаты' : 'Значение и масштаб космических исследований',
-                    points: isKazakh ? [
-                        'Күн жүйесінің құрылымы және ғаламшарлардың физикалық сипаттамасы',
-                        'Ғарыштық аппараттар мен телескоптардың заманауи мүмкіндіктері',
-                        'Астрофизикалық заңдар мен гравитациялық өрістерді зерттеу'
-                    ] : [
-                        'Масштабы Солнечной системы и уникальные физические характеристики планет',
-                        'Возможности современных орбитальных телескопов и межпланетных станций',
-                        'Астрофизические законы, гравитационные взаимодействия и космическая среда'
-                    ],
-                    layout: 'split-left',
-                    imagePrompt: 'solar system planets orbital trajectory futuristic space probe, 3d render',
-                    speakerNotes: isKazakh ? 'Ғарыштың кеңістігі мен оны игерудің адамзат үшін маңызы.' : 'Введение в проблематику космических открытий и технологических прорывов.'
-                },
-                {
-                    title: isKazakh ? 'Негізгі астрономиялық көрсеткіштер мен фактілер' : 'Ключевые астрономические параметры и факты',
-                    points: isKazakh ? [
-                        'Жарық жылдамдығы: c ≈ 300 000 км/с — ғаламдағы шекті жылдамдық',
-                        'Гравитациялық тұрақты: G = 6.674×10⁻¹¹ Н·м²/кг²',
-                        'Орбиталық қозғалыс заңдары (Кеплер заңдары мен Ньютон тартылысы)'
-                    ] : [
-                        'Скорость света: c ≈ 300 000 км/с — фундаментальный предел Вселенной',
-                        'Гравитационная постоянная: G = 6.674×10⁻¹¹ Н·м²/кг²',
-                        'Законы небесной механики: законы Кеплера и всемирное тяготение Ньютона'
-                    ],
-                    layout: 'stat',
-                    imagePrompt: 'orbital mechanics gravitational field simulation space 3d render',
-                    speakerNotes: isKazakh ? 'Фундаменталды көрсеткіштер мен ғарыш заңдылықтары.' : 'Основные физические константы и параметры орбитального движения.'
-                },
-                {
-                    title: isKazakh ? 'Зерттеу кезеңдері мен технологиялық миссиялар' : 'Этапы исследований и ключевые космические миссии',
-                    points: isKazakh ? [
-                        '1-кезең: Жер бетіндегі оптикалық және радиотелескоптар арқылы бақылау',
-                        '2-кезең: Автоматты зондтар мен роверлерді (Curiosity, Perseverance) жіберу',
-                        '3-кезең: Пилоттық миссиялар және ғарыш станциялары (ХҒС / Artemis)'
-                    ] : [
-                        'Этап 1: Наземные оптические и радиотелескопические наблюдения',
-                        'Этап 2: Запуск автоматических зондов, спутников и планетоходов',
-                        'Этап 3: Пилотируемые экспедиции и орбитальные научные станции (МКС / Artemis)'
-                    ],
-                    layout: 'steps',
-                    imagePrompt: 'spacecraft mission rover on alien planet surface exploration, 3d cinematic',
-                    speakerNotes: isKazakh ? 'Ғарыш миссияларының даму эволюциясы.' : 'Хронология и технологический прогресс космических полетов.'
-                },
-                {
-                    title: isKazakh ? 'Практикалық қолданыс және болашақ' : 'Практическое применение и колонизация',
-                    points: isKazakh ? [
-                        'Жерсеріктік байланыс, GPS/ГЛОНАСС навигациясы және метеорология',
-                        'Ғарыштық материалтану және салмақсыздықтағы тәжірибелер',
-                        'Ай және Марс базаларын құру перспективалары'
-                    ] : [
-                        'Спутниковая связь, глобальная навигация GPS/ГЛОНАСС и мониторинг климата',
-                        'Космическое материаловедение и уникальные эксперименты в микрогравитации',
-                        'Перспективы пилотируемых полетов на Марс и лунных обитаемых баз'
-                    ],
-                    layout: 'cards-grid',
-                    imagePrompt: 'futuristic human base on mars dome habitat, 3d cinematic 8k',
-                    speakerNotes: isKazakh ? 'Ғарыш технологияларының жердегі өмірімізге тигізетін пайдасы.' : 'Как космонавтика меняет технологии на Земле и открывает будущее.'
-                },
-                {
-                    title: isKazakh ? 'Қорытынды және викторина' : 'Итоги и контрольные вопросы',
-                    points: isKazakh ? [
-                        'Ғарышты игеру — ғылым мен адамзат болашағының кепілі',
-                        'Сұрақ: Бізге ең жақын орналасқан жұлдыз қалай аталады?',
-                        'Сұрақ: Ғарыш аппараттары қандай жылдамдықпен ұшады?'
-                    ] : [
-                        'Освоение космоса — главный драйвер научно-технического прогресса человечества',
-                        'Вопрос: В чем заключается главное условие первой космической скорости?',
-                        'Вопрос: Какие ключевые вызовы стоят перед марсианской экспедицией?'
-                    ],
-                    layout: 'insight',
-                    imagePrompt: 'astronaut looking at glowing earth from orbit, 3d photorealistic cinematic',
-                    speakerNotes: isKazakh ? 'Баяндаманы қорытындылап, оқушылармен кері байланыс жасау.' : 'Подведение итогов и интерактивная проверка усвоения материала.'
-                }
-            ];
-        } else if (/физик|ньютон|ом|ток|электр|квант|механик|энерги|термодинамик|оптика/i.test(lower)) {
-            slides = [
-                {
-                    title: cleanTopic,
-                    points: [],
-                    layout: 'cover',
-                    imagePrompt: `${cleanTopic} physics laboratory experiment science apparatus, cinematic 3d render`,
-                    speakerNotes: isKazakh ? `Физика пәні бойынша сабағымызды бастаймыз: ${cleanTopic}.` : `Приветствие. Сегодня мы подробно разберем тему по физике: ${cleanTopic}.`
-                },
-                {
-                    title: isKazakh ? 'Негізгі түсініктер мен физикалық шамалар' : 'Основные понятия и физические величины',
-                    points: isKazakh ? [
-                        'Зерттелетін құбылыстың физикалық мәні мен табиғаты',
-                        'Негізгі өлшем бірліктері және ХБЖ (SI) жүйесіндегі орны',
-                        'Құбылыстың күнделікті өмірде және табиғатта байқалуы'
-                    ] : [
-                        'Физическая сущность и природа изучаемого явления/закона',
-                        'Основные единицы измерения в Международной системе СИ',
-                        'Наблюдение эффекта в природе и повседневной жизни человека'
-                    ],
-                    layout: 'split-left',
-                    imagePrompt: 'abstract physics concept atom nucleus electrons glowing orbits 3d',
-                    speakerNotes: isKazakh ? 'Құбылыстың негізгі ұғымдарымен таныстыру.' : 'Объясните физическую суть явления простыми и точными терминами.'
-                },
-                {
-                    title: isKazakh ? 'Фундаменталды формулалар мен заңдар' : 'Фундаментальные законы и формулы',
-                    points: isKazakh ? [
-                        'Негізгі формула: шамалар арасындағы тура және кері пропорционалдық',
-                        'Тұрақты коэффиценттер және олардың физикалық мағынасы',
-                        'Заңның қолданылу шектері мен шарттары'
-                    ] : [
-                        'Ключевая расчетная формула: прямая и обратная пропорциональность величин',
-                        'Физический смысл входящих констант и коэффициентов',
-                        'Границы применимости и условия выполнения закона'
-                    ],
-                    layout: 'stat',
-                    imagePrompt: 'glowing mathematical physics formulas chalk chalkboard aesthetic 3d',
-                    speakerNotes: isKazakh ? 'Формулаларды талдап, есептер шығаруда қалай қолдануды көрсету.' : 'Детальный разбор формулы и физического смысла каждой переменной.'
-                },
-                {
-                    title: isKazakh ? 'Тәжірибе және эксперименттік дәлелдеу' : 'Экспериментальное подтверждение и опыт',
-                    points: isKazakh ? [
-                        '1-қадам: Тәжірибелік қондырғыны жинау және өлшеу құралдарын қосу',
-                        '2-қадам: Параметрлерді өзгерте отырып, тәуелділік графигін құру',
-                        '3-қадам: Тәжірибелік мәндерді теориялық есептеулермен салыстыру'
-                    ] : [
-                        'Шаг 1: Сборка демонстрационной установки и подключение датчиков',
-                        'Шаг 2: Изменение параметров и построение графической зависимости',
-                        'Шаг 3: Сравнение опытных значений с теоретическими расчетами'
-                    ],
-                    layout: 'steps',
-                    imagePrompt: 'laboratory physics optical laser experiment beam prisms glass 3d',
-                    speakerNotes: isKazakh ? 'Эксперименттің орындалу реті мен өлшеу тәсілдері.' : 'Демонстрация лабораторного эксперимента и построение графиков.'
-                },
-                {
-                    title: isKazakh ? 'Заманауи техника мен өндірісте қолданылуы' : 'Применение в современной технике и технологиях',
-                    points: isKazakh ? [
-                        'Энергетика, машина жасау және робототехника саласында',
-                        'Электроника, микрочиптер және нанотехнологиялық құрылғыларда',
-                        'Көлік қауіпсіздігі және авиакосмостық жүйелерде'
-                    ] : [
-                        'Энергетический комплекс, турбины, двигатели и электроприводы',
-                        'Микроэлектроника, полупроводники, сенсоры и робототехника',
-                        'Транспортные системы, безопасность и аэрокосмическая отрасль'
-                    ],
-                    layout: 'cards-grid',
-                    imagePrompt: 'high tech futuristic turbine engine electronics microchip, 3d render',
-                    speakerNotes: isKazakh ? 'Бұл физикалық заң қалай өмірімізді өзгертетінін көрсету.' : 'Примеры реального воплощения физического закона в промышленности.'
-                },
-                {
-                    title: isKazakh ? 'Сабақты бекіту және есептер' : 'Закрепление материала и задачи',
-                    points: isKazakh ? [
-                        'Негізгі формулалар мен тұжырымдарды есте сақтау',
-                        'Сапалық сұрақ: Қандай жағдайда шама 2 есе артады?',
-                        'Есептеу: Формула бойынша ізделінді мәнді табу алгоритмі'
-                    ] : [
-                        'Ключевой вывод: понимание закона позволяет прогнозировать поведение системы',
-                        'Качественный вопрос: как изменится результат при удвоении ключевого параметра?',
-                        'Практическая задача для самостоятельного решения'
-                    ],
-                    layout: 'insight',
-                    imagePrompt: 'golden brain glowing ideas innovation solution, 3d render',
-                    speakerNotes: isKazakh ? 'Оқушылардың тақырыпты меңгеруін тексеру.' : 'Контрольный опрос и закрепление полученных знаний.'
-                }
-            ];
-        } else if (/биолог|клетк|жасуша|днк|генет|эволюци|микроскоп|бактери|вирус|анатоми/i.test(lower)) {
-            slides = [
-                {
-                    title: cleanTopic,
-                    points: [],
-                    layout: 'cover',
-                    imagePrompt: `${cleanTopic} biology cell dna microscope laboratory 3d render`,
-                    speakerNotes: isKazakh ? `Биология сабағы бойынша баяндама: ${cleanTopic}.` : `Приветствие. Сегодня мы исследуем тему по биологии: ${cleanTopic}.`
-                },
-                {
-                    title: isKazakh ? 'Құрылымы мен биологиялық маңызы' : 'Строение и биологическая роль',
-                    points: isKazakh ? [
-                        'Жасушалық немесе организмдік деңгейдегі негізгі компоненттер',
-                        'Тіршілік процестеріндегі атқаратын басты қызметтері',
-                        'Эволюциялық бейімделу және өзара байланыс'
-                    ] : [
-                        'Ключевые структурные компоненты на клеточном и организменном уровнях',
-                        'Главные функции в процессах метаболизма и жизнедеятельности',
-                        'Эволюционная адаптация и системные взаимосвязи'
-                    ],
-                    layout: 'split-left',
-                    imagePrompt: 'biological cell organelle glowing mitochondria dna 3d render',
-                    speakerNotes: isKazakh ? 'Биологиялық нысанның құрылымы мен ерекшеліктері.' : 'Разбор структуры и клеточной организации.'
-                },
-                {
-                    title: isKazakh ? 'Негізгі биохимиялық және генетикалық көрсеткіштер' : 'Биохимические параметры и генетика',
-                    points: isKazakh ? [
-                        'Генетикалық ақпараттың берілуі және ДНҚ репликациясы',
-                        'Ферменттік реакциялар және энергия алмасуы (АТФ)',
-                        'Гомеостазды сақтау механизмдері'
-                    ] : [
-                        'Передача генетической информации и матричные процессы',
-                        'Ферментативные реакции и энергетический баланс клетки (АТФ)',
-                        'Механизмы регуляции и поддержания гомеостаза'
-                    ],
-                    layout: 'stat',
-                    imagePrompt: 'dna double helix glowing neon green emerald laboratory 3d',
-                    speakerNotes: isKazakh ? 'Биологиялық үдерістердің молекулалық негіздері.' : 'Молекулярные механизмы и генетические закономерности.'
-                },
-                {
-                    title: isKazakh ? 'Зерттеу әдістері мен микроскопия' : 'Методы исследований и микроскопия',
-                    points: isKazakh ? [
-                        '1-қадам: Биологиялық микропрепаратты дайындау',
-                        '2-қадам: Жарық немесе электронды микроскоп арқылы ұлғайтып көру',
-                        '3-қадам: Жасушалар мен ұлпалардың суретін салып, сипаттау'
-                    ] : [
-                        'Шаг 1: Приготовление временного микропрепарата и окрашивание',
-                        'Шаг 2: Исследование под оптическим/электронным микроскопом',
-                        'Шаг 3: Морфологический анализ и документирование структур'
-                    ],
-                    layout: 'steps',
-                    imagePrompt: 'electron microscope laboratory biology scientific analysis 3d',
-                    speakerNotes: isKazakh ? 'Микроскоппен жұмыс істеу тәртібі мен бақылау.' : 'Демонстрация микроскопических методов анализа.'
-                },
-                {
-                    title: isKazakh ? 'Медицина мен биотехнологияда қолданылуы' : 'Биотехнологии и медицинское применение',
-                    points: isKazakh ? [
-                        'Гендік инженерия және вакциналар жасау',
-                        'Ауыл шаруашылығындағы селекция және биопрепараттар',
-                        'Экологиялық мониторинг және биоремедиация'
-                    ] : [
-                        'Генная инженерия, разработка вакцин и персонализированная медицина',
-                        'Селекция, агробиотехнологии и повышение продуктивности',
-                        'Экологический мониторинг и биоочистка природной среды'
-                    ],
-                    layout: 'cards-grid',
-                    imagePrompt: 'biotechnology laboratory flask plant dna medical discovery 3d',
-                    speakerNotes: isKazakh ? 'Заманауи биотехнологияның жетістіктері.' : 'Практическое применение в медицине и биотехнологиях.'
-                },
-                {
-                    title: isKazakh ? 'Қорытынды және тексеру сұрақтары' : 'Итоги и контрольные вопросы',
-                    points: isKazakh ? [
-                        'Тірі табиғаттың біртұтастығы мен үйлесімі',
-                        'Сұрақ: Жасушаның негізгі органоидтары қандай қызмет атқарады?',
-                        'Сұрақ: Генетикалық кодтың әмбебаптығы неде?'
-                    ] : [
-                        'Единство биосферы и системная организация живой материи',
-                        'Вопрос: Какую ключевую функцию выполняют мембранные органеллы?',
-                        'Вопрос: В чем проявляется универсальность генетического кода?'
-                    ],
-                    layout: 'insight',
-                    imagePrompt: 'glowing green leaf nature ecosystem globe 3d render',
-                    speakerNotes: isKazakh ? 'Сабақты қорытындылап, негізгі түйінді атап өту.' : 'Обобщение темы и контрольные вопросы для проверки.'
-                }
-            ];
-        } else {
-            slides = [
-                {
-                    title: cleanTopic,
-                    points: [
-                        isKazakh ? 'Ғылыми-танымдық шолу және маңызды тұжырымдар' : 'Комплексный обзор, фундаментальные основы и ключевые факты'
-                    ],
-                    layout: 'cover',
-                    imagePrompt: `${cleanTopic} professional cinematic 3d illustration presentation masterpiece 8k`,
-                    speakerNotes: isKazakh ? `Құрметті қатысушылар, бүгінгі тақырыбымыз: ${cleanTopic}.` : `Приветствие участников. Тема нашего сегодняшнего выступления: ${cleanTopic}.`
-                },
-                {
-                    title: isKazakh ? `Негізгі ұғымдары мен мәні: ${cleanTopic}` : `Введение и ключевые понятия: ${cleanTopic}`,
-                    points: isKazakh ? [
-                        `${cleanTopic} — заманауи ғылым мен өмірдегі маңызды бағыттардың бірі`,
-                        'Тақырыпқа қатысты негізгі түсініктер мен терминологиялық анықтамалар',
-                        'Зерттеу пәні мен қарастырылатын басты сұрақтар'
-                    ] : [
-                        `${cleanTopic} — фундаментальное явление и актуальное направление в современной науке и практике`,
-                        'Базовые определения, структура понятийного аппарата и терминология',
-                        'Ключевые предпосылки, объект изучения и главные рассматриваемые аспекты'
-                    ],
-                    layout: 'split-left',
-                    imagePrompt: `${cleanTopic} conceptual scientific theory glowing 3d render octane`,
-                    speakerNotes: isKazakh ? 'Тақырыптың өзектілігі мен негізгі мәнін ашып түсіндіру.' : 'Обоснуйте актуальность темы и сформулируйте главный тезис выступления.'
-                },
-                {
-                    title: isKazakh ? 'Негізгі көрсеткіштер мен ғылыми деректер' : 'Главные параметры, показатели и факты',
-                    statVal: '★ Топ',
-                    points: isKazakh ? [
-                        'Басты сандық және сапалық көрсеткіштердің жүйелі талдауы',
-                        'Құбылыстың негізгі қасиеттері мен тәуелділік сипаттамасы',
-                        'Практикалық зерттеулердегі дәлдік пен тиімділік'
-                    ] : [
-                        'Системный анализ ключевых качественных и количественных характеристик',
-                        'Фундаментальные закономерности, принципы взаимодействия и метрики',
-                        'Аналитические данные и результаты контрольных наблюдений'
-                    ],
-                    layout: 'stat',
-                    imagePrompt: `${cleanTopic} analytics data metrics infographic glowing 3d render`,
-                    speakerNotes: isKazakh ? 'Негізгі сандық және сапалық көрсеткіштерге назар аудару.' : 'Представьте ключевые аналитические данные и прокомментируйте главную метрику.'
-                },
-                {
-                    title: isKazakh ? 'Даму кезеңдері мен орындалу алгоритмі' : 'Хронология и ключевые этапы развития',
-                    points: isKazakh ? [
-                        '1-кезең: Бастапқы зерттеу және негіздеме қалыптастыру',
-                        '2-кезең: Негізгі үдерісті жүзеге асыру және тәжірибелік тексеру',
-                        '3-кезең: Қорытынды нәтижелерді шығару және тәжірибеге енгізу'
-                    ] : [
-                        'Этап 1: Исследование исходных условий и концептуальное проектирование',
-                        'Этап 2: Практическая реализация ключевых процессов и мониторинг',
-                        'Этап 3: Формирование итоговых результатов и масштабирование'
-                    ],
-                    layout: 'steps',
-                    imagePrompt: `${cleanTopic} process roadmap progression timeline glowing 3d isometric`,
-                    speakerNotes: isKazakh ? 'Жүйелі даму кезеңдерін рет-ретімен баяндау.' : 'Опишите пошаговую методологию и ключевые стадии реализации.'
-                },
-                {
-                    title: isKazakh ? 'Құрылымы, бағыттары және маңызы' : 'Структура, компоненты и практическая ценность',
-                    points: isKazakh ? [
-                        'Құрамдас бөліктер мен ішкі жүйелердің өзара үйлесімді байланысы',
-                        'Отандық және халықаралық тәжірибедегі үздік шешімдер',
-                        'Заманауи технологиялар мен тиімді тәсілдерді қолдану',
-                        'Тиімділікті арттыруға бағытталған практикалық ұсыныстар'
-                    ] : [
-                        'Взаимосвязь ключевых структурных элементов и внутренних систем',
-                        'Передовые отечественные и международные практики применения',
-                        'Использование современных технологических инструментов',
-                        'Практические сценарии внедрения и прикладная отдача'
-                    ],
-                    layout: 'cards-grid',
-                    imagePrompt: `${cleanTopic} modular structure network connected blocks 3d render`,
-                    speakerNotes: isKazakh ? 'Құрылымдық ерекшеліктер мен тәжірибелік қолдану мысалдары.' : 'Разберите архитектуру системы и реальные примеры практического применения.'
-                },
-                {
-                    title: isKazakh ? 'Салыстырмалы талдау және артықшылықтары' : 'Сравнительный анализ и преимущества',
-                    points: isKazakh ? [
-                        'Дәстүрлі тәсілдерге қарағанда жоғары тиімділік пен сенімділік',
-                        'Үдерістерді оңтайландыру және уақыт пен ресурсты үнемдеу',
-                        'Инновациялық шешімдердің ұзақ мерзімді нәтижелілігі',
-                        'Жаңа мүмкіндіктер мен болашақ өсу әлеуеті'
-                    ] : [
-                        'Высокая надежность и результативность по сравнению с базовыми аналогами',
-                        'Оптимизация процессов, экономия ключевых ресурсов и повышение точности',
-                        'Долгосрочные системные преимущества внедряемых решений',
-                        'Открытие новых перспектив для дальнейшего масштабирования'
-                    ],
-                    layout: 'compare',
-                    imagePrompt: `${cleanTopic} comparative analysis balance scales innovation 3d render`,
-                    speakerNotes: isKazakh ? 'Салыстырмалы талдау жасап, басты артықшылықтарды көрсету.' : 'Сопоставьте ключевые подходы и подчеркните главные конкурентные преимущества.'
-                },
-                {
-                    title: isKazakh ? 'Қорытынды, тұжырымдар мен болашағы' : 'Стратегические выводы и перспективы',
-                    points: isKazakh ? [
-                        `«${cleanTopic} — ғылым мен қоғам дамуындағы серпінді қадам»`,
-                        'Қарастырылған мәліметтер негізінде жасалған басты тұжырымдар',
-                        'Болашақтағы даму векторлары мен жаңа мүмкіндіктер'
-                    ] : [
-                        `«${cleanTopic} — стратегический драйвер научно-технического и практического прогресса»`,
-                        'Обобщение рассмотренного материала и ключевые аналитические выводы',
-                        'Перспективные векторы развития, открытые вопросы и направления для исследований'
-                    ],
-                    layout: 'insight',
-                    imagePrompt: `${cleanTopic} futuristic glowing idea vision light crystal 3d render`,
-                    speakerNotes: isKazakh ? 'Баяндаманы қорытындылап, сұрақ-жауап кезеңіне өту.' : 'Подведите итоги выступления и перейдите к открытой дискуссии с аудиторией.'
-                }
-            ];
-        }
+        ];
     }
 
-    const targetSlideCount = parseInt((options && options.slideCount) || 7, 10);
+    // ── FIT TO REQUESTED SLIDE COUNT (5, 7, 10, 12) ────────────
     if (slides && slides.length > 0) {
         if (slides.length > targetSlideCount) {
+            // Trim to target count (e.g. 5)
             const cover = slides[0];
             const last = slides[slides.length - 1];
             const middle = slides.slice(1, slides.length - 1);
@@ -2519,48 +2396,11 @@ function generateOfflineSmartDeck(topic, sourceContext = '', intel = null, optio
                 slides = [cover, ...selectedMiddle, last];
             }
         } else if (slides.length < targetSlideCount) {
-            const diff = targetSlideCount - slides.length;
-            const extraLayouts = ['stat', 'compare', 'cards-grid', 'steps', 'insight'];
-            for (let i = 0; i < diff; i++) {
-                const extraLayout = extraLayouts[i % extraLayouts.length];
-                if (isKazakh) {
-                    slides.splice(slides.length - 1, 0, {
-                        title: `${cleanTopic}: Қосымша мәліметтер мен талдау #${i + 1}`,
-                        points: [
-                            'Тақырыпқа қатысты маңызды тәжірибелік мысалдар мен фактілер',
-                            'Күнделікті өмірмен және заманауи ғылыммен байланысы',
-                            'Оқушылар мен зерттеушілерге арналған қосымша ұсыныстар'
-                        ],
-                        layout: extraLayout,
-                        imagePrompt: `${cleanTopic} scientific analysis detail 3d render 8k`,
-                        speakerNotes: 'Бұл слайдта тақырыптың қосымша аспектілері мен ерекшеліктері қарастырылады.'
-                    });
-                } else if (isEnglish) {
-                    slides.splice(slides.length - 1, 0, {
-                        title: `${cleanTopic}: In-Depth Analysis #${i + 1}`,
-                        points: [
-                            'Key practical observations and empirical evidence',
-                            'Interdisciplinary applications and modern advancements',
-                            'Critical insights and strategic recommendations'
-                        ],
-                        layout: extraLayout,
-                        imagePrompt: `${cleanTopic} scientific modern detailed study 3d render 8k`,
-                        speakerNotes: 'Detailed discussion of in-depth analytical points.'
-                    });
-                } else {
-                    slides.splice(slides.length - 1, 0, {
-                        title: `${cleanTopic}: Углубленный анализ #${i + 1}`,
-                        points: [
-                            'Важные практические примеры и ключевые наблюдения',
-                            'Связь с современными научно-техническими разработками',
-                            'Дополнительные выводы и прикладные рекомендации'
-                        ],
-                        layout: extraLayout,
-                        imagePrompt: `${cleanTopic} scientific analysis detail 3d render 8k`,
-                        speakerNotes: 'Подробный комментарий к дополнительным материалам и аналитике.'
-                    });
-                }
-            }
+            // Expand to target count (e.g. 10 or 12) using unique distinct extra slides
+            const neededExtras = targetSlideCount - slides.length;
+            const extraSlides = buildExtraSlides(cleanTopic, neededExtras);
+            // Insert extra slides before the last slide (insight/conclusion)
+            slides.splice(slides.length - 1, 0, ...extraSlides);
         }
     }
 
@@ -2577,8 +2417,6 @@ function generateOfflineSmartDeck(topic, sourceContext = '', intel = null, optio
 }
 
 async function callUniversalAI(promptText, sourceContext = '', intel = null, options = {}) {
-    let systemPrompt = '';
-
     const slideCount = (options && options.slideCount) || 7;
     const audienceLevel = (options && options.audienceLevel) || 'school';
     const requestedLang = (options && options.slideLang) || 'auto';
@@ -2590,177 +2428,51 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null, opt
         targetLang = isKk ? 'kk' : 'ru';
     }
 
-    const langDirective = targetLang === 'kk'
-        ? 'ТІЛДІК ТАЛАП: Барлық тақырыптар, слайд мазмұны, негізгі тезистер мен спикер жазбалары таза, сауатты, академиялық ҚАЗАҚ ТІЛІНДЕ болуы шарт! Қазақша әріптерді (ә, і, ң, ғ, ү, ұ, қ, ө, һ) дұрыс қолдан.'
-        : targetLang === 'en'
-        ? 'LANGUAGE REQUIREMENT: All titles, slide bullets, facts, and speaker notes must be in clear modern academic ENGLISH.'
-        : 'ЯЗЫКОВОЕ ТРЕБОВАНИЕ: Все заголовки, тезисы, факты и шпаргалка спикера должны быть на грамотном РУССКОМ ЯЗЫКЕ.';
+    const langName = targetLang === 'kk' ? 'Қазақ тілі' : (targetLang === 'en' ? 'English' : 'Русский');
 
-    const audienceDesc = audienceLevel === 'school'
-        ? 'Мектеп оқушылары мен ұстаздарға арналған көрнекі түсінікті стиль (7-11 сынып)'
-        : audienceLevel === 'college'
-        ? 'Колледж бен ЖОО студенттеріне арналған тереңдетілген білім беру стилі'
-        : audienceLevel === 'business'
-        ? 'Инвесторлар, стартаптар және кәсіпкерлерге арналған нақты KPI және нәтижелі pitch deck стилі'
-        : 'Ғылыми конференциялар мен академиялық баяндамаларға арналған зерттеу стилі';
-
-    if (sourceContext && sourceContext.trim()) {
-        systemPrompt = [
-            'Ты профессиональный методист и арт-директор образовательных презентаций.',
-            'На основе ПРЕДОСТАВЛЕННОГО КОНТЕКСТА создай структуру презентации. Не придумывай информацию от себя. Верни JSON объект с полями "title" и "slides".',
-            '',
-            `${langDirective}`,
-            `АУДИТОРИЯ: ${audienceDesc}.`,
-            `СЛАЙДТАР САНЫ: Дәл ${slideCount} слайд жаса.`,
-            '',
-            'СТРОГИЕ ПРАВИЛА ИЗВЛЕЧЕНИЯ (Grounded RAG Generation):',
-            '1. Все тезисы, факты, формулы, правила и выводы должны быть извлечены ИСКЛЮЧИТЕЛЬНО из предоставленного текста источника.',
-            '2. Избегай галлюцинаций. Не добавляй стороннюю информацию, которой нет в контексте источника.',
-            `3. Создай ровно ${slideCount} слайдов. Первый слайд — титульная обложка (points: [], layout: "cover").`,
-            '4. Поле imagePrompt пиши СТРОГО НА АНГЛИЙСКОМ ЯЗЫКЕ для генератора ИИ-иллюстраций Pollinations AI.',
-            '5. Ответь СТРОГО валидным JSON объектом без markdown оберток.',
-            '',
-            'Формат ответа JSON:',
-            '{',
-            '  "title": "Заголовок презентации по источнику",',
-            '  "theme": {',
-            '    "backgroundColor": "#0f172a",',
-            '    "primaryTextColor": "#f8fafc",',
-            '    "accentColor": "#38bdf8",',
-            '    "style": "Академический RAG"',
-            '  },',
-            '  "slides": [',
-            '    {',
-            '      "title": "Заголовок слайда",',
-            '      "layout": "cover | split-left | stat | steps | cards-grid | compare | insight",',
-            '      "points": ["Фактический пункт 1 из источника с точными терминами/числами", "Фактический пункт 2 из источника"],',
-            '      "imagePrompt": "Short accurate description in English for AI image generator, clean 3d render",',
-            '      "speakerNotes": "Подсказка спикеру: что рассказать на этом слайде по материалам источника."',
-            '    }',
-            '  ]',
-            '}'
-        ].join('\n');
-    } else {
-        systemPrompt = [
-            'Ты ведущий арт-директор и эксперт по созданию структурированных образовательных, биографических и научных презентаций мирового уровня.',
-            'Создай структурированную презентацию СТРОГО ПО ТЕМЕ ЗАПРОСА («' + promptText + '»).',
-            'ВСЕ заголовки, тезисы, факты, даты и выводы должны относиться ИСКЛЮЧИТЕЛЬНО к этой теме.',
-            '',
-            `${langDirective}`,
-            `АУДИТОРИЯ: ${audienceDesc}.`,
-            `СЛАЙДТАР САНЫ: Дәл ${slideCount} слайд жаса.`,
-            '',
-            'СТРОГИЕ ПРАВИЛА:',
-            '1. Если тема о персоне/личности (певец, композитор, писатель, ученый, исторический деятель, актер):',
-            '   - Слайд 1 (cover): Титул с именем личности и главным статусом.',
-            '   - Слайд 2 (split-left): Биография, происхождение, годы жизни / становление.',
-            '   - Слайд 3 (stat): Ключевое феноменальное достижение, рекорд или числовой показатель (например, "6 октав", "№ 1", "45+ наград").',
-            '   - Слайд 4 (steps): Основные хронологические этапы творческого/профессионального пути.',
-            '   - Слайд 5 (cards-grid): Главные шедевры, произведения, проекты и международные премии.',
-            '   - Слайд 6 (compare): Вклад в национальную культуру и признание на мировой арене.',
-            '   - Слайд 7 (insight): Главная цитата, историческое наследие и миссия.',
-            '2. Если тема научная или школьная (физика, биология, химия, космос, математика, история):',
-            '   - Изложи сущность явления, формулы, эксперименты, этапы развития, структуру и выводы.',
-            '3. Если тема о стартап-хабе или IT-парке (Kyzylorda Hub, Astana Hub, инкубаторы):',
-            '   - Используй сервисы хаба, инкубацию, показатели резидентов и инвестиции.',
-            '4. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО подмешивать стартапы или инвестиции к темам о людях, науке или искусстве!',
-            '5. Ответь СТРОГО валидным JSON объектом без markdown оберток.',
-            '',
-            'Формат ответа JSON:',
-            '{',
-            '  "title": "Полное точное название темы",',
-            '  "theme": {',
-            '    "backgroundColor": "#060713",',
-            '    "primaryTextColor": "#cbd5e1",',
-            '    "accentColor": "#00f0ff",',
-            '    "style": "Cyber Nebula 4K"',
-            '  },',
-            '  "slides": [',
-            '    {',
-            '      "title": "Точный заголовок слайда",',
-            '      "layout": "cover | split-left | stat | steps | cards-grid | compare | insight | hub-ecosystem | kpi-grid",',
-            '      "statVal": "Ключевое число / факт (для stat)",',
-            '      "points": ["Конкретный факт 1 по теме запроса", "Конкретный факт 2 по теме запроса", "Конкретный факт 3 по теме запроса"],',
-            '      "imagePrompt": "Accurate English description for 3d octane render 8k",',
-            '      "speakerNotes": "Шпаргалка спикеру: тезисы для выступления на 1 минуту."',
-            '    }',
-            '  ]',
-            '}'
-        ].join('\n');
-    }
-
-    let userContent = `ТЕМА ПРЕЗЕНТАЦИИ: ${promptText}\nКОЛИЧЕСТВО СЛАЙДОВ: ${slideCount}\nЯЗЫК: ${targetLang === 'kk' ? 'Қазақша' : targetLang === 'en' ? 'English' : 'Русский'}`;
-    if (sourceContext && sourceContext.trim()) {
-        userContent = [
-            'ДОСТОВЕРНЫЙ МАТЕРИАЛ ИЗ ИСТОЧНИКА / ЭНЦИКЛОПЕДИИ:',
-            '========================================',
-            sourceContext.trim(),
-            '========================================',
-            '',
-            `ЗАДАНИЕ: На основе приведенного выше материала создай структурированную презентацию строго по теме: ${promptText}`,
-            `Количество слайдов: ${slideCount}. Язык: ${targetLang === 'kk' ? 'Қазақша' : targetLang === 'en' ? 'English' : 'Русский'}`,
-            'Все факты, имена, даты и показатели извлекай строго из этого текста.'
-        ].join('\n');
-    }
-
-    // 1. TIER 1: Google Gemini (2.5-Flash and 1.5-Flash)
-    const activeGeminiKey = (API_KEY && (API_KEY.startsWith('AQ.') || API_KEY.startsWith('AIzaSy'))) ? API_KEY : FALLBACK_GEMINI_KEY;
-    const geminiModels = ['gemini-2.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
-
-    for (let model of geminiModels) {
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`;
-            const res = await fetchWithTimeout(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    system_instruction: { parts: [{ text: systemPrompt }] },
-                    contents: [{ role: 'user', parts: [{ text: userContent }] }],
-                    generationConfig: {
-                        temperature: sourceContext ? 0.2 : 0.7,
-                        responseMimeType: 'application/json'
-                    }
-                })
-            }, 15000);
-            if (res.ok) {
-                const data = await res.json();
-                const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                const parsed = parseJsonDeck(rawText);
-                if (parsed && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
-                    return parsed;
-                }
-            }
-        } catch (e) {
-            console.warn(`Gemini model ${model} skipped:`, e.message);
-        }
-    }
-
-    // 2. TIER 2: Pollinations AI POST (Direct JSON generator)
+    // 1. FAST TIER: Pollinations AI Text JSON Generator (100% Free, No key, Direct JSON)
     try {
-        const res = await fetchWithTimeout('https://text.pollinations.ai/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userContent }
-                ],
-                model: 'openai',
-                json: true
-            })
-        }, 12000);
+        const compactSystem = `You are an expert presentation designer. Create a JSON presentation with ${slideCount} slides about "${promptText}". Language: ${langName}. Respond with pure JSON only, matching format: {"title":"...","slides":[{"title":"...","layout":"cover|split-left|stat|steps|cards-grid|compare|insight","points":["...","..."],"imagePrompt":"... in English","speakerNotes":"..."}]}`;
+        const res = await fetchWithTimeout(`https://text.pollinations.ai/${encodeURIComponent(compactSystem)}?json=true&model=openai`, {}, 10000);
         if (res.ok) {
-            const rawText = await res.text();
-            const parsed = parseJsonDeck(rawText);
-            if (parsed && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+            const raw = await res.text();
+            const parsed = parseJsonDeck(raw);
+            if (parsed && Array.isArray(parsed.slides) && parsed.slides.length >= 3) {
+                console.info('[AI Deck] Successfully generated via Pollinations AI');
                 return parsed;
             }
         }
     } catch (e) {
-        console.warn('Pollinations AI POST skipped:', e.message);
+        console.warn('Pollinations AI fast tier skipped:', e.message);
     }
 
-    // 3. TIER 3: User OpenAI Key (if user configured personal sk-proj-... key)
+    // 2. TIER 2: Google Gemini (ONLY if user has a genuine key starting with AIzaSy)
+    if (API_KEY && API_KEY.startsWith('AIzaSy')) {
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+            const gemPrompt = `Create a ${slideCount}-slide presentation in ${langName} on topic "${promptText}". Return pure JSON with title and slides.`;
+            const res = await fetchWithTimeout(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [{ text: gemPrompt }] }],
+                    generationConfig: { responseMimeType: 'application/json' }
+                })
+            }, 4000);
+            if (res.ok) {
+                const data = await res.json();
+                const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                const parsed = parseJsonDeck(rawText);
+                if (parsed && Array.isArray(parsed.slides) && parsed.slides.length >= 3) {
+                    return parsed;
+                }
+            }
+        } catch (e) {
+            console.warn('Gemini personal key skipped:', e.message);
+        }
+    }
+
+    // 3. TIER 3: User OpenAI Key (sk-proj-...)
     if (API_KEY && API_KEY.startsWith('sk-proj-')) {
         try {
             const res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
@@ -2772,17 +2484,17 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null, opt
                 body: JSON.stringify({
                     model: 'gpt-4o-mini',
                     messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: userContent }
+                        { role: 'system', content: `Create a ${slideCount}-slide presentation in ${langName} as JSON object.` },
+                        { role: 'user', content: promptText }
                     ],
-                    temperature: sourceContext ? 0.25 : 0.7
+                    temperature: 0.3
                 })
-            }, 12000);
+            }, 5000);
             if (res.ok) {
                 const oaiData = await res.json();
                 const content = oaiData?.choices?.[0]?.message?.content;
                 const parsed = parseJsonDeck(content);
-                if (parsed && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+                if (parsed && Array.isArray(parsed.slides) && parsed.slides.length >= 3) {
                     return parsed;
                 }
             }
@@ -2791,12 +2503,14 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null, opt
         }
     }
 
-    // 4. TIER 4: Guaranteed Local Pedagogical RAG Engine (Zero failure guarantee)
-    console.info('Activating Grounded Smart Deck Engine for instant generation...');
+    // 4. TIER 4: Guaranteed Pedagogical Deck Synthesizer (Instant, Zero Delay, Content-Rich)
+    console.info('Activating High-Grade Smart Deck Synthesizer...');
     return generateOfflineSmartDeck(promptText, sourceContext, intel, options);
 }
 
 const callGemini = callUniversalAI;
+
+
 
 
 
@@ -3022,13 +2736,16 @@ function loadActiveSlideToEditor() {
     const slide = getCurrentSlide();
     if (!slide) return;
 
-    document.getElementById('active-slide-num').textContent = presentationState.currentSlideIndex + 1;
-    document.getElementById('edit-slide-title').value = slide.title || '';
-    document.getElementById('edit-slide-points').value = (slide.points || []).join('\n');
+    const activeNum = document.getElementById('active-slide-num');
+    if (activeNum) activeNum.textContent = presentationState.currentSlideIndex + 1;
+    const titleInput = document.getElementById('edit-slide-title');
+    if (titleInput) titleInput.value = slide.title || '';
+    const pointsInput = document.getElementById('edit-slide-points');
+    if (pointsInput) pointsInput.value = (slide.points || []).join('\n');
     const notesInput = document.getElementById('edit-speaker-notes');
     if (notesInput) notesInput.value = slide.speakerNotes || '';
-    document.getElementById('edit-image-prompt').value = slide.imagePrompt || '';
-    
+    const promptInput = document.getElementById('edit-image-prompt');
+    if (promptInput) promptInput.value = slide.imagePrompt || '';
     const editImgUrl = document.getElementById('edit-image-url');
     if (editImgUrl) editImgUrl.value = slide.imageUrl || '';
 
@@ -3065,37 +2782,32 @@ function transliterateText(str) {
 
 function sanitizeImagePrompt(prompt, slideTitle = '', topicTitle = '') {
     let text = (prompt || '').trim();
-    if (!text || text.length < 3) {
-        text = `${slideTitle} ${topicTitle}`.trim() || 'educational presentation science illustration';
+    const cleanTitle = (slideTitle || '').trim();
+    const cleanTopic = (topicTitle || '').trim();
+
+    // Contextual focus based on the specific slide title and content
+    const subject = `${cleanTitle} ${text}`.toLowerCase();
+    let visualFocus = 'detailed educational 3d visualization, octane render, cinematic lighting';
+    
+    if (/портрет|биография|өмірбаян|тұлға|персона|личность|абай|димаш|шоқан|ғалым|автор/i.test(subject)) {
+        visualFocus = 'cinematic character portrait, dramatic stage and studio lighting, hyperrealistic 8k';
+    } else if (/формула|заң|теорема|закон|есеп|уравнен|расчет|stat|kpi/i.test(subject)) {
+        visualFocus = 'glowing scientific mathematical physics formulas, illuminated chalkboard equations, 3d render';
+    } else if (/зертхана|тәжірибе|опыт|прибор|құрал|лаборатор|аппарат|микроскоп/i.test(subject)) {
+        visualFocus = 'high tech research laboratory experiment setup with optical laser glass instruments, 3d render';
+    } else if (/кезең|қадам|барысы|этап|хронолог|тарих|steps/i.test(subject)) {
+        visualFocus = 'isometric technological workflow roadmap progression steps, glowing volumetric neon 3d';
+    } else if (/құрылым|құрам|жүйе|жасуша|ағза|днк|молекул|cards/i.test(subject)) {
+        visualFocus = 'exploded cross-section architecture 3d model, bioluminescent emerald and cyan lighting';
+    } else if (/салыстыр|артықшылық|айырмашылық|compare/i.test(subject)) {
+        visualFocus = 'comparative dual contrast balance scales innovation visual concept 3d';
+    } else if (/қорытынды|болашақ|викторина|сұрақ|инсайт|insight/i.test(subject)) {
+        visualFocus = 'glowing crystal light bulb futuristic trophy eureka moment vision 3d render';
     }
 
-    const mappings = [
-        { regex: /абай|құнанбаев|кунанбаев/i, prompt: 'Abai Kunanbayev historical Kazakh poet philosopher national costume portrait painting, masterpiece, dramatic cinematic lighting, 8k render' },
-        { regex: /шоқан|уәлиханов|валиханов/i, prompt: 'Shoqan Walikhanov Kazakh scholar researcher portrait in historical study room, dramatic lighting, 8k render' },
-        { regex: /ыбырай|алтынсарин/i, prompt: 'Ybyrai Altynsarin Kazakh educator teacher vintage classroom, masterpiece oil painting' },
-        { regex: /жасуша|клетка|митохондр|хлоропласт|днк|генетик/i, prompt: 'glowing biological cell structure DNA double helix organelles 3D microscope scientific rendering octane, bioluminescent emerald lighting 8k' },
-        { regex: /ом|ток|кернеу|электр|резистор|тізбек|цепь/i, prompt: 'glowing electrical circuit physics laboratory experiment voltmeter ammeter glowing wires 3D octane render 8k' },
-        { regex: /ньютон|гравитац|динамика|күш|сила|инерци/i, prompt: 'Newtonian physics laboratory experiment motion forces gravity pendulum 3D cinematic render 8k' },
-        { regex: /период|менделеев|химия|реакци|молекул|атом/i, prompt: 'chemistry laboratory colorful test tubes glowing chemical reaction glowing neon molecules 3D octane render 8k' },
-        { regex: /пифагор|геометр|үшбұрыш|треугольник/i, prompt: 'Pythagorean geometric mathematical theorem golden ratio visual blueprint 3D isometric 8k' },
-        { regex: /ғарыш|космос|планет|күн жүйе|астроном|марс/i, prompt: 'solar system planets orbiting sun in deep cosmic nebula space photorealistic 8k, volumetric lighting' },
-        { regex: /жасанды интеллект|робот|информатик|нейро|ai/i, prompt: 'futuristic artificial intelligence neural cybernetic network glowing holographic brain 3D cyberpunk render 8k' },
-        { regex: /тарих|история|батыр|хан|қазақ/i, prompt: 'historical Kazakh warriors nomads yurt culture dramatic golden sunset landscape cinematic 8k' },
-        { regex: /экология|табиғат|природа|өсімдік/i, prompt: 'nature ecology green blooming environment forest landscape clean energy 3d octane render 8k' }
-    ];
-
-    for (const m of mappings) {
-        if (m.regex.test(text) || m.regex.test(slideTitle) || m.regex.test(topicTitle)) {
-            return m.prompt;
-        }
-    }
-
-    const hasCyrillic = /[а-яА-ЯёЁәіңғүұқөһӘІҢҒҮҰҚӨҺ]/.test(text);
-    if (hasCyrillic) {
-        return `educational visual concept of ${transliterateText(text)}, high quality 3d cinematic render, octane lighting, unreal engine 5 aesthetic, 8k`;
-    }
-
-    return `${text}, 3d octane render, volumetric cinematic lighting, 8k`;
+    const titleEn = transliterateText(cleanTitle || cleanTopic);
+    const topicEn = transliterateText(cleanTopic);
+    return `${topicEn}, ${titleEn}, ${visualFocus}, unreal engine 5 aesthetic, 8k`;
 }
 
 function generateSvgIllustration(title, accentColor, bgColor) {
@@ -3139,7 +2851,7 @@ async function fetchWikipediaKnowledge(query) {
     for (const lang of langOrder) {
         try {
             const url = `https://${lang}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(cleanQuery)}&gsrlimit=2&prop=extracts&exintro=1&explaintext=1&format=json&origin=*`;
-            const res = await fetchWithTimeout(url, {}, 4000);
+            const res = await fetchWithTimeout(url, {}, 3500);
             if (res.ok) {
                 const data = await res.json();
                 const pages = Object.values(data?.query?.pages || {});
@@ -3156,7 +2868,7 @@ async function fetchWikipediaKnowledge(query) {
     return '';
 }
 
-async function fetchWikipediaImages(query, limit = 5) {
+async function fetchWikipediaImages(query, limit = 8) {
     if (!query) return [];
     const cleanQuery = query.replace(/^(кто такой|кто такая|что такое|ким ол|не ол|туралы|слайд|презентация|баяндама|тақырыбында|реферат|расскажи про|тема)\s+/gi, '').trim();
     if (!cleanQuery) return [];
@@ -3173,7 +2885,7 @@ async function fetchWikipediaImages(query, limit = 5) {
         for (const lang of ['ru', 'kk', 'en']) {
             try {
                 const url = `https://${lang}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrlimit=${limit}&prop=pageimages|extracts&exintro=1&explaintext=1&pithumbsize=1200&format=json&origin=*`;
-                const res = await fetchWithTimeout(url, {}, 3500);
+                const res = await fetchWithTimeout(url, {}, 3000);
                 if (res.ok) {
                     const data = await res.json();
                     const pages = Object.values(data?.query?.pages || {});
@@ -3188,99 +2900,135 @@ async function fetchWikipediaImages(query, limit = 5) {
                         }
                     }
                 }
-            } catch (e) {
-                // skip
-            }
+            } catch (e) {}
         }
         if (results.length >= limit) break;
     }
     return results;
 }
 
+// Vast Curated Collection of 15+ Unique HD Photos per Domain
+const CURATED_PHOTO_BANKS = {
+    biology: [
+        { url: 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=1200&auto=format&fit=crop&q=80', label: 'ДНҚ құрылымы және генетика' },
+        { url: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1200&auto=format&fit=crop&q=80', label: 'Микробиологиялық зертхана' },
+        { url: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200&auto=format&fit=crop&q=80', label: 'Биомедициналық талдау' },
+        { url: 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=1200&auto=format&fit=crop&q=80', label: 'Жасушалық биология және микроскоп' },
+        { url: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200&auto=format&fit=crop&q=80', label: 'Адам анатомиясы мен жүйелері' },
+        { url: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=1200&auto=format&fit=crop&q=80', label: 'Биохимиялық реакциялар' },
+        { url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&auto=format&fit=crop&q=80', label: 'Нейробиология және ми' },
+        { url: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=1200&auto=format&fit=crop&q=80', label: 'Медициналық диагностика' },
+        { url: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=1200&auto=format&fit=crop&q=80', label: 'Ғылыми жаңалықтар' },
+        { url: 'https://images.unsplash.com/photo-1511497584788-87676104235f?w=1200&auto=format&fit=crop&q=80', label: 'Өсімдік жасушасы мен фотосинтез' },
+        { url: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1200&auto=format&fit=crop&q=80', label: 'Дәрігерлік зерттеу' },
+        { url: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=1200&auto=format&fit=crop&q=80', label: 'Жүрек және қанайналым' },
+        { url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&auto=format&fit=crop&q=80', label: 'Клиникалық физиология' },
+        { url: 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?w=1200&auto=format&fit=crop&q=80', label: 'Биотехнологиялық инновациялар' },
+        { url: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1200&auto=format&fit=crop&q=80', label: 'Органикалық зерттеулер' }
+    ],
+    physics: [
+        { url: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=1200&auto=format&fit=crop&q=80', label: 'Кванттық оптика және лазер' },
+        { url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=1200&auto=format&fit=crop&q=80', label: 'Зертханалық физикалық тәжірибе' },
+        { url: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1200&auto=format&fit=crop&q=80', label: 'Формулалар мен есептеулер' },
+        { url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&auto=format&fit=crop&q=80', label: 'Инженерлік аппаратура' },
+        { url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&auto=format&fit=crop&q=80', label: 'Микроэлектроника және чиптер' },
+        { url: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80', label: 'Электр және кибернетика' },
+        { url: 'https://images.unsplash.com/photo-1507499739999-097706ad8914?w=1200&auto=format&fit=crop&q=80', label: 'Плазма және электр разряды' },
+        { url: 'https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?w=1200&auto=format&fit=crop&q=80', label: 'Астрофизикалық кеңістік' },
+        { url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1200&auto=format&fit=crop&q=80', label: 'Магнит өрісі және күш сызықтары' },
+        { url: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1200&auto=format&fit=crop&q=80', label: 'Эксперименттік құрылғылар' },
+        { url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=1200&auto=format&fit=crop&q=80', label: 'Жоғары технологиялық өндіріс' },
+        { url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80', label: 'Кванттық есептеулер' },
+        { url: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?w=1200&auto=format&fit=crop&q=80', label: 'Оптикалық призма және спектр' },
+        { url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&auto=format&fit=crop&q=80', label: 'Электрондық жүйелер' },
+        { url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop&q=80', label: 'Гравитация және ғарыш' }
+    ],
+    dimash: [
+        { url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Kudaibergen_at_New_Wave_in_2019.jpg/1280px-Kudaibergen_at_New_Wave_in_2019.jpg', label: 'Димаш Құдайберген (New Wave)' },
+        { url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80', label: 'Концерт және вокалдық сахна' },
+        { url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&auto=format&fit=crop&q=80', label: 'Стадиондық шоу және аншлаг' },
+        { url: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=1200&auto=format&fit=crop&q=80', label: 'Музыкалық марапаттар мен сахна' },
+        { url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80', label: 'Студия және микрофон' },
+        { url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&auto=format&fit=crop&q=80', label: 'Вокал шеберлігі және сахна' },
+        { url: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=1200&auto=format&fit=crop&q=80', label: 'Dears жанкүйерлер қауымдастығы' },
+        { url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200&auto=format&fit=crop&q=80', label: 'Музыкалық шеберлік' },
+        { url: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=1200&auto=format&fit=crop&q=80', label: 'Классикалық аспаптар' },
+        { url: 'https://images.unsplash.com/photo-1445985543470-41fba5c3144a?w=1200&auto=format&fit=crop&q=80', label: 'Үлкен симфониялық оркестр' },
+        { url: 'https://images.unsplash.com/photo-1520523839898-507125cd53c1?w=1200&auto=format&fit=crop&q=80', label: 'Рояль мен пернелер' },
+        { url: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1200&auto=format&fit=crop&q=80', label: 'Дыбыс режиссурасы' },
+        { url: 'https://images.unsplash.com/photo-1471478331149-c72f17e33c73?w=1200&auto=format&fit=crop&q=80', label: 'Сахналық жарық' },
+        { url: 'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=1200&auto=format&fit=crop&q=80', label: 'Фестиваль атмосферасы' },
+        { url: 'https://images.unsplash.com/photo-1469488865564-c2de10f69f96?w=1200&auto=format&fit=crop&q=80', label: 'Әлемдік гастрольдер' }
+    ],
+    startup: [
+        { url: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&auto=format&fit=crop&q=80', label: 'Startup Hub Coworking' },
+        { url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80', label: 'Командалық талқылау' },
+        { url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80', label: 'Hackathon & Workshop' },
+        { url: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1200&auto=format&fit=crop&q=80', label: 'Pitch Demo Day' },
+        { url: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1200&auto=format&fit=crop&q=80', label: 'Венчурлік инвестициялар' },
+        { url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&auto=format&fit=crop&q=80', label: 'Цифрлық экожүйе' },
+        { url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&auto=format&fit=crop&q=80', label: 'KPI Аналитика' },
+        { url: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&auto=format&fit=crop&q=80', label: 'Бизнес келіссөздер' },
+        { url: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&auto=format&fit=crop&q=80', label: 'IT әзірлеушілер тобы' },
+        { url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200&auto=format&fit=crop&q=80', label: 'Стратегиялық жоспарлау' },
+        { url: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1200&auto=format&fit=crop&q=80', label: 'Кәсіпкерлік жетістік' },
+        { url: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1200&auto=format&fit=crop&q=80', label: 'Жобалық инкубация' },
+        { url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=1200&auto=format&fit=crop&q=80', label: 'Конференция спикері' },
+        { url: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=1200&auto=format&fit=crop&q=80', label: 'Кеңес беру және менторлық' },
+        { url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80', label: 'Заманауи бизнес орталығы' }
+    ],
+    general: [
+        { url: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1200&auto=format&fit=crop&q=80', label: 'Білім беру және зерттеу' },
+        { url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop&q=80', label: 'Жаһандық инновациялар' },
+        { url: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=1200&auto=format&fit=crop&q=80', label: 'Шығармашылық идеялар' },
+        { url: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=1200&auto=format&fit=crop&q=80', label: 'Академиялық оқу үдерісі' },
+        { url: 'https://images.unsplash.com/photo-1513258496099-48168024aec0?w=1200&auto=format&fit=crop&q=80', label: 'Заманауи білім ордасы' },
+        { url: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&auto=format&fit=crop&q=80', label: 'Семинар және шеберлік сабағы' },
+        { url: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=1200&auto=format&fit=crop&q=80', label: 'Кітапхана қоры мен ғылым' },
+        { url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&auto=format&fit=crop&q=80', label: 'Студенттер қауымдастығы' },
+        { url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&auto=format&fit=crop&q=80', label: 'Цифрлық платформа' },
+        { url: 'https://images.unsplash.com/photo-1588072432836-e10032774350?w=1200&auto=format&fit=crop&q=80', label: 'Мектеп және интерактивті сабақ' },
+        { url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=1200&auto=format&fit=crop&q=80', label: 'Оқушылар жетістігі' },
+        { url: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1200&auto=format&fit=crop&q=80', label: 'Зерттеушілік жобалар' },
+        { url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&auto=format&fit=crop&q=80', label: 'Ұстаздар мен оқушылар' },
+        { url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&auto=format&fit=crop&q=80', label: 'Ынтымақтастық және серіктестік' },
+        { url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&auto=format&fit=crop&q=80', label: 'Технологиялық жаңалықтар' }
+    ]
+};
+
 function getCuratedWebImages(query) {
     const text = (query || '').toLowerCase();
-    const results = [];
     if (/димаш|dimash|құдайберген|кудайберген/i.test(text)) {
-        results.push(
-            { url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Kudaibergen_at_New_Wave_in_2019.jpg/1280px-Kudaibergen_at_New_Wave_in_2019.jpg', label: 'Димаш Құдайберген (New Wave)', source: 'Wikimedia' },
-            { url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80', label: 'Концерт және вокалдық сахна', source: 'Live Concert' },
-            { url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&auto=format&fit=crop&q=80', label: 'Стадиондық шоу және аншлаг', source: 'Live Stadium' },
-            { url: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=1200&auto=format&fit=crop&q=80', label: 'Музыкалық марапаттар мен сахна', source: 'Awards' },
-            { url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80', label: 'Студия және микрофон', source: 'Studio' },
-            { url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&auto=format&fit=crop&q=80', label: 'Вокал шеберлігі және сахна', source: 'Performance' },
-            { url: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=1200&auto=format&fit=crop&q=80', label: 'Dears жанкүйерлер қауымдастығы', source: 'Community' }
-        );
-    } else if (/абай|құнанбай|кунанбаев|шоқан|уәлихан|ыбырай|алтынсарин/i.test(text)) {
-        results.push(
-            { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Abay_Kunanbayev_1896.jpg/800px-Abay_Kunanbayev_1896.jpg', label: 'Абай Құнанбаев портреті (1896)', source: 'Wikipedia' },
-            { url: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=1200&auto=format&fit=crop&q=80', label: 'Тарихи қолжазбалар мен мұра', source: 'Heritage' },
-            { url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=1200&auto=format&fit=crop&q=80', label: 'Философия және кітапхана', source: 'Philosophy' },
-            { url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80', label: 'Ұлы дала табиғаты', source: 'Steppe' },
-            { url: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200&auto=format&fit=crop&q=80', label: 'Поэзия және руханият', source: 'Poetry' }
-        );
-    } else if (/хаб|hub|стартап|startup|инкуба|бизнес|жоба/i.test(text)) {
-        results.push(
-            { url: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&auto=format&fit=crop&q=80', label: 'Startup Hub Coworking', source: 'Unsplash' },
-            { url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80', label: 'Инновациялық командалық талқылау', source: 'Unsplash' },
-            { url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80', label: 'Hackathon & Workshop', source: 'Unsplash' },
-            { url: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1200&auto=format&fit=crop&q=80', label: 'Pitch Demo Day', source: 'Unsplash' },
-            { url: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1200&auto=format&fit=crop&q=80', label: 'Венчурлік инвестициялар', source: 'Unsplash' },
-            { url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&auto=format&fit=crop&q=80', label: 'Цифрлық экожүйе', source: 'Unsplash' }
-        );
-    } else if (/физик|ньютон|ом|ток|электр|квант|механик|энерги/i.test(text)) {
-        results.push(
-            { url: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=1200&auto=format&fit=crop&q=80', label: 'Кванттық оптика және лазер', source: 'Physics' },
-            { url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=1200&auto=format&fit=crop&q=80', label: 'Зертханалық физикалық тәжірибе', source: 'Physics Lab' },
-            { url: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1200&auto=format&fit=crop&q=80', label: 'Формулалар мен есептеулер', source: 'Math Board' },
-            { url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&auto=format&fit=crop&q=80', label: 'Инженерлік аппаратура', source: 'Engineering' },
-            { url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&auto=format&fit=crop&q=80', label: 'Микроэлектроника және чиптер', source: 'Tech' }
-        );
-    } else if (/биолог|клетк|жасуша|днк|генет|микроскоп/i.test(text)) {
-        results.push(
-            { url: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1200&auto=format&fit=crop&q=80', label: 'Микробиологиялық зертхана', source: 'Biology Lab' },
-            { url: 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=1200&auto=format&fit=crop&q=80', label: 'ДНҚ қос спиралі құрылымы', source: 'DNA Helix' },
-            { url: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200&auto=format&fit=crop&q=80', label: 'Биомедициналық зерттеулер', source: 'Biomedical' },
-            { url: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=1200&auto=format&fit=crop&q=80', label: 'Ғылыми жаңалықтар', source: 'Science' }
-        );
-    } else if (/космос|ғарыш|планет|астроном|марс|орбит/i.test(text)) {
-        results.push(
-            { url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop&q=80', label: 'Жер және терең ғарыш', source: 'Cosmos' },
-            { url: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=1200&auto=format&fit=crop&q=80', label: 'Марс беті мен зерттеулер', source: 'Mars' },
-            { url: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1200&auto=format&fit=crop&q=80', label: 'Орбиталық станция және спутник', source: 'Orbit' },
-            { url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=1200&auto=format&fit=crop&q=80', label: 'Галактикалық тұмандық', source: 'Nebula' }
-        );
-    } else if (/жасанды интеллект|нейро|робот|информатик|ai|программ|код/i.test(text)) {
-        results.push(
-            { url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80', label: 'Жасанды интеллект және нейрожүйелер', source: 'AI Neural' },
-            { url: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&auto=format&fit=crop&q=80', label: 'Заманауи робототехника', source: 'Robotics' },
-            { url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&auto=format&fit=crop&q=80', label: 'Бағдарламалық жасақтама мен код', source: 'Coding' },
-            { url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80', label: 'Мәліметтер матрицасы', source: 'Cyber Matrix' }
-        );
+        return CURATED_PHOTO_BANKS.dimash;
     }
-    return results;
+    if (/анатом|биолог|клетк|жасуша|днк|орган|жүрек|өкпе|ми|бауыр|мозг|скелет|қаңқа|cell|dna|biology/i.test(text)) {
+        return CURATED_PHOTO_BANKS.biology;
+    }
+    if (/физик|ньютон|ом|ток|электр|квант|механик|энерги|лазер|physics/i.test(text)) {
+        return CURATED_PHOTO_BANKS.physics;
+    }
+    if (/хаб|hub|стартап|startup|инкуба|бизнес|жоба|кызылорда|astana/i.test(text)) {
+        return CURATED_PHOTO_BANKS.startup;
+    }
+    return CURATED_PHOTO_BANKS.general;
 }
 
 async function searchAllRealWebPhotos(query, topicTitle = '') {
     const combined = `${query || ''} ${topicTitle || ''}`.trim();
     const curated = getCuratedWebImages(combined);
-    const wiki = await fetchWikipediaImages(query || topicTitle, 8);
+    const wiki = await fetchWikipediaImages(query || topicTitle, 6);
     
-    const all = [...curated];
-    const seen = new Set(all.map(item => item.url));
-    for (const item of wiki) {
+    // Combine Wikipedia images with curated bank
+    const all = [...wiki, ...curated];
+    const seen = new Set();
+    const uniqueList = [];
+    for (const item of all) {
         if (!seen.has(item.url)) {
             seen.add(item.url);
-            all.push(item);
+            uniqueList.push(item);
         }
     }
-    if (all.length < 3) {
-        all.push(
-            { url: getTopicFallbackImage(query, topicTitle), label: 'Тематическое фото (Unsplash)', source: 'Unsplash' },
-            { url: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=1200&auto=format&fit=crop&q=80', label: 'Универсальное фото', source: 'Unsplash' },
-            { url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop&q=80', label: 'Инновации и горизонты', source: 'Unsplash' }
-        );
-    }
-    return all;
+    return uniqueList.length >= 5 ? uniqueList : CURATED_PHOTO_BANKS.general;
 }
 
 async function autoAttachRealWebPhotos(presentation, mainTopic) {
@@ -3292,66 +3040,26 @@ async function autoAttachRealWebPhotos(presentation, mainTopic) {
 
     for (let i = 0; i < presentation.slides.length; i++) {
         const slide = presentation.slides[i];
-        if (!slide.imageUrl || !slide.imageUrl.startsWith('http')) {
-            let pool = topicPhotos;
-            
-            // If slide has a specific title query, search for it
-            const hasSpecificSubject = slide.title && slide.title.length > 5 && !/^(слайд|введение|итоги|қорытынды|кіріспе)/i.test(slide.title);
-            if (hasSpecificSubject) {
-                const specificPhotos = await searchAllRealWebPhotos(slide.title, mainTopic);
-                if (specificPhotos && specificPhotos.length > 0) {
-                    pool = [...specificPhotos, ...topicPhotos];
-                }
-            }
+        
+        // Find an unused photo from pool
+        let chosen = topicPhotos.find(p => !usedUrls.has(p.url));
+        if (!chosen) {
+            // Pick from general fallback bank to ensure uniqueness
+            const fallbackPool = CURATED_PHOTO_BANKS.general;
+            chosen = fallbackPool.find(p => !usedUrls.has(p.url)) || topicPhotos[i % topicPhotos.length];
+        }
 
-            // Pick an unused photo from pool, or fallback to modulo
-            let chosen = pool.find(p => !usedUrls.has(p.url));
-            if (!chosen && pool.length > 0) {
-                chosen = pool[i % pool.length];
-            }
-            if (chosen) {
-                slide.imageUrl = chosen.url;
-                usedUrls.add(chosen.url);
-            } else {
-                slide.imageUrl = getTopicFallbackImage(slide.imagePrompt, slide.title || mainTopic);
-            }
+        if (chosen) {
+            slide.imageUrl = chosen.url;
+            usedUrls.add(chosen.url);
         }
     }
 }
 
-function getTopicFallbackImage(prompt, title = '') {
+function getTopicFallbackImage(prompt, title = '', slideIndex = 0) {
     const text = `${prompt || ''} ${title || ''}`.toLowerCase();
-    if (/димаш|dimash|құдайберген|кудайберген/i.test(text)) {
-        return 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Kudaibergen_at_New_Wave_in_2019.jpg/1280px-Kudaibergen_at_New_Wave_in_2019.jpg';
-    }
-    if (/вокал|голос|әнші|певец|концерт|музыка|оркестр|домбыра|singer|concert/i.test(text)) {
-        return 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80';
-    }
-    if (/ом|ток|кернеу|электр|резистор|circuit|physic|ньютон|динамика|күш|gravity|вольт|ампер/i.test(text)) {
-        return 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80';
-    }
-    if (/жасуша|клетка|митохондр|хлоропласт|днк|биолог|cell|dna|microscope|микроскоп|бактери/i.test(text)) {
-        return 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&auto=format&fit=crop&q=80';
-    }
-    if (/период|менделеев|химия|реакци|молекул|атом|chem|колба|раствор/i.test(text)) {
-        return 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=80';
-    }
-    if (/ғарыш|космос|планет|астроном|space|universe|planet|stars|күн жүйе/i.test(text)) {
-        return 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80';
-    }
-    if (/абай|шоқан|ыбырай|тарих|батыр|хан|history|kazakh|культура|әдебиет/i.test(text)) {
-        return 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=800&auto=format&fit=crop&q=80';
-    }
-    if (/жасанды интеллект|робот|информатик|нейро|ai|code|robot|cyber|программи/i.test(text)) {
-        return 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
-    }
-    if (/пифагор|геометр|үшбұрыш|математик|math|geometry|формула|алгебра/i.test(text)) {
-        return 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=800&auto=format&fit=crop&q=80';
-    }
-    if (/экология|табиғат|природа|өсімдік|nature|forest|эко|су|ағаш/i.test(text)) {
-        return 'https://images.unsplash.com/photo-1511497584788-87676104235f?w=800&auto=format&fit=crop&q=80';
-    }
-    return 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=800&auto=format&fit=crop&q=80';
+    const list = getCuratedWebImages(text);
+    return list[slideIndex % list.length].url;
 }
 
 function handleImageFallback(imgEl, title, svgFallback, prompt) {
@@ -3359,7 +3067,7 @@ function handleImageFallback(imgEl, title, svgFallback, prompt) {
     const stage = imgEl.getAttribute('data-fallback-stage') || 'ai';
     if (stage === 'ai') {
         imgEl.setAttribute('data-fallback-stage', 'topic');
-        imgEl.src = getTopicFallbackImage(prompt, title);
+        imgEl.src = getTopicFallbackImage(prompt, title, 1);
     } else {
         imgEl.onerror = null;
         imgEl.src = svgFallback;
@@ -3372,9 +3080,10 @@ function buildPollinationsUrl(prompt, seed, slideTitle = '') {
     const cleanPrompt = sanitizeImagePrompt(prompt, slideTitle, presentationState ? presentationState.title : '');
     const fullPrompt = `${cleanPrompt}${styleModifier}`;
     const encoded = encodeURIComponent(fullPrompt);
-    const seedParam = seed ? `&seed=${seed}` : `&seed=${Math.floor(Math.random() * 1000000)}`;
+    const seedParam = seed ? `&seed=${seed}` : `&seed=${Math.floor(Math.random() * 10000000)}`;
     return `https://image.pollinations.ai/prompt/${encoded}?width=800&height=600&nologo=true${seedParam}`;
 }
+
 
 /* Build Slide Card HTML inner structure with 7 Diverse WOW Archetypes */
 function buildSlideCardHTML(card, slide, index, theme) {
