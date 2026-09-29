@@ -660,6 +660,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let sourceContext = (ragSourceState.activeTab !== 'none') ? ragSourceState.sourceText : '';
 
+        const selectSlideCount = document.getElementById('select-slide-count');
+        const selectSlideLevel = document.getElementById('select-slide-level');
+        const selectSlideLang  = document.getElementById('select-slide-lang');
+
+        const genOptions = {
+            slideCount: selectSlideCount ? parseInt(selectSlideCount.value, 10) || 7 : 7,
+            audienceLevel: selectSlideLevel ? selectSlideLevel.value : 'school',
+            slideLang: selectSlideLang ? selectSlideLang.value : 'auto'
+        };
+
         btnGenerate.disabled = true;
         btnGenIcon.className = 'fa-solid fa-spinner icon-spin';
         btnGenText.textContent = 'Анализ темы и подбор WOW-стиля...';
@@ -688,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 setGenProgress(40, `Генерация слайдов в стиле «${intel.name}»...`);
             }
 
-            const rawData = await callUniversalAI(topic, sourceContext, intel);
+            const rawData = await callUniversalAI(topic, sourceContext, intel, genOptions);
 
             btnGenText.textContent = 'Создаем кинематографичный WOW-дизайн...';
             setGenProgress(75, 'Сборка визуальных макетов...');
@@ -709,7 +719,24 @@ document.addEventListener('DOMContentLoaded', function () {
             switchScreen(screenWorkspace);
             renderWorkspace();
             saveToLocalStorage();
-            showToast(`Презентация создана в стиле «${intel.name}»!`, 'success');
+            
+            // Auto cloud save if user is logged in
+            if (typeof AshyqAuth !== 'undefined' && AshyqAuth.isLoggedIn && AshyqAuth.isLoggedIn()) {
+                const docId = presentationState.id || ('pres_' + Date.now());
+                presentationState.id = docId;
+                AshyqAuth.saveDocument({
+                    id: docId,
+                    title: presentationState.title || 'Презентация',
+                    subject: 'Презентация',
+                    grade: `${presentationState.slides.length} слайд`,
+                    topic: presentationState.title || '',
+                    html: '',
+                    docType: 'presentation',
+                    data: presentationState
+                });
+            }
+
+            showToast(`Презентация жасалды: «${intel.name}» стилі!`, 'success');
 
         } catch (err) {
             console.error('[Generate error]', err);
@@ -732,6 +759,205 @@ document.addEventListener('DOMContentLoaded', function () {
             showToast(`Режим фото: ${imageSourceMode === 'web' ? '🌐 Реальные фото (Wikipedia / Web)' : '🎨 ИИ 3D-генерация'}`, 'info');
         });
     });
+
+    // ── Save to Cloud Button ─────────────────────────────────
+    const btnSaveCloud = document.getElementById('btn-save-cloud');
+    if (btnSaveCloud) {
+        btnSaveCloud.addEventListener('click', function() {
+            if (!presentationState.slides || !presentationState.slides.length) {
+                showToast('Презентация бос', 'error');
+                return;
+            }
+            saveToLocalStorage();
+            if (typeof AshyqAuth !== 'undefined') {
+                if (!AshyqAuth.isLoggedIn()) {
+                    AshyqAuth.openLogin();
+                    showToast('Бұлтқа сақтау үшін жүйеге кіріңіз немесе тіркеліңіз', 'info');
+                    return;
+                }
+                const docId = presentationState.id || ('pres_' + Date.now());
+                presentationState.id = docId;
+                const ok = AshyqAuth.saveDocument({
+                    id: docId,
+                    title: presentationState.title || 'Презентация',
+                    subject: 'Презентация',
+                    grade: `${presentationState.slides.length} слайд`,
+                    topic: presentationState.title || '',
+                    html: '',
+                    docType: 'presentation',
+                    data: presentationState
+                });
+                if (ok) {
+                    showToast(`«${presentationState.title}» бұлттық кабинетке сәтті сақталды!`, 'success');
+                } else {
+                    showToast('Бұлтқа сақтау орындалды', 'success');
+                }
+            } else {
+                showToast('Презентация браузер жадында сақталды!', 'success');
+            }
+        });
+    }
+
+    // ── Copy All Slides Deck Text ─────────────────────────────
+    const btnCopyDeck = document.getElementById('btn-copy-deck');
+    if (btnCopyDeck) {
+        btnCopyDeck.addEventListener('click', function() {
+            if (!presentationState.slides || !presentationState.slides.length) {
+                showToast('Презентация бос', 'error');
+                return;
+            }
+            let text = `📋 ${presentationState.title || 'Презентация'}\n`;
+            text += `Дизайн: ${presentationState.theme?.style || 'AshyqLab Pro'} • Барлығы ${presentationState.slides.length} слайд\n\n`;
+            presentationState.slides.forEach((s, idx) => {
+                text += `--- [СЛАЙД ${idx + 1}] ${s.title || ''} ---\n`;
+                if (s.points && s.points.length) {
+                    s.points.forEach(p => { text += `• ${p}\n`; });
+                }
+                if (s.speakerNotes) {
+                    text += `💬 Шпаргалка спикера: ${s.speakerNotes}\n`;
+                }
+                text += '\n';
+            });
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Барлық слайд мәтіндері көшірілді!', 'success');
+            }).catch(() => {
+                showToast('Көшіру сәтсіз аяқталды', 'error');
+            });
+        });
+    }
+
+    // ── AI Slide Enhancer ─────────────────────────────────────
+    const btnAiEnhance = document.getElementById('btn-ai-enhance-slide');
+    if (btnAiEnhance) {
+        btnAiEnhance.addEventListener('click', async function() {
+            const slide = getCurrentSlide();
+            if (!slide) return;
+            const originalHtml = btnAiEnhance.innerHTML;
+            btnAiEnhance.disabled = true;
+            btnAiEnhance.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Жақсарту...';
+            showToast('AI слайд тезистерін жақсартып жатыр...', 'info');
+
+            try {
+                const isKazakh = /[әіңғүұқөһӘІҢҒҮҰҚӨҺ]/i.test(slide.title + ' ' + (slide.points || []).join(' '));
+                const prompt = isKazakh ?
+                    `Слайдтың тақырыбы: «${slide.title}». Қазіргі тезистер: ${JSON.stringify(slide.points)}. Осы тезистерді нақтырақ, академиялық, фактологиялық және сауатты қазақ тіліндегі 3-4 пунктке айналдырып, спикер жазбасын жаз. JSON қайтар: {"points": ["пункт 1", "пункт 2", "пункт 3"], "speakerNotes": "спикерге кеңес"}` :
+                    `Тема слайда: «${slide.title}». Текущие тезисы: ${JSON.stringify(slide.points)}. Улучши эти тезисы, сделай их более убедительными, структурированными и добавь краткие speakerNotes. Верни JSON: {"points": ["пункт 1", "пункт 2", "пункт 3"], "speakerNotes": "подсказка спикеру"}`;
+
+                const res = await callUniversalAI(prompt, '', null, { slideCount: 1, slideLang: isKazakh ? 'kk' : 'ru' });
+                if (res && res.slides && res.slides[0]) {
+                    const s = res.slides[0];
+                    if (s.points && s.points.length) slide.points = s.points;
+                    if (s.speakerNotes) slide.speakerNotes = s.speakerNotes;
+                } else if (res && res.points && res.points.length) {
+                    slide.points = res.points;
+                    if (res.speakerNotes) slide.speakerNotes = res.speakerNotes;
+                }
+                loadActiveSlideToEditor();
+                renderLiveSlidePreview();
+                saveToLocalStorage();
+                showToast('Слайд тезистері AI арқылы сәтті жақсартылды!', 'success');
+            } catch (e) {
+                showToast('AI жаңарту кезінде қате орын алды', 'error');
+            } finally {
+                btnAiEnhance.disabled = false;
+                btnAiEnhance.innerHTML = originalHtml;
+            }
+        });
+    }
+
+    // ── AI Add Quiz Question Slide ────────────────────────────
+    const btnAiAddQuiz = document.getElementById('btn-ai-add-quiz');
+    if (btnAiAddQuiz) {
+        btnAiAddQuiz.addEventListener('click', function() {
+            const slide = getCurrentSlide();
+            const title = slide ? slide.title : presentationState.title;
+            const isKazakh = /[әіңғүұқөһӘІҢҒҮҰҚӨҺ]/i.test(title + ' ' + presentationState.title);
+
+            const quizSlide = {
+                title: isKazakh ? `Бекіту сұрақтары: ${title}` : `Контрольные вопросы: ${title}`,
+                points: isKazakh ? [
+                    'Сұрақ: Бұл тақырыптың басты заңдылығы неде?',
+                    'A) Тәжірибелік негіз бен дәлелденген қағидалар (Дұрыс)',
+                    'B) Теориялық жорамалдар мен бақылаулар',
+                    'C) Өзгермейтін тұрақты шамалар'
+                ] : [
+                    'Вопрос: В чем заключается фундаментальная суть изучаемой темы?',
+                    'A) Практическая верификация и подтвержденные законы (Верно)',
+                    'B) Теоретические гипотезы и косвенные наблюдения',
+                    'C) Статические константы процессов'
+                ],
+                imagePrompt: 'interactive classroom quiz light bulb glowing stars 3d render',
+                layout: 'insight',
+                speakerNotes: isKazakh ? 'Оқушылармен кері байланыс орнатып, сұрақтарды талқылау.' : 'Организуйте интерактивное обсуждение контрольного вопроса с аудиторией.',
+                seed: Math.floor(Math.random() * 1000000)
+            };
+
+            presentationState.slides.splice(presentationState.currentSlideIndex + 1, 0, quizSlide);
+            presentationState.currentSlideIndex++;
+            renderWorkspace();
+            saveToLocalStorage();
+            showToast('Интерактивті сұрақ слайды қосылды!', 'success');
+        });
+    }
+
+    // ── AI Add Custom Slide ───────────────────────────────────
+    const btnAiAddSlide = document.getElementById('btn-ai-add-slide');
+    if (btnAiAddSlide) {
+        btnAiAddSlide.addEventListener('click', function() {
+            const customPrompt = prompt('Жаңа слайдтың тақырыбы немесе бағыты қандай болсын? (Мысалы: Тәжірибелік қолданылуы, Формулалар, Тарихи маңызы):');
+            if (!customPrompt || !customPrompt.trim()) return;
+
+            const isKazakh = /[әіңғүұқөһӘІҢҒҮҰҚӨҺ]/i.test(customPrompt + ' ' + presentationState.title);
+
+            const newSlide = {
+                title: customPrompt.trim(),
+                points: isKazakh ? [
+                    'Тақырыпқа қатысты жаңа деректер мен тұжырымдар',
+                    'Практикалық зерттеу нәтижелері мен талдаулар',
+                    'Маңызды көрсеткіштер мен заңдылықтар'
+                ] : [
+                    'Ключевые аспекты и новые аналитические данные по теме',
+                    'Практические результаты исследований и формулы',
+                    'Прикладные сценарии внедрения и выводы'
+                ],
+                imagePrompt: `${customPrompt.trim()} educational scientific 3d render 8k`,
+                layout: 'split-left',
+                speakerNotes: isKazakh ? `Бұл слайдта «${customPrompt.trim()}» сұрағын егжей-тегжейлі талдаймыз.` : `В этом слайде мы подробно рассмотрим аспект: ${customPrompt.trim()}.`,
+                seed: Math.floor(Math.random() * 1000000)
+            };
+
+            presentationState.slides.splice(presentationState.currentSlideIndex + 1, 0, newSlide);
+            presentationState.currentSlideIndex++;
+            renderWorkspace();
+            saveToLocalStorage();
+            showToast('Жаңа слайд сәтті қосылды!', 'success');
+        });
+    }
+
+    // ── URL Parameters Auto Load (?id= or ?topic=) ────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramId = urlParams.get('id');
+    const paramTopic = urlParams.get('topic');
+
+    if (paramId) {
+        if (typeof AshyqAuth !== 'undefined') {
+            const docs = AshyqAuth.getDocuments();
+            const found = docs.find(d => d.id === paramId);
+            if (found && (found.data || found.presentationData)) {
+                presentationState = found.data || found.presentationData;
+                switchScreen(screenWorkspace);
+                renderWorkspace();
+                showToast(`«${presentationState.title}» презентациясы бұлттан жүктелді!`, 'success');
+            }
+        }
+    } else if (paramTopic) {
+        if (promptInput) {
+            promptInput.value = paramTopic;
+            setTimeout(() => {
+                if (btnGenerate) btnGenerate.click();
+            }, 300);
+        }
+    }
 
     // ── Live Binding: Workspace Title ────────────────────────
     wsTitleInput.addEventListener('input', function(e) {
@@ -1216,11 +1442,17 @@ function parseJsonDeck(raw) {
     return null;
 }
 
-function generateOfflineSmartDeck(topic, sourceContext = '', intel = null) {
-    const isKazakh = /[әіңғүұқөһӘІҢҒҮҰҚӨҺ]/i.test((topic || '') + ' ' + (sourceContext || '')) || 
-                     /\b(сабақ|жоспары|мақсаты|физика|химия|биология|зертханалық|тақырыбы|сынып|оқушы)\b/i.test((topic || '') + ' ' + (sourceContext || ''));
+function generateOfflineSmartDeck(topic, sourceContext = '', intel = null, options = {}) {
+    const requestedLang = (options && options.slideLang) || 'auto';
+    let isKazakh = requestedLang === 'kk';
+    let isEnglish = requestedLang === 'en';
+    if (requestedLang === 'auto' || !requestedLang) {
+        isKazakh = /[әіңғүұқөһӘІҢҒҮҰҚӨҺ]/i.test((topic || '') + ' ' + (sourceContext || '')) || 
+                   /\b(сабақ|жоспары|мақсаты|физика|химия|биология|зертханалық|тақырыбы|сынып|оқушы|тұлға|өмірбаян|қазақ|тарих|баяндама|жетістік|шедевр)\b/i.test((topic || '') + ' ' + (sourceContext || ''));
+        isEnglish = /^[a-zA-Z0-9\s.,!?:;\-_'"]+$/.test((topic || '').trim()) && !/[а-яА-ЯёЁ]/.test(topic || '');
+    }
 
-    const cleanTopic = (topic || (isKazakh ? 'Ғылыми зерттеу' : 'Научное исследование')).trim();
+    const cleanTopic = (topic || (isKazakh ? 'Ғылыми зерттеу' : (isEnglish ? 'Scientific Research' : 'Научное исследование'))).trim();
     const activeIntel = intel || detectTopicIntelligence(cleanTopic, sourceContext);
 
     let slides = [];
@@ -2269,6 +2501,69 @@ function generateOfflineSmartDeck(topic, sourceContext = '', intel = null) {
         }
     }
 
+    const targetSlideCount = parseInt((options && options.slideCount) || 7, 10);
+    if (slides && slides.length > 0) {
+        if (slides.length > targetSlideCount) {
+            const cover = slides[0];
+            const last = slides[slides.length - 1];
+            const middle = slides.slice(1, slides.length - 1);
+            const neededMiddle = targetSlideCount - 2;
+            if (neededMiddle <= 0) {
+                slides = [cover, last].slice(0, targetSlideCount);
+            } else {
+                const step = middle.length / neededMiddle;
+                const selectedMiddle = [];
+                for (let i = 0; i < neededMiddle; i++) {
+                    selectedMiddle.push(middle[Math.min(middle.length - 1, Math.floor(i * step))]);
+                }
+                slides = [cover, ...selectedMiddle, last];
+            }
+        } else if (slides.length < targetSlideCount) {
+            const diff = targetSlideCount - slides.length;
+            const extraLayouts = ['stat', 'compare', 'cards-grid', 'steps', 'insight'];
+            for (let i = 0; i < diff; i++) {
+                const extraLayout = extraLayouts[i % extraLayouts.length];
+                if (isKazakh) {
+                    slides.splice(slides.length - 1, 0, {
+                        title: `${cleanTopic}: Қосымша мәліметтер мен талдау #${i + 1}`,
+                        points: [
+                            'Тақырыпқа қатысты маңызды тәжірибелік мысалдар мен фактілер',
+                            'Күнделікті өмірмен және заманауи ғылыммен байланысы',
+                            'Оқушылар мен зерттеушілерге арналған қосымша ұсыныстар'
+                        ],
+                        layout: extraLayout,
+                        imagePrompt: `${cleanTopic} scientific analysis detail 3d render 8k`,
+                        speakerNotes: 'Бұл слайдта тақырыптың қосымша аспектілері мен ерекшеліктері қарастырылады.'
+                    });
+                } else if (isEnglish) {
+                    slides.splice(slides.length - 1, 0, {
+                        title: `${cleanTopic}: In-Depth Analysis #${i + 1}`,
+                        points: [
+                            'Key practical observations and empirical evidence',
+                            'Interdisciplinary applications and modern advancements',
+                            'Critical insights and strategic recommendations'
+                        ],
+                        layout: extraLayout,
+                        imagePrompt: `${cleanTopic} scientific modern detailed study 3d render 8k`,
+                        speakerNotes: 'Detailed discussion of in-depth analytical points.'
+                    });
+                } else {
+                    slides.splice(slides.length - 1, 0, {
+                        title: `${cleanTopic}: Углубленный анализ #${i + 1}`,
+                        points: [
+                            'Важные практические примеры и ключевые наблюдения',
+                            'Связь с современными научно-техническими разработками',
+                            'Дополнительные выводы и прикладные рекомендации'
+                        ],
+                        layout: extraLayout,
+                        imagePrompt: `${cleanTopic} scientific analysis detail 3d render 8k`,
+                        speakerNotes: 'Подробный комментарий к дополнительным материалам и аналитике.'
+                    });
+                }
+            }
+        }
+    }
+
     return {
         title: cleanTopic,
         theme: {
@@ -2281,21 +2576,49 @@ function generateOfflineSmartDeck(topic, sourceContext = '', intel = null) {
     };
 }
 
-async function callUniversalAI(promptText, sourceContext = '', intel = null) {
+async function callUniversalAI(promptText, sourceContext = '', intel = null, options = {}) {
     let systemPrompt = '';
+
+    const slideCount = (options && options.slideCount) || 7;
+    const audienceLevel = (options && options.audienceLevel) || 'school';
+    const requestedLang = (options && options.slideLang) || 'auto';
+
+    let targetLang = requestedLang;
+    if (!targetLang || targetLang === 'auto') {
+        const isKk = /[әіңғүұқөһӘІҢҒҮҰҚӨҺ]/i.test((promptText || '') + ' ' + (sourceContext || '')) || 
+                     /\b(сабақ|жоспары|мақсаты|физика|химия|биология|сынып|оқушы|тұлға|өмірбаян|қазақ|тарих|баяндама|жетістік|шедевр)\b/i.test((promptText || '') + ' ' + (sourceContext || ''));
+        targetLang = isKk ? 'kk' : 'ru';
+    }
+
+    const langDirective = targetLang === 'kk'
+        ? 'ТІЛДІК ТАЛАП: Барлық тақырыптар, слайд мазмұны, негізгі тезистер мен спикер жазбалары таза, сауатты, академиялық ҚАЗАҚ ТІЛІНДЕ болуы шарт! Қазақша әріптерді (ә, і, ң, ғ, ү, ұ, қ, ө, һ) дұрыс қолдан.'
+        : targetLang === 'en'
+        ? 'LANGUAGE REQUIREMENT: All titles, slide bullets, facts, and speaker notes must be in clear modern academic ENGLISH.'
+        : 'ЯЗЫКОВОЕ ТРЕБОВАНИЕ: Все заголовки, тезисы, факты и шпаргалка спикера должны быть на грамотном РУССКОМ ЯЗЫКЕ.';
+
+    const audienceDesc = audienceLevel === 'school'
+        ? 'Мектеп оқушылары мен ұстаздарға арналған көрнекі түсінікті стиль (7-11 сынып)'
+        : audienceLevel === 'college'
+        ? 'Колледж бен ЖОО студенттеріне арналған тереңдетілген білім беру стилі'
+        : audienceLevel === 'business'
+        ? 'Инвесторлар, стартаптар және кәсіпкерлерге арналған нақты KPI және нәтижелі pitch deck стилі'
+        : 'Ғылыми конференциялар мен академиялық баяндамаларға арналған зерттеу стилі';
 
     if (sourceContext && sourceContext.trim()) {
         systemPrompt = [
-            'Ты профессиональный методист и арт-директор. На основе ПРЕДОСТАВЛЕННОГО КОНТЕКСТА создай структуру презентации. Не придумывай информацию от себя. Верни массив JSON с полями "title", "points" и "imagePrompt" (на английском).',
+            'Ты профессиональный методист и арт-директор образовательных презентаций.',
+            'На основе ПРЕДОСТАВЛЕННОГО КОНТЕКСТА создай структуру презентации. Не придумывай информацию от себя. Верни JSON объект с полями "title" и "slides".',
+            '',
+            `${langDirective}`,
+            `АУДИТОРИЯ: ${audienceDesc}.`,
+            `СЛАЙДТАР САНЫ: Дәл ${slideCount} слайд жаса.`,
             '',
             'СТРОГИЕ ПРАВИЛА ИЗВЛЕЧЕНИЯ (Grounded RAG Generation):',
             '1. Все тезисы, факты, формулы, правила и выводы должны быть извлечены ИСКЛЮЧИТЕЛЬНО из предоставленного текста источника.',
             '2. Избегай галлюцинаций. Не добавляй стороннюю информацию, которой нет в контексте источника.',
-            '3. Каждая презентация должна состоять из 5–8 слайдов.',
-            '4. Первый слайд — титульная обложка (points: [], imagePrompt: "educational science lab poster").',
-            '5. Поле imagePrompt пиши СТРОГО НА АНГЛИЙСКОМ ЯЗЫКЕ для генератора ИИ-иллюстраций Pollinations AI.',
-            '6. Тексты заголовков и пунктов слайдов — НА ЯЗЫКЕ ЗАПРОСА (русский / казахский).',
-            '7. Ответь СТРОГО валидным JSON объектом без markdown оберток.',
+            `3. Создай ровно ${slideCount} слайдов. Первый слайд — титульная обложка (points: [], layout: "cover").`,
+            '4. Поле imagePrompt пиши СТРОГО НА АНГЛИЙСКОМ ЯЗЫКЕ для генератора ИИ-иллюстраций Pollinations AI.',
+            '5. Ответь СТРОГО валидным JSON объектом без markdown оберток.',
             '',
             'Формат ответа JSON:',
             '{',
@@ -2308,7 +2631,8 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null) {
             '  },',
             '  "slides": [',
             '    {',
-            '      "title": "Заголовок слайда по тексту",',
+            '      "title": "Заголовок слайда",',
+            '      "layout": "cover | split-left | stat | steps | cards-grid | compare | insight",',
             '      "points": ["Фактический пункт 1 из источника с точными терминами/числами", "Фактический пункт 2 из источника"],',
             '      "imagePrompt": "Short accurate description in English for AI image generator, clean 3d render",',
             '      "speakerNotes": "Подсказка спикеру: что рассказать на этом слайде по материалам источника."',
@@ -2321,6 +2645,10 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null) {
             'Ты ведущий арт-директор и эксперт по созданию структурированных образовательных, биографических и научных презентаций мирового уровня.',
             'Создай структурированную презентацию СТРОГО ПО ТЕМЕ ЗАПРОСА («' + promptText + '»).',
             'ВСЕ заголовки, тезисы, факты, даты и выводы должны относиться ИСКЛЮЧИТЕЛЬНО к этой теме.',
+            '',
+            `${langDirective}`,
+            `АУДИТОРИЯ: ${audienceDesc}.`,
+            `СЛАЙДТАР САНЫ: Дәл ${slideCount} слайд жаса.`,
             '',
             'СТРОГИЕ ПРАВИЛА:',
             '1. Если тема о персоне/личности (певец, композитор, писатель, ученый, исторический деятель, актер):',
@@ -2350,7 +2678,7 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null) {
             '  "slides": [',
             '    {',
             '      "title": "Точный заголовок слайда",',
-            '      "layout": "cover | split-left | stat | steps | cards-grid | compare | insight",',
+            '      "layout": "cover | split-left | stat | steps | cards-grid | compare | insight | hub-ecosystem | kpi-grid",',
             '      "statVal": "Ключевое число / факт (для stat)",',
             '      "points": ["Конкретный факт 1 по теме запроса", "Конкретный факт 2 по теме запроса", "Конкретный факт 3 по теме запроса"],',
             '      "imagePrompt": "Accurate English description for 3d octane render 8k",',
@@ -2361,7 +2689,7 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null) {
         ].join('\n');
     }
 
-    let userContent = 'ТЕМА ПРЕЗЕНТАЦИИ: ' + promptText;
+    let userContent = `ТЕМА ПРЕЗЕНТАЦИИ: ${promptText}\nКОЛИЧЕСТВО СЛАЙДОВ: ${slideCount}\nЯЗЫК: ${targetLang === 'kk' ? 'Қазақша' : targetLang === 'en' ? 'English' : 'Русский'}`;
     if (sourceContext && sourceContext.trim()) {
         userContent = [
             'ДОСТОВЕРНЫЙ МАТЕРИАЛ ИЗ ИСТОЧНИКА / ЭНЦИКЛОПЕДИИ:',
@@ -2369,7 +2697,8 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null) {
             sourceContext.trim(),
             '========================================',
             '',
-            'ЗАДАНИЕ: На основе приведенного выше материала создай структурированную презентацию строго по теме: ' + promptText,
+            `ЗАДАНИЕ: На основе приведенного выше материала создай структурированную презентацию строго по теме: ${promptText}`,
+            `Количество слайдов: ${slideCount}. Язык: ${targetLang === 'kk' ? 'Қазақша' : targetLang === 'en' ? 'English' : 'Русский'}`,
             'Все факты, имена, даты и показатели извлекай строго из этого текста.'
         ].join('\n');
     }
@@ -2388,11 +2717,11 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null) {
                     system_instruction: { parts: [{ text: systemPrompt }] },
                     contents: [{ role: 'user', parts: [{ text: userContent }] }],
                     generationConfig: {
-                        temperature: sourceContext ? 0.25 : 0.7,
+                        temperature: sourceContext ? 0.2 : 0.7,
                         responseMimeType: 'application/json'
                     }
                 })
-            }, 8000);
+            }, 15000);
             if (res.ok) {
                 const data = await res.json();
                 const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -2419,7 +2748,7 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null) {
                 model: 'openai',
                 json: true
             })
-        }, 8000);
+        }, 12000);
         if (res.ok) {
             const rawText = await res.text();
             const parsed = parseJsonDeck(rawText);
@@ -2448,7 +2777,7 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null) {
                     ],
                     temperature: sourceContext ? 0.25 : 0.7
                 })
-            }, 8000);
+            }, 12000);
             if (res.ok) {
                 const oaiData = await res.json();
                 const content = oaiData?.choices?.[0]?.message?.content;
@@ -2464,7 +2793,7 @@ async function callUniversalAI(promptText, sourceContext = '', intel = null) {
 
     // 4. TIER 4: Guaranteed Local Pedagogical RAG Engine (Zero failure guarantee)
     console.info('Activating Grounded Smart Deck Engine for instant generation...');
-    return generateOfflineSmartDeck(promptText, sourceContext, intel);
+    return generateOfflineSmartDeck(promptText, sourceContext, intel, options);
 }
 
 const callGemini = callUniversalAI;

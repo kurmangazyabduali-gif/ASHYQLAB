@@ -2793,4 +2793,151 @@ html, body {
     text-overflow: ellipsis;
 }
 
+/* ──────────────────────────────────────────────
+   ADVANCED PRESENTATION GENERATION CONTROLS
+─────────────────────────────────────────────── */
+.pres-advanced-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.pres-param-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: left;
+}
+
+.pres-param-group label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pres-param-select {
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pres-param-select:focus {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08);
+}
+
+/* Workspace Header Custom Tool Buttons */
+.btn-ws-tool {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--c-border);
+    color: var(--c-text);
+    cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-ws-tool:hover {
+    background: rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+    border-color: var(--c-accent);
+}
+
+.btn-ws-tool i {
+    font-size: 13px;
+    color: #38bdf8;
+}
+
+/* AI Assistant & Quick Enhancer Box */
+.ai-assist-box {
+    margin-top: 14px;
+    padding: 12px;
+    background: rgba(56, 189, 248, 0.06);
+    border: 1px dashed rgba(56, 189, 248, 0.35);
+    border-radius: 12px;
+}
+
+.ai-assist-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: #0284c7;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.ai-assist-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+}
+
+.btn-ai-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.btn-ai-pill:hover {
+    background: #f0f9ff;
+    border-color: #0284c7;
+    color: #0284c7;
+    transform: translateX(2px);
+}
+
+.btn-ai-pill i {
+    font-size: 12px;
+    color: #0284c7;
+}
+
+@media (max-width: 768px) {
+    .pres-advanced-row {
+        grid-template-columns: 1fr;
+    }
+    .ws-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .btn-ws-tool span {
+        display: none;
+    }
+}
+
+
 

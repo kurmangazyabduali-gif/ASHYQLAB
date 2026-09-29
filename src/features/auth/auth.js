@@ -1246,8 +1246,8 @@
                     ${docs.map(d => `
                         <div class="dash-item-card">
                             <div>
-                                <span class="dash-item-badge">${d.subject || 'Пән'} • ${d.grade || ''}</span>
-                                <h4 class="dash-item-title">${d.title || 'Құжат'}</h4>
+                                <span class="dash-item-badge">${d.docType === 'presentation' ? '🎨 AI Презентация' : (d.subject || 'Пән')} • ${d.grade || ''}</span>
+                                <h4 class="dash-item-title">${d.title || (d.docType === 'presentation' ? 'Презентация' : 'Құжат')}</h4>
                                 <div class="dash-item-meta">
                                     <div>🕒 ${d.createdAt || ''}</div>
                                     ${d.topic ? `<div style="margin-top:2px;font-style:italic;">«${d.topic}»</div>` : ''}
@@ -1358,6 +1358,20 @@
             const doc = this.getDocuments().find(d => d.id === docId);
             if (!doc) return;
             
+            if (doc.docType === 'presentation' || doc.presentationData || (doc.data && doc.data.slides)) {
+                const presState = doc.data || doc.presentationData || doc;
+                localStorage.setItem('vsh_presentation_state', JSON.stringify(presState));
+                if (window.location.pathname.includes('presentation.html')) {
+                    if (typeof loadFromLocalStorage === 'function') loadFromLocalStorage();
+                    if (typeof renderWorkspace === 'function') renderWorkspace();
+                    this.closeDashboardModal();
+                    this.showToast(`«${doc.title}» презентациясы жүктелді!`, 'success');
+                } else {
+                    window.location.href = 'presentation.html';
+                }
+                return;
+            }
+
             const paper = document.getElementById('a4DocumentPaper');
             if (paper) {
                 paper.innerHTML = doc.html;

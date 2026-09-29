@@ -184,6 +184,39 @@
                     <span class="hint-chip" data-text="Абай Құнанбаевтың философиялық мұрасы мен Қара сөздері">📜 Абай мұрасы</span>
                 </div>
 
+                <!-- Кеңейтілген параметрлер: Слайд саны, Деңгей, Тіл -->
+                <div class="pres-advanced-row">
+                    <div class="pres-param-group">
+                        <label for="select-slide-count"><i class="fa-solid fa-layer-group"></i> Слайдтар саны:</label>
+                        <select id="select-slide-count" class="pres-param-select">
+                            <option value="5">5 слайд (Қысқаша шолу)</option>
+                            <option value="7" selected>7 слайд (Оңтайлы сабақ)</option>
+                            <option value="10">10 слайд (Толыққанды баяндама)</option>
+                            <option value="12">12 слайд (Кеңейтілген курс)</option>
+                        </select>
+                    </div>
+
+                    <div class="pres-param-group">
+                        <label for="select-slide-level"><i class="fa-solid fa-graduation-cap"></i> Мақсатты деңгей:</label>
+                        <select id="select-slide-level" class="pres-param-select">
+                            <option value="school" selected>Мектеп (7–11 сынып)</option>
+                            <option value="college">Колледж / Студенттер</option>
+                            <option value="academic">Ғылыми / Академиялық</option>
+                            <option value="business">Стартап / Бизнес-питч</option>
+                        </select>
+                    </div>
+
+                    <div class="pres-param-group">
+                        <label for="select-slide-lang"><i class="fa-solid fa-language"></i> Тілі:</label>
+                        <select id="select-slide-lang" class="pres-param-select">
+                            <option value="auto" selected>✨ Авто (Тақырып бойынша)</option>
+                            <option value="kk">🇰🇿 Қазақша</option>
+                            <option value="ru">🇷🇺 Русский</option>
+                            <option value="en">🇬🇧 English</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Выбор источника фото: Реальные фото из Сети или ИИ -->
                 <div class="image-source-toggle-row">
                     <label class="image-source-label">
@@ -218,7 +251,7 @@
                 <div class="feat-item"><i class="fa-solid fa-file-pdf"></i> Скачать ВСЕ слайды в PDF</div>
                 <div class="feat-item"><i class="fa-solid fa-file-powerpoint"></i> Скачать ВСЕ слайды в PPTX</div>
                 <div class="feat-item"><i class="fa-solid fa-desktop"></i> Полноэкранный показ</div>
-                <div class="feat-item"><i class="fa-solid fa-plus-minus"></i> Добавление/Удаление слайдов</div>
+                <div class="feat-item"><i class="fa-solid fa-cloud-arrow-up"></i> Бұлттық авто-сақтау</div>
             </div>
         </div>
     </div>
@@ -232,7 +265,7 @@
         <!-- Шапка Рабочей Области -->
         <header class="workspace-header">
             <button id="btn-back-to-prompt" class="ws-btn-back">
-                <i class="fa-solid fa-arrow-left"></i> Новая презентация
+                <i class="fa-solid fa-arrow-left"></i> Жаңа презентация
             </button>
 
             <div class="ws-title-container">
@@ -241,6 +274,16 @@
             </div>
 
             <div class="ws-actions">
+                <!-- Бұлттық сақтау -->
+                <button id="btn-save-cloud" class="btn-ws-tool" title="Бұлттық кабинетке сақтау">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span>Бұлтқа сақтау</span>
+                </button>
+
+                <!-- Слайдтарды көшіру -->
+                <button id="btn-copy-deck" class="btn-ws-tool" title="Барлық слайд мәтінін көшіру">
+                    <i class="fa-solid fa-copy"></i> <span>Көшіру</span>
+                </button>
+
                 <!-- Полноэкранный просмотр -->
                 <button id="btn-present-mode" class="btn-present">
                     <i class="fa-solid fa-play"></i> Показ слайдов
@@ -248,10 +291,10 @@
 
                 <!-- Скачивание PPTX и PDF (ВСЕ СЛАЙДЫ) -->
                 <button id="btn-download-pptx" class="btn-pptx">
-                    <i class="fa-solid fa-file-powerpoint"></i> Скачать PPTX (Все)
+                    <i class="fa-solid fa-file-powerpoint"></i> Скачать PPTX
                 </button>
                 <button id="btn-download-pdf" class="btn-pdf">
-                    <i class="fa-solid fa-file-pdf"></i> Скачать PDF (Все)
+                    <i class="fa-solid fa-file-pdf"></i> Скачать PDF
                 </button>
             </div>
         </header>
@@ -347,16 +390,20 @@
                         </button>
                     </div>
 
-                    <!-- Поле: Промпт для ИИ-генерации (Fallback) -->
-                    <div class="form-group">
-                        <label for="edit-image-prompt">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> ИИ 3D Промпт (English):
-                        </label>
-                        <input id="edit-image-prompt" class="form-input" type="text" placeholder="Description in English..." />
-                        
-                        <button type="button" id="btn-refresh-image" class="btn-refresh-img">
-                            <i class="fa-solid fa-dice"></i> Сгенерировать 3D вариант через ИИ
-                        </button>
+                    <!-- AI Ассистент & Жедел құралдар -->
+                    <div class="ai-assist-box">
+                        <div class="ai-assist-label"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Ассистент & Жақсарту:</div>
+                        <div class="ai-assist-grid">
+                            <button type="button" id="btn-ai-enhance-slide" class="btn-ai-pill" title="AI көмегімен тезистерді байыту және сауатты ету">
+                                <i class="fa-solid fa-feather-pointed"></i> Тезистерді жақсарту
+                            </button>
+                            <button type="button" id="btn-ai-add-quiz" class="btn-ai-pill" title="Слайдқа байланысты интерактивті сұрақ қосу">
+                                <i class="fa-solid fa-circle-question"></i> Сұрақ қосу
+                            </button>
+                            <button type="button" id="btn-ai-add-slide" class="btn-ai-pill" title="Осы тақырыпқа жаңа слайд генерациялау">
+                                <i class="fa-solid fa-plus-circle"></i> Жаңа AI Слайд
+                            </button>
+                        </div>
                     </div>
                 </div>
 
