@@ -74,7 +74,20 @@
                 script.src = 'https://accounts.google.com/gsi/client';
                 script.async = true;
                 script.defer = true;
+                script.onload = () => {
+                    setTimeout(() => {
+                        if (typeof this.initGoogleGsi === 'function') {
+                            this.initGoogleGsi();
+                        }
+                    }, 120);
+                };
                 document.head.appendChild(script);
+            } else {
+                setTimeout(() => {
+                    if (typeof this.initGoogleGsi === 'function') {
+                        this.initGoogleGsi();
+                    }
+                }, 120);
             }
         },
 
@@ -165,13 +178,13 @@
             {
                 name: 'Abduali Kurmangazy',
                 email: 'kurmangazyabduali@gmail.com',
-                avatarBg: 'linear-gradient(135deg, #1e3a8a, #2563eb)',
+                avatarBg: 'linear-gradient(135deg, #1e293b, #0f172a)',
                 avatarText: 'AK'
             },
             {
                 name: 'Abduali Kurmangazy',
                 email: 'kurmangazyabeke@gmail.com',
-                avatarBg: 'linear-gradient(135deg, #0f172a, #334155)',
+                avatarBg: 'linear-gradient(135deg, #0f172a, #1e293b)',
                 avatarText: 'AK'
             },
             {
@@ -211,7 +224,7 @@
                 name: 'Erbol Sadibekov',
                 email: 'erbolsadibekovvv@gmail.com',
                 status: 'Вы вышли из аккаунта',
-                avatarBg: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                avatarBg: 'linear-gradient(135deg, #334155, #1e293b)',
                 avatarText: 'E'
             },
             {
@@ -235,23 +248,62 @@
             }
         ],
 
+        initGoogleGsi: function() {
+            const clientId = localStorage.getItem('ashyq_google_client_id') || window.ASHYQ_GOOGLE_CLIENT_ID || '1047123984712-ashyqlab.apps.googleusercontent.com';
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+                try {
+                    window.google.accounts.id.initialize({
+                        client_id: clientId,
+                        callback: (response) => this.handleGoogleCredentialResponse(response),
+                        auto_select: false,
+                        cancel_on_tap_outside: true
+                    });
+
+                    const btnLogin = document.getElementById('googleBtnContainerLogin');
+                    if (btnLogin) {
+                        btnLogin.innerHTML = '';
+                        window.google.accounts.id.renderButton(btnLogin, {
+                            type: 'standard',
+                            theme: 'outline',
+                            size: 'large',
+                            text: 'signin_with',
+                            shape: 'rectangular',
+                            logo_alignment: 'left',
+                            width: btnLogin.offsetWidth || 340
+                        });
+                    }
+
+                    const btnRegister = document.getElementById('googleBtnContainerRegister');
+                    if (btnRegister) {
+                        btnRegister.innerHTML = '';
+                        window.google.accounts.id.renderButton(btnRegister, {
+                            type: 'standard',
+                            theme: 'outline',
+                            size: 'large',
+                            text: 'signup_with',
+                            shape: 'rectangular',
+                            logo_alignment: 'left',
+                            width: btnRegister.offsetWidth || 340
+                        });
+                    }
+
+                    if (!this.currentUser) {
+                        window.google.accounts.id.prompt();
+                    }
+                } catch(e) {
+                    console.warn('Google GSI init notice:', e);
+                }
+            }
+        },
+
         signInWithGoogle: function() {
             const alertBox = document.getElementById('authAlertBox');
             if (alertBox) alertBox.style.display = 'none';
 
-            // Google One-Tap / GIS Client check in parallel
-            const clientId = localStorage.getItem('ashyq_google_client_id') || window.ASHYQ_GOOGLE_CLIENT_ID;
-            if (window.google && window.google.accounts && window.google.accounts.id && clientId) {
-                try {
-                    window.google.accounts.id.initialize({
-                        client_id: clientId,
-                        callback: (response) => this.handleGoogleCredentialResponse(response)
-                    });
-                    window.google.accounts.id.prompt();
-                } catch(e) {}
-            }
+            // Google One-Tap / GIS Client prompt attempt
+            this.initGoogleGsi();
 
-            // Open the authentic Google Account Selector Modal (as shown in Photo 2)
+            // Open the authentic Google Account Selector Modal (matching Photo 2 pixel-perfect)
             this.openGoogleChooserModal();
         },
 
@@ -263,7 +315,7 @@
             if (!modal) {
                 modal = document.createElement('div');
                 modal.id = 'ashyqGoogleChooserModal';
-                modal.className = 'auth-modal-backdrop';
+                modal.className = 'auth-modal-backdrop google-chooser-backdrop';
                 modal.style.zIndex = '10010';
                 document.body.appendChild(modal);
             }
@@ -285,52 +337,69 @@
                         <div class="google-account-name">${acc.name}</div>
                         <div class="google-account-email">${acc.email}</div>
                     </div>
-                    ${acc.status ? `<span class="google-account-status">${acc.status}</span>` : ''}
+                    ${acc.status ? `<div class="google-account-status">${acc.status}</div>` : ''}
                 </div>
             `).join('');
 
             modal.innerHTML = `
                 <div class="google-chooser-modal-card" onclick="event.stopPropagation()">
-                    <div class="google-chooser-header">
-                        <div class="google-chooser-top-row">
-                            <div class="google-chooser-brand">
-                                <svg style="width:28px;height:28px;" viewBox="0 0 24 24">
-                                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
-                                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
-                                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                                </svg>
-                                <span style="font-weight:700;font-size:14px;color:#1e293b;letter-spacing:-0.2px;">Google</span>
-                            </div>
-                            <button type="button" class="auth-modal-close" onclick="AshyqAuth.closeGoogleChooserModal()">✕</button>
+                    <!-- Top header row (close button & mobile brand) -->
+                    <div class="google-chooser-top-row">
+                        <div class="google-chooser-mobile-logo">
+                            <img src="assets/logo.png" alt="AshyqLab" class="google-top-logo-img">
+                            <span style="font-weight:700;font-size:15px;color:#1e293b;">AshyqLab</span>
                         </div>
-                        <h2 class="google-chooser-title">Выберите аккаунт</h2>
-                        <p class="google-chooser-subtitle">Переход в приложение «<span style="color:#2563eb;font-weight:700;">AshyqLab</span>»</p>
+                        <button type="button" class="google-chooser-close-btn" onclick="AshyqAuth.closeGoogleChooserModal()" title="Жабу">✕</button>
                     </div>
 
-                    <div class="google-account-list" id="googleAccountListContainer">
-                        ${accountsHtml}
-                    </div>
-
-                    <div id="googleAnotherAccountForm" style="display:none;padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;">
-                        <form onsubmit="AshyqAuth.handleGoogleCustomAccountSubmit(event)">
-                            <div style="font-weight:700;font-size:13px;color:#1e293b;margin-bottom:10px;">Басқа Google аккаунтын енгізу:</div>
-                            <input type="email" id="googleCustomEmail" required placeholder="example@gmail.com" class="auth-input" style="margin-bottom:8px;" />
-                            <input type="text" id="googleCustomName" placeholder="Құрманғазы Абдуали" value="Құрманғазы Абдуали" class="auth-input" style="margin-bottom:12px;" />
-                            <div style="display:flex;gap:8px;">
-                                <button type="submit" class="auth-submit-btn" style="flex:1;background:#1d4ed8;padding:8px 14px;font-size:13px;">Кіру</button>
-                                <button type="button" class="tool-btn" onclick="AshyqAuth.toggleGoogleAnotherForm(false)" style="padding:8px 14px;font-size:13px;">Болдырмау</button>
+                    <div class="google-chooser-columns">
+                        <!-- LEFT PANE: BRAND, TITLE, SUBTITLE -->
+                        <div class="google-chooser-left-pane">
+                            <div class="google-chooser-brand-badge">
+                                <img src="assets/logo.png" alt="AshyqLab" class="google-brand-main-logo">
                             </div>
-                        </form>
-                    </div>
+                            <h1 class="google-chooser-title">Выберите аккаунт</h1>
+                            <p class="google-chooser-subtitle">Переход в приложение «<span class="google-app-highlight">AshyqLab</span>»</p>
+                        </div>
 
-                    <div class="google-use-another" onclick="AshyqAuth.toggleGoogleAnotherForm(true)">
-                        <div class="google-use-another-icon">👤+</div>
-                        <span>Использовать другой аккаунт (Басқа аккаунт)</span>
-                    </div>
+                        <!-- RIGHT PANE: ACCOUNTS LIST, SCROLL BUTTON, ANOTHER ACCOUNT, LEGAL -->
+                        <div class="google-chooser-right-pane">
+                            <div class="google-account-list-wrapper">
+                                <div class="google-account-list" id="googleAccountListContainer" onscroll="AshyqAuth.handleAccountsScroll(this)">
+                                    ${accountsHtml}
+                                </div>
+                                <button type="button" class="google-scroll-down-btn" id="googleScrollDownBtn" onclick="AshyqAuth.scrollAccountsDown()" title="Төмен айналдыру">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                                    </svg>
+                                </button>
+                            </div>
 
-                    <div class="google-chooser-footer">
-                        Чтобы продолжить, Google предоставит приложению <b>AshyqLab</b> доступ к вашему имени, адресу электронной почты и фото профиля.
+                            <div id="googleAnotherAccountForm" style="display:none;padding:14px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;">
+                                <form onsubmit="AshyqAuth.handleGoogleCustomAccountSubmit(event)">
+                                    <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:8px;">Басқа Google аккаунтын енгізу:</div>
+                                    <input type="email" id="googleCustomEmail" required placeholder="example@gmail.com" class="auth-input" style="margin-bottom:8px;" />
+                                    <input type="text" id="googleCustomName" placeholder="Педагогтің аты-жөні" value="Құрманғазы Абдуали" class="auth-input" style="margin-bottom:10px;" />
+                                    <div style="display:flex;gap:8px;">
+                                        <button type="submit" class="auth-submit-btn" style="flex:1;margin-top:0;padding:8px 14px;font-size:13px;">Кіру / Тіркелу</button>
+                                        <button type="button" class="tool-btn" onclick="AshyqAuth.toggleGoogleAnotherForm(false)" style="padding:8px 14px;font-size:13px;border-radius:10px;">Болдырмау</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div class="google-use-another" onclick="AshyqAuth.toggleGoogleAnotherForm(true)">
+                                <div class="google-use-another-icon">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#5f6368">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    </svg>
+                                </div>
+                                <span class="google-use-another-text">Использовать другой аккаунт</span>
+                            </div>
+
+                            <div class="google-chooser-footer">
+                                Чтобы продолжить, Google предоставит приложению <b>AshyqLab</b> доступ к вашему имени, адресу электронной почты и фото профиля. Перед использованием приложения ознакомьтесь с его политикой конфиденциальности и условиями использования.
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -338,6 +407,31 @@
             modal.onclick = () => AshyqAuth.closeGoogleChooserModal();
             modal.classList.add('open');
             window._currentGoogleChooserAccounts = allAccounts;
+
+            setTimeout(() => {
+                const list = document.getElementById('googleAccountListContainer');
+                if (list) this.handleAccountsScroll(list);
+            }, 100);
+        },
+
+        scrollAccountsDown: function() {
+            const list = document.getElementById('googleAccountListContainer');
+            if (list) {
+                list.scrollBy({ top: 160, behavior: 'smooth' });
+            }
+        },
+
+        handleAccountsScroll: function(el) {
+            const btn = document.getElementById('googleScrollDownBtn');
+            if (!btn || !el) return;
+            const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 25;
+            if (isAtBottom) {
+                btn.style.opacity = '0';
+                btn.style.pointerEvents = 'none';
+            } else {
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            }
         },
 
         closeGoogleChooserModal: function() {
@@ -928,7 +1022,7 @@
         injectModals: function() {
             if (document.getElementById('ashyqAuthModal')) return;
 
-            // 1. Auth Modal (Login & Registration + Google Sign In)
+            // 1. Auth Modal (Login & Registration + Official Google Sign In)
             const authModal = document.createElement('div');
             authModal.id = 'ashyqAuthModal';
             authModal.className = 'auth-modal-backdrop';
@@ -940,7 +1034,7 @@
                             <img src="assets/logo.png" alt="AshyqLab" class="auth-modal-brand-logo">
                             <span class="auth-modal-title">Ashyq<span style="color:#1d4ed8;">Lab</span></span>
                         </div>
-                        <p class="auth-modal-subtitle">Педагогтерге арналған бұлттық кабинет</p>
+                        <p class="auth-modal-subtitle">Педагогтерге арналған ресми бұлттық кабинет</p>
                     </div>
 
                     <div class="auth-tabs-row">
@@ -951,98 +1045,123 @@
                     <div class="auth-modal-body">
                         <div id="authAlertBox" class="auth-alert-box"></div>
 
-                        <!-- GOOGLE ONE-CLICK SIGN IN BUTTON -->
-                        <button type="button" class="auth-google-btn" onclick="AshyqAuth.signInWithGoogle()">
-                            <svg class="auth-google-icon" viewBox="0 0 24 24">
-                                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
-                                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
-                                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                            </svg>
-                            <span>Google арқылы кіру</span>
-                        </button>
+                        <!-- LOGIN SECTION -->
+                        <div id="authLoginSection">
+                            <!-- Official GIS Button Container -->
+                            <div id="googleBtnContainerLogin" class="google-official-btn-slot"></div>
 
-                        <div class="auth-divider">немесе электрондық поштамен</div>
-
-                        <!-- LOGIN FORM -->
-                        <form id="authLoginForm" onsubmit="AshyqAuth.handleLoginSubmit(event)">
-                            <div class="auth-form-group">
-                                <label class="auth-label">Электрондық пошта (Email)</label>
-                                <div class="auth-input-wrapper">
-                                    <span class="auth-input-icon">✉️</span>
-                                    <input type="email" id="authLoginEmail" required placeholder="muallim@mektep.kz" class="auth-input">
-                                </div>
-                            </div>
-
-                            <div class="auth-form-group">
-                                <label class="auth-label">Құпиясөз (Пароль)</label>
-                                <div class="auth-input-wrapper">
-                                    <span class="auth-input-icon">🔒</span>
-                                    <input type="password" id="authLoginPassword" required placeholder="••••••••" class="auth-input">
-                                </div>
-                            </div>
-
-                            <button type="submit" id="authLoginSubmitBtn" class="auth-submit-btn">
-                                <span>🚀 Жүйеге кіру</span>
+                            <!-- Fast Google Sign-In Button -->
+                            <button type="button" class="auth-google-btn" onclick="AshyqAuth.signInWithGoogle()">
+                                <svg class="auth-google-icon" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
+                                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
+                                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                                </svg>
+                                <span>Google арқылы кіру (Войти с Google)</span>
                             </button>
-                        </form>
 
-                        <!-- REGISTRATION FORM -->
-                        <form id="authRegisterForm" style="display:none;" onsubmit="AshyqAuth.handleRegisterSubmit(event)">
-                            <div class="auth-form-group">
-                                <label class="auth-label">Педагогтің Т.А.Ә. (ФИО)</label>
-                                <div class="auth-input-wrapper">
-                                    <span class="auth-input-icon">👤</span>
-                                    <input type="text" id="authRegName" required placeholder="Құрманғазы Абдуали" class="auth-input">
-                                </div>
-                            </div>
+                            <div class="auth-divider">немесе электрондық поштамен</div>
 
-                            <div class="auth-form-group">
-                                <label class="auth-label">Электрондық пошта (Email)</label>
-                                <div class="auth-input-wrapper">
-                                    <span class="auth-input-icon">✉️</span>
-                                    <input type="email" id="authRegEmail" required placeholder="muallim@mektep.kz" class="auth-input">
-                                </div>
-                            </div>
-
-                            <div class="auth-form-group">
-                                <label class="auth-label">Құпиясөз жасау (Пароль)</label>
-                                <div class="auth-input-wrapper">
-                                    <span class="auth-input-icon">🔒</span>
-                                    <input type="password" id="authRegPassword" required minlength="5" placeholder="Кемінде 5 таңба" class="auth-input">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <!-- LOGIN FORM -->
+                            <form id="authLoginForm" onsubmit="AshyqAuth.handleLoginSubmit(event)">
                                 <div class="auth-form-group">
-                                    <label class="auth-label">Мектеп / Лицей</label>
+                                    <label class="auth-label">Электрондық пошта (Email)</label>
                                     <div class="auth-input-wrapper">
-                                        <span class="auth-input-icon">🏫</span>
-                                        <input type="text" id="authRegSchool" placeholder="№ 1 мектеп-лицей" class="auth-input" value="№ 1 мектеп-лицей">
+                                        <span class="auth-input-icon">✉️</span>
+                                        <input type="email" id="authLoginEmail" required placeholder="muallim@mektep.kz" class="auth-input">
                                     </div>
                                 </div>
+
                                 <div class="auth-form-group">
-                                    <label class="auth-label">Оқытатын пәні</label>
+                                    <label class="auth-label">Құпиясөз (Пароль)</label>
                                     <div class="auth-input-wrapper">
-                                        <span class="auth-input-icon">📚</span>
-                                        <select id="authRegSubject" class="auth-select">
-                                            <option value="Физика">Физика</option>
-                                            <option value="Химия">Химия</option>
-                                            <option value="Биология">Биология</option>
-                                            <option value="Информатика">Информатика</option>
-                                            <option value="Математика">Математика</option>
-                                            <option value="Қазақ тілі мен әдебиеті">Қазақ тілі</option>
-                                            <option value="Қазақстан тарихы">Тарих</option>
-                                            <option value="География">География</option>
-                                        </select>
+                                        <span class="auth-input-icon">🔒</span>
+                                        <input type="password" id="authLoginPassword" required placeholder="••••••••" class="auth-input">
                                     </div>
                                 </div>
-                            </div>
 
-                            <button type="submit" id="authRegSubmitBtn" class="auth-submit-btn">
-                                <span>✨ Тіркелу және Бұлтты ашу</span>
+                                <button type="submit" id="authLoginSubmitBtn" class="auth-submit-btn">
+                                    <span>🚀 Жүйеге кіру</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- REGISTRATION SECTION -->
+                        <div id="authRegisterSection" style="display:none;">
+                            <!-- Official GIS Button Container -->
+                            <div id="googleBtnContainerRegister" class="google-official-btn-slot"></div>
+
+                            <!-- Fast Google Registration Button -->
+                            <button type="button" class="auth-google-btn" onclick="AshyqAuth.signInWithGoogle()">
+                                <svg class="auth-google-icon" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
+                                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
+                                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                                </svg>
+                                <span>Google арқылы жылдам тіркелу</span>
                             </button>
-                        </form>
+
+                            <div class="auth-divider">немесе жаңа профиль толтыру</div>
+
+                            <!-- REGISTRATION FORM -->
+                            <form id="authRegisterForm" onsubmit="AshyqAuth.handleRegisterSubmit(event)">
+                                <div class="auth-form-group">
+                                    <label class="auth-label">Педагогтің Т.А.Ә. (ФИО)</label>
+                                    <div class="auth-input-wrapper">
+                                        <span class="auth-input-icon">👤</span>
+                                        <input type="text" id="authRegName" required placeholder="Құрманғазы Абдуали" class="auth-input">
+                                    </div>
+                                </div>
+
+                                <div class="auth-form-group">
+                                    <label class="auth-label">Электрондық пошта (Email)</label>
+                                    <div class="auth-input-wrapper">
+                                        <span class="auth-input-icon">✉️</span>
+                                        <input type="email" id="authRegEmail" required placeholder="muallim@mektep.kz" class="auth-input">
+                                    </div>
+                                </div>
+
+                                <div class="auth-form-group">
+                                    <label class="auth-label">Құпиясөз жасау (Пароль)</label>
+                                    <div class="auth-input-wrapper">
+                                        <span class="auth-input-icon">🔒</span>
+                                        <input type="password" id="authRegPassword" required minlength="5" placeholder="Кемінде 5 таңба" class="auth-input">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                    <div class="auth-form-group">
+                                        <label class="auth-label">Мектеп / Лицей</label>
+                                        <div class="auth-input-wrapper">
+                                            <span class="auth-input-icon">🏫</span>
+                                            <input type="text" id="authRegSchool" placeholder="№ 1 мектеп-лицей" class="auth-input" value="№ 1 мектеп-лицей">
+                                        </div>
+                                    </div>
+                                    <div class="auth-form-group">
+                                        <label class="auth-label">Оқытатын пәні</label>
+                                        <div class="auth-input-wrapper">
+                                            <span class="auth-input-icon">📚</span>
+                                            <select id="authRegSubject" class="auth-select">
+                                                <option value="Физика">Физика</option>
+                                                <option value="Химия">Химия</option>
+                                                <option value="Биология">Биология</option>
+                                                <option value="Информатика">Информатика</option>
+                                                <option value="Математика">Математика</option>
+                                                <option value="Қазақ тілі мен әдебиеті">Қазақ тілі</option>
+                                                <option value="Қазақстан тарихы">Тарих</option>
+                                                <option value="География">География</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" id="authRegSubmitBtn" class="auth-submit-btn">
+                                    <span>✨ Тіркелу және Бұлтты ашу</span>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1101,12 +1220,14 @@
             this.switchAuthTab('login');
             const modal = document.getElementById('ashyqAuthModal');
             if (modal) modal.classList.add('open');
+            setTimeout(() => this.initGoogleGsi(), 60);
         },
 
         openRegister: function() {
             this.switchAuthTab('register');
             const modal = document.getElementById('ashyqAuthModal');
             if (modal) modal.classList.add('open');
+            setTimeout(() => this.initGoogleGsi(), 60);
         },
 
         closeAuthModal: function() {
@@ -1117,22 +1238,28 @@
         switchAuthTab: function(tab) {
             const loginTab = document.getElementById('authTabLogin');
             const regTab = document.getElementById('authTabRegister');
-            const loginForm = document.getElementById('authLoginForm');
-            const regForm = document.getElementById('authRegisterForm');
+            const loginSec = document.getElementById('authLoginSection');
+            const regSec = document.getElementById('authRegisterSection');
             const alertBox = document.getElementById('authAlertBox');
             if (alertBox) alertBox.style.display = 'none';
 
             if (tab === 'login') {
                 if (loginTab) loginTab.classList.add('active');
                 if (regTab) regTab.classList.remove('active');
-                if (loginForm) loginForm.style.display = 'block';
-                if (regForm) regForm.style.display = 'none';
+                if (loginSec) loginSec.style.display = 'block';
+                if (regSec) regSec.style.display = 'none';
             } else {
                 if (loginTab) loginTab.classList.remove('active');
                 if (regTab) regTab.classList.add('active');
-                if (loginForm) loginForm.style.display = 'none';
-                if (regForm) regForm.style.display = 'block';
+                if (loginSec) loginSec.style.display = 'none';
+                if (regSec) regSec.style.display = 'block';
             }
+
+            setTimeout(() => {
+                if (typeof this.initGoogleGsi === 'function') {
+                    this.initGoogleGsi();
+                }
+            }, 50);
         },
 
         handleLoginSubmit: async function(e) {
