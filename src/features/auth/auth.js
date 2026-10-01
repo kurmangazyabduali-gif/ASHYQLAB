@@ -111,7 +111,7 @@
                 const link = document.createElement('link');
                 link.id = 'ashyq-auth-css';
                 link.rel = 'stylesheet';
-                link.href = 'src/styles/auth.css';
+                link.href = 'src/styles/auth.css?v=2.2';
                 document.head.appendChild(link);
             }
         },
@@ -1417,11 +1417,25 @@
 
         copyGameLink: function(gameId, template) {
             const url = `${window.location.origin}/studio.html?template=${template}&gameId=${gameId}&auto=1`;
-            navigator.clipboard.writeText(url).then(() => {
-                this.showToast('Ойынның тікелей сілтемесі көшірілді!', 'success');
-            }).catch(() => {
-                prompt('Ойынның сілтемесі:', url);
-            });
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    this.showToast('Ойынның тікелей сілтемесі көшірілді!', 'success');
+                }).catch(() => {
+                    this._copyFallback(url);
+                });
+            } else {
+                this._copyFallback(url);
+            }
+        },
+
+        _copyFallback: function(text) {
+            const t = document.createElement('textarea');
+            t.value = text;
+            document.body.appendChild(t);
+            t.select();
+            try { document.execCommand('copy'); } catch(e){}
+            document.body.removeChild(t);
+            this.showToast('Сілтеме буферге көшірілді!', 'success');
         },
 
         showToast: function(msg, type) {
