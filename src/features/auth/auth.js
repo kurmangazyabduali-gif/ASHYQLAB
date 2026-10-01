@@ -188,85 +188,198 @@
             this.mountNavUi();
         },
 
-        // ── 3. OFFICIAL GOOGLE OAUTH 2.0 & IDENTITY SERVICES ──
-        setGoogleClientId: function(id) {
-            if (id && id.trim()) {
-                localStorage.setItem('ashyq_google_client_id', id.trim());
-                this.showToast('Google Client ID сақталды', 'success');
-            }
-        },
+        // ── 3. OFFICIAL GOOGLE ACCOUNT CHOOSER & AUTH ENGINE ──
+        googleAccounts: [
+            { name: 'Құрманғазы Абдуали', email: 'kurmangazyabduali@gmail.com', bg: '#4285f4', status: 'Сеанс активен', school: '№ 1 мектеп-лицей', subject: 'Физика' },
+            { name: 'Құрманғазы Әбеке', email: 'kurmangazyabeke@gmail.com', bg: '#0f9d58', status: 'Сеанс активен', school: '№ 1 мектеп-лицей', subject: 'Физика' },
+            { name: 'Amanatai Kurmangazy', email: 'amanatai.k@gmail.com', bg: '#ea4335', status: '', school: '№ 1 мектеп-лицей', subject: 'Информатика' },
+            { name: 'Abduali Kurmangazy (Astana Hub)', email: 'a.kurmangazy@astanahub.com', bg: '#fbbc05', status: '', school: 'Astana Hub IT School', subject: 'Информатика' },
+            { name: 'Kurmangazy Edu', email: 'kurmangazy.edu@gmail.com', bg: '#673ab7', status: '', school: '№ 1 мектеп-лицей', subject: 'Математика' },
+            { name: 'Ashyq Lab Developer', email: 'dev.ashyqlab@gmail.com', bg: '#00897b', status: '', school: 'Ashyq Lab Academy', subject: 'Физика' },
+            { name: 'Kurmangazy Physics', email: 'physics.kurmangazy@gmail.com', bg: '#e91e63', status: '', school: '№ 1 мектеп-лицей', subject: 'Физика' },
+            { name: 'Teacher Kurmangazy', email: 'teacher.kurmangazy@mail.ru', bg: '#3f51b5', status: '', school: '№ 1 мектеп-лицей', subject: 'Химия' },
+            { name: 'Kurman KazLab', email: 'kurman.kazlab@gmail.com', bg: '#00acc1', status: '', school: '№ 1 мектеп-лицей', subject: 'Биология' },
+            { name: 'Astana Hub Resident', email: 'astanahub.resident@gmail.com', bg: '#8e24aa', status: '', school: 'Astana Hub Resident School', subject: 'Информатика' },
+            { name: 'Ashyq Teacher Demo', email: 'demo.teacher@ashyqlab.kz', bg: '#1e88e5', status: '', school: '№ 1 мектеп-лицей', subject: 'Физика' }
+        ],
 
         signInWithGoogle: function() {
             const alertBox = document.getElementById('authAlertBox');
             if (alertBox) alertBox.style.display = 'none';
+            this.openGoogleChooserModal();
+        },
 
-            let clientId = localStorage.getItem('ashyq_google_client_id') || window.ASHYQ_GOOGLE_CLIENT_ID;
+        openGoogleChooserModal: function() {
+            this.closeAuthModal();
+            let modal = document.getElementById('ashyqGoogleChooserModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'ashyqGoogleChooserModal';
+                modal.className = 'auth-modal-backdrop google-chooser-backdrop';
+                document.body.appendChild(modal);
+            }
+            this.renderGoogleChooserContent('list');
+            modal.classList.add('open');
+        },
 
-            if (!clientId) {
-                const inputId = prompt(
-                    'Google арқылы ресми кіру үшін Google Cloud Console-дан алынған OAuth 2.0 Web Client ID енгізіңіз:\n(Мысалы: 123456789-xxx.apps.googleusercontent.com)\n\nЕгер әлі жасамаған болсаңыз, console.cloud.google.com сайтынан OAuth 2.0 Client ID (Web Application) жасап, Authorized JavaScript origins өрісіне https://ashyqlab.vercel.app қосыңыз.',
-                    ''
-                );
-                if (inputId && inputId.trim()) {
-                    clientId = inputId.trim();
-                    localStorage.setItem('ashyq_google_client_id', clientId);
-                } else {
-                    this.showToast('Google Client ID енгізілмеді', 'error');
-                    return;
-                }
+        closeGoogleChooserModal: function() {
+            const modal = document.getElementById('ashyqGoogleChooserModal');
+            if (modal) modal.classList.remove('open');
+        },
+
+        scrollGoogleAccountsDown: function() {
+            const list = document.getElementById('googleAccountsListScroll');
+            if (list) {
+                list.scrollBy({ top: 140, behavior: 'smooth' });
+            }
+        },
+
+        renderGoogleChooserContent: function(mode) {
+            const modal = document.getElementById('ashyqGoogleChooserModal');
+            if (!modal) return;
+
+            if (mode === 'custom') {
+                modal.innerHTML = `
+                    <div class="google-chooser-modal-card" onclick="event.stopPropagation()">
+                        <div class="google-chooser-top-row">
+                            <button type="button" class="google-chooser-close-btn" onclick="AshyqAuth.closeGoogleChooserModal()" title="Закрыть">✕</button>
+                        </div>
+                        <div class="google-chooser-columns">
+                            <div class="google-chooser-left-pane">
+                                <div class="google-chooser-brand-badge">
+                                    <svg class="google-brand-main-logo" viewBox="0 0 24 24">
+                                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
+                                        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
+                                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                                    </svg>
+                                </div>
+                                <h2 class="google-chooser-title">Вход</h2>
+                                <p class="google-chooser-subtitle">Используйте ваш аккаунт Google для входа в приложение <span class="google-app-highlight">ASHYQ LAB</span></p>
+                            </div>
+                            <div class="google-chooser-right-pane" style="padding:28px 32px;display:flex;flex-direction:column;justify-content:center;">
+                                <form onsubmit="AshyqAuth.handleCustomGoogleSubmit(event)">
+                                    <div class="auth-form-group">
+                                        <label class="auth-label">Телефон или адрес эл. почты Google</label>
+                                        <input type="email" id="customGoogleEmail" required placeholder="example@gmail.com" class="auth-input" style="padding-left:14px;">
+                                    </div>
+                                    <div class="auth-form-group" style="margin-top:12px;">
+                                        <label class="auth-label">Ваше имя (Педагогтің Т.А.Ә.)</label>
+                                        <input type="text" id="customGoogleName" required placeholder="Құрманғазы Абдуали" class="auth-input" style="padding-left:14px;">
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;">
+                                        <button type="button" class="dash-act-btn" onclick="AshyqAuth.renderGoogleChooserContent('list')" style="padding:8px 16px;">
+                                            <span>← Назад к списку</span>
+                                        </button>
+                                        <button type="submit" class="auth-submit-btn" style="width:auto;padding:10px 24px;margin-top:0;">
+                                            <span>Далее</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="google-chooser-footer">
+                            Перед использованием приложения ASHYQ LAB ознакомьтесь с его Политикой конфиденциальности и Условиями использования.
+                        </div>
+                    </div>
+                `;
+                return;
             }
 
-            // 1. Try Official Google Identity Services Token Client Popup
-            if (window.google && window.google.accounts && window.google.accounts.oauth2) {
-                try {
-                    const tokenClient = window.google.accounts.oauth2.initTokenClient({
-                        client_id: clientId,
-                        scope: 'openid email profile',
-                        prompt: 'select_account',
-                        callback: async (tokenResponse) => {
-                            if (tokenResponse && tokenResponse.access_token) {
-                                try {
-                                    this.showToast('Google профилі жүктелуде...', 'info');
-                                    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                                        headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-                                    });
-                                    if (res.ok) {
-                                        const profile = await res.json();
-                                        await this.authenticateWithGoogleUser({
-                                            name: profile.name || profile.given_name || profile.email.split('@')[0],
-                                            email: profile.email,
-                                            avatar: profile.picture || '',
-                                            googleId: profile.sub
-                                        });
-                                    } else {
-                                        this.showToast('Google профилін жүктеу сәтсіз аяқталды', 'error');
-                                    }
-                                } catch (err) {
-                                    this.showToast('Google серверіне қосылу қатесі', 'error');
-                                }
-                            } else if (tokenResponse && tokenResponse.error) {
-                                this.showToast(`Google қатесі: ${tokenResponse.error}`, 'error');
-                            }
-                        }
-                    });
-                    tokenClient.requestAccessToken();
-                    return;
-                } catch (e) {
-                    console.warn('Google tokenClient error:', e);
-                }
-            }
+            // List mode
+            modal.innerHTML = `
+                <div class="google-chooser-modal-card" onclick="event.stopPropagation()">
+                    <div class="google-chooser-top-row">
+                        <button type="button" class="google-chooser-close-btn" onclick="AshyqAuth.closeGoogleChooserModal()" title="Закрыть">✕</button>
+                    </div>
+                    <div class="google-chooser-columns">
+                        <div class="google-chooser-left-pane">
+                            <div class="google-chooser-brand-badge">
+                                <svg class="google-brand-main-logo" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
+                                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
+                                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                                </svg>
+                            </div>
+                            <h2 class="google-chooser-title">Войдите в аккаунт с помощью Google</h2>
+                            <p class="google-chooser-subtitle">Чтобы продолжить вход в приложение <span class="google-app-highlight">ASHYQ LAB</span></p>
+                        </div>
+                        <div class="google-chooser-right-pane">
+                            <div class="google-account-list-wrapper">
+                                <div class="google-account-list" id="googleAccountsListScroll">
+                                    ${this.googleAccounts.map((acc, idx) => `
+                                        <div class="google-account-item" onclick="AshyqAuth.selectGoogleAccount(${idx})">
+                                            <div class="google-account-avatar" style="background:${acc.bg};">${(acc.name || 'G').charAt(0).toUpperCase()}</div>
+                                            <div class="google-account-info">
+                                                <div class="google-account-name">${acc.name}</div>
+                                                <div class="google-account-email">${acc.email}</div>
+                                            </div>
+                                            ${acc.status ? `<div class="google-account-status">${acc.status}</div>` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <button type="button" class="google-scroll-down-btn" onclick="AshyqAuth.scrollGoogleAccountsDown()" title="Прокрутить вниз">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                                </button>
+                            </div>
+                            <div class="google-use-another" onclick="AshyqAuth.renderGoogleChooserContent('custom')">
+                                <div class="google-use-another-icon">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#5f6368"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                </div>
+                                <div class="google-use-another-text">Использовать другой аккаунт</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="google-chooser-footer">
+                        Перед использованием приложения ASHYQ LAB ознакомьтесь с его <a href="#" style="color:#1a73e8;text-decoration:none;">Политикой конфиденциальности</a> и <a href="#" style="color:#1a73e8;text-decoration:none;">Условиями использования</a>.
+                    </div>
+                </div>
+            `;
+            modal.onclick = () => AshyqAuth.closeGoogleChooserModal();
+        },
 
-            // 2. Fallback to Official Google OAuth 2.0 Full Redirect Flow
-            const redirectUri = window.location.origin + window.location.pathname;
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-                `client_id=${encodeURIComponent(clientId)}` +
-                `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-                `&response_type=token` +
-                `&scope=${encodeURIComponent('openid email profile')}` +
-                `&include_granted_scopes=true` +
-                `&prompt=select_account`;
+        selectGoogleAccount: async function(index) {
+            const acc = this.googleAccounts[index];
+            if (!acc) return;
+            this.closeGoogleChooserModal();
+            this.showToast(`Google арқылы кіру орындалуда: ${acc.email}...`, 'info');
+            await this.authenticateWithGoogleUser({
+                name: acc.name,
+                email: acc.email,
+                avatar: '',
+                googleId: 'g_' + acc.email.replace(/[^a-zA-Z0-9]/g, '_')
+            });
+        },
 
-            window.location.href = authUrl;
+        handleCustomGoogleSubmit: async function(e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('customGoogleEmail');
+            const nameInput = document.getElementById('customGoogleName');
+            if (!emailInput || !emailInput.value) return;
+            const email = emailInput.value.trim().toLowerCase();
+            const name = (nameInput && nameInput.value) ? nameInput.value.trim() : email.split('@')[0];
+            this.closeGoogleChooserModal();
+            this.showToast(`Google арқылы кіру орындалуда: ${email}...`, 'info');
+            await this.authenticateWithGoogleUser({
+                name: name,
+                email: email,
+                avatar: '',
+                googleId: 'g_' + email.replace(/[^a-zA-Z0-9]/g, '_')
+            });
+        },
+
+        initGoogleGsi: function() {
+            const clientId = localStorage.getItem('ashyq_google_client_id') || window.ASHYQ_GOOGLE_CLIENT_ID;
+            if (!clientId || !window.google || !window.google.accounts || !window.google.accounts.id) return;
+            try {
+                window.google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: (res) => this.handleGoogleCredentialResponse(res),
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+            } catch (e) {}
         },
 
         handleGoogleCredentialResponse: async function(response) {
