@@ -52,6 +52,7 @@
             this.injectModals();
             this.mountNavUi();
             this.loadGoogleSdk();
+            this.checkOAuthRedirect();
             
             // If logged in, perform background cloud sync
             if (this.currentUser) {
@@ -74,20 +75,34 @@
                 script.src = 'https://accounts.google.com/gsi/client';
                 script.async = true;
                 script.defer = true;
-                script.onload = () => {
-                    setTimeout(() => {
-                        if (typeof this.initGoogleGsi === 'function') {
-                            this.initGoogleGsi();
-                        }
-                    }, 120);
-                };
                 document.head.appendChild(script);
-            } else {
-                setTimeout(() => {
-                    if (typeof this.initGoogleGsi === 'function') {
-                        this.initGoogleGsi();
+            }
+        },
+
+        checkOAuthRedirect: async function() {
+            if (window.location.hash && window.location.hash.includes('access_token=')) {
+                try {
+                    const params = new URLSearchParams(window.location.hash.substring(1));
+                    const accessToken = params.get('access_token');
+                    if (accessToken) {
+                        history.replaceState(null, document.title, window.location.pathname + window.location.search);
+                        this.showToast('Google арқылы кіру тексерілуде...', 'info');
+                        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                            headers: { Authorization: `Bearer ${accessToken}` }
+                        });
+                        if (res.ok) {
+                            const profile = await res.json();
+                            await this.authenticateWithGoogleUser({
+                                name: profile.name || profile.given_name || profile.email.split('@')[0],
+                                email: profile.email,
+                                avatar: profile.picture || '',
+                                googleId: profile.sub
+                            });
+                        }
                     }
-                }, 120);
+                } catch (e) {
+                    console.warn('Google OAuth redirect parse error:', e);
+                }
             }
         },
 
@@ -173,269 +188,85 @@
             this.mountNavUi();
         },
 
-        // ── 3. GOOGLE AUTHENTICATION (OAUTH 2.0 PIXEL PERFECT ACCOUNT CHOOSER) ──
-        DEFAULT_GOOGLE_ACCOUNTS: [
-            {
-                name: 'Abduali Kurmangazy',
-                email: 'kurmangazyabduali@gmail.com',
-                avatarBg: 'linear-gradient(135deg, #1e293b, #0f172a)',
-                avatarText: 'AK'
-            },
-            {
-                name: 'Abduali Kurmangazy',
-                email: 'kurmangazyabeke@gmail.com',
-                avatarBg: 'linear-gradient(135deg, #0f172a, #1e293b)',
-                avatarText: 'AK'
-            },
-            {
-                name: 'amanatai',
-                email: 'amanat.ai.tot@gmail.com',
-                status: 'Вы вышли из аккаунта',
-                avatarBg: 'linear-gradient(135deg, #0d9488, #059669)',
-                avatarText: 'A'
-            },
-            {
-                name: 'Abduali Kurmangazy',
-                email: 'a.kurmangazy@astanahub.com',
-                avatarBg: 'linear-gradient(135deg, #9333ea, #7e22ce)',
-                avatarText: 'A'
-            },
-            {
-                name: 'Kyzylorda Hub',
-                email: 'tubekbaeff@gmail.com',
-                status: 'Вы вышли из аккаунта',
-                avatarBg: 'linear-gradient(135deg, #0284c7, #0369a1)',
-                avatarText: 'K'
-            },
-            {
-                name: 'Bigboss',
-                email: 'krmbigbosskrm@gmail.com',
-                avatarBg: 'linear-gradient(135deg, #78350f, #92400e)',
-                avatarText: 'B'
-            },
-            {
-                name: 'Lunar Technology',
-                email: 'lunartechnologyofficial@gmail.com',
-                status: 'Вы вышли из аккаунта',
-                avatarBg: 'linear-gradient(135deg, #18181b, #27272a)',
-                avatarText: 'LT'
-            },
-            {
-                name: 'Erbol Sadibekov',
-                email: 'erbolsadibekovvv@gmail.com',
-                status: 'Вы вышли из аккаунта',
-                avatarBg: 'linear-gradient(135deg, #334155, #1e293b)',
-                avatarText: 'E'
-            },
-            {
-                name: 'Бекболат Бөлебай',
-                email: 'bolebay.bekbolat.25@gmail.com',
-                status: 'Вы вышли из аккаунта',
-                avatarBg: 'linear-gradient(135deg, #4f46e5, #4338ca)',
-                avatarText: 'Б'
-            },
-            {
-                name: 'Айнұр Асқарова',
-                email: 'akaldibaevnaa@gmail.com',
-                avatarBg: 'linear-gradient(135deg, #10b981, #059669)',
-                avatarText: 'А'
-            },
-            {
-                name: 'Абдуали Курмангазы',
-                email: 'kurmangazyabdubeke@gmail.com',
-                avatarBg: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                avatarText: 'A'
+        // ── 3. OFFICIAL GOOGLE OAUTH 2.0 & IDENTITY SERVICES ──
+        setGoogleClientId: function(id) {
+            if (id && id.trim()) {
+                localStorage.setItem('ashyq_google_client_id', id.trim());
+                this.showToast('Google Client ID сақталды', 'success');
             }
-        ],
+        },
 
         signInWithGoogle: function() {
             const alertBox = document.getElementById('authAlertBox');
             if (alertBox) alertBox.style.display = 'none';
 
-            // Open the authentic Google Account Selector Modal (matching Photo 2 pixel-perfect)
-            this.openGoogleChooserModal();
-        },
+            let clientId = localStorage.getItem('ashyq_google_client_id') || window.ASHYQ_GOOGLE_CLIENT_ID;
 
-        openGoogleChooserModal: function() {
-            // Close main auth modal if open
-            this.closeAuthModal();
-
-            let modal = document.getElementById('ashyqGoogleChooserModal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'ashyqGoogleChooserModal';
-                modal.className = 'auth-modal-backdrop google-chooser-backdrop';
-                modal.style.zIndex = '10010';
-                document.body.appendChild(modal);
-            }
-
-            // Combine saved custom accounts with default list
-            let savedCustomAccounts = [];
-            try {
-                savedCustomAccounts = JSON.parse(localStorage.getItem('ashyq_saved_google_accounts') || '[]');
-            } catch(e) {}
-
-            const allAccounts = [...savedCustomAccounts, ...this.DEFAULT_GOOGLE_ACCOUNTS.filter(d => !savedCustomAccounts.some(s => s.email.toLowerCase() === d.email.toLowerCase()))];
-
-            const accountsHtml = allAccounts.map((acc, idx) => `
-                <div class="google-account-item" onclick="AshyqAuth.selectGoogleAccount(${idx})">
-                    <div class="google-account-avatar" style="background:${acc.avatarBg || 'linear-gradient(135deg, #4285F4, #1d4ed8)'};">
-                        ${acc.avatarText || (acc.name ? acc.name.charAt(0).toUpperCase() : 'G')}
-                    </div>
-                    <div class="google-account-info">
-                        <div class="google-account-name">${acc.name}</div>
-                        <div class="google-account-email">${acc.email}</div>
-                    </div>
-                    ${acc.status ? `<div class="google-account-status">${acc.status}</div>` : ''}
-                </div>
-            `).join('');
-
-            modal.innerHTML = `
-                <div class="google-chooser-modal-card" onclick="event.stopPropagation()">
-                    <!-- Top header row (close button & mobile brand) -->
-                    <div class="google-chooser-top-row">
-                        <div class="google-chooser-mobile-logo">
-                            <img src="assets/logo.png" alt="AshyqLab" class="google-top-logo-img">
-                            <span style="font-weight:700;font-size:15px;color:#1e293b;">AshyqLab</span>
-                        </div>
-                        <button type="button" class="google-chooser-close-btn" onclick="AshyqAuth.closeGoogleChooserModal()" title="Жабу">✕</button>
-                    </div>
-
-                    <div class="google-chooser-columns">
-                        <!-- LEFT PANE: BRAND, TITLE, SUBTITLE -->
-                        <div class="google-chooser-left-pane">
-                            <div class="google-chooser-brand-badge">
-                                <img src="assets/logo.png" alt="AshyqLab" class="google-brand-main-logo">
-                            </div>
-                            <h1 class="google-chooser-title">Выберите аккаунт</h1>
-                            <p class="google-chooser-subtitle">Переход в приложение «<span class="google-app-highlight">AshyqLab</span>»</p>
-                        </div>
-
-                        <!-- RIGHT PANE: ACCOUNTS LIST, SCROLL BUTTON, ANOTHER ACCOUNT, LEGAL -->
-                        <div class="google-chooser-right-pane">
-                            <div class="google-account-list-wrapper">
-                                <div class="google-account-list" id="googleAccountListContainer" onscroll="AshyqAuth.handleAccountsScroll(this)">
-                                    ${accountsHtml}
-                                </div>
-                                <button type="button" class="google-scroll-down-btn" id="googleScrollDownBtn" onclick="AshyqAuth.scrollAccountsDown()" title="Төмен айналдыру">
-                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <div id="googleAnotherAccountForm" style="display:none;padding:14px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;">
-                                <form onsubmit="AshyqAuth.handleGoogleCustomAccountSubmit(event)">
-                                    <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:8px;">Басқа Google аккаунтын енгізу:</div>
-                                    <input type="email" id="googleCustomEmail" required placeholder="example@gmail.com" class="auth-input" style="margin-bottom:8px;" />
-                                    <input type="text" id="googleCustomName" placeholder="Педагогтің аты-жөні" value="Құрманғазы Абдуали" class="auth-input" style="margin-bottom:10px;" />
-                                    <div style="display:flex;gap:8px;">
-                                        <button type="submit" class="auth-submit-btn" style="flex:1;margin-top:0;padding:8px 14px;font-size:13px;">Кіру / Тіркелу</button>
-                                        <button type="button" class="tool-btn" onclick="AshyqAuth.toggleGoogleAnotherForm(false)" style="padding:8px 14px;font-size:13px;border-radius:10px;">Болдырмау</button>
-                                    </div>
-                                </form>
-                            </div>
-
-                            <div class="google-use-another" onclick="AshyqAuth.toggleGoogleAnotherForm(true)">
-                                <div class="google-use-another-icon">
-                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#5f6368">
-                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                                    </svg>
-                                </div>
-                                <span class="google-use-another-text">Использовать другой аккаунт</span>
-                            </div>
-
-                            <div class="google-chooser-footer">
-                                Чтобы продолжить, Google предоставит приложению <b>AshyqLab</b> доступ к вашему имени, адресу электронной почты и фото профиля. Перед использованием приложения ознакомьтесь с его политикой конфиденциальности и условиями использования.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            modal.onclick = () => AshyqAuth.closeGoogleChooserModal();
-            modal.classList.add('open');
-            window._currentGoogleChooserAccounts = allAccounts;
-
-            setTimeout(() => {
-                const list = document.getElementById('googleAccountListContainer');
-                if (list) this.handleAccountsScroll(list);
-            }, 100);
-        },
-
-        scrollAccountsDown: function() {
-            const list = document.getElementById('googleAccountListContainer');
-            if (list) {
-                list.scrollBy({ top: 160, behavior: 'smooth' });
-            }
-        },
-
-        handleAccountsScroll: function(el) {
-            const btn = document.getElementById('googleScrollDownBtn');
-            if (!btn || !el) return;
-            const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 25;
-            if (isAtBottom) {
-                btn.style.opacity = '0';
-                btn.style.pointerEvents = 'none';
-            } else {
-                btn.style.opacity = '1';
-                btn.style.pointerEvents = 'auto';
-            }
-        },
-
-        closeGoogleChooserModal: function() {
-            const modal = document.getElementById('ashyqGoogleChooserModal');
-            if (modal) modal.classList.remove('open');
-        },
-
-        toggleGoogleAnotherForm: function(show) {
-            const form = document.getElementById('googleAnotherAccountForm');
-            if (form) {
-                form.style.display = show ? 'block' : 'none';
-                if (show) {
-                    const inp = document.getElementById('googleCustomEmail');
-                    if (inp) inp.focus();
+            if (!clientId) {
+                const inputId = prompt(
+                    'Google арқылы ресми кіру үшін Google Cloud Console-дан алынған OAuth 2.0 Web Client ID енгізіңіз:\n(Мысалы: 123456789-xxx.apps.googleusercontent.com)\n\nЕгер әлі жасамаған болсаңыз, console.cloud.google.com сайтынан OAuth 2.0 Client ID (Web Application) жасап, Authorized JavaScript origins өрісіне https://ashyqlab.vercel.app қосыңыз.',
+                    ''
+                );
+                if (inputId && inputId.trim()) {
+                    clientId = inputId.trim();
+                    localStorage.setItem('ashyq_google_client_id', clientId);
+                } else {
+                    this.showToast('Google Client ID енгізілмеді', 'error');
+                    return;
                 }
             }
-        },
 
-        handleGoogleCustomAccountSubmit: async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('googleCustomEmail').value.trim();
-            const name = document.getElementById('googleCustomName').value.trim() || email.split('@')[0];
-            if (!email) return;
-
-            // Save to local custom accounts
-            try {
-                let saved = JSON.parse(localStorage.getItem('ashyq_saved_google_accounts') || '[]');
-                if (!saved.some(s => s.email.toLowerCase() === email.toLowerCase())) {
-                    saved.unshift({
-                        name: name,
-                        email: email,
-                        avatarBg: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                        avatarText: name.charAt(0).toUpperCase()
+            // 1. Try Official Google Identity Services Token Client Popup
+            if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+                try {
+                    const tokenClient = window.google.accounts.oauth2.initTokenClient({
+                        client_id: clientId,
+                        scope: 'openid email profile',
+                        prompt: 'select_account',
+                        callback: async (tokenResponse) => {
+                            if (tokenResponse && tokenResponse.access_token) {
+                                try {
+                                    this.showToast('Google профилі жүктелуде...', 'info');
+                                    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                        headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                                    });
+                                    if (res.ok) {
+                                        const profile = await res.json();
+                                        await this.authenticateWithGoogleUser({
+                                            name: profile.name || profile.given_name || profile.email.split('@')[0],
+                                            email: profile.email,
+                                            avatar: profile.picture || '',
+                                            googleId: profile.sub
+                                        });
+                                    } else {
+                                        this.showToast('Google профилін жүктеу сәтсіз аяқталды', 'error');
+                                    }
+                                } catch (err) {
+                                    this.showToast('Google серверіне қосылу қатесі', 'error');
+                                }
+                            } else if (tokenResponse && tokenResponse.error) {
+                                this.showToast(`Google қатесі: ${tokenResponse.error}`, 'error');
+                            }
+                        }
                     });
-                    localStorage.setItem('ashyq_saved_google_accounts', JSON.stringify(saved));
+                    tokenClient.requestAccessToken();
+                    return;
+                } catch (e) {
+                    console.warn('Google tokenClient error:', e);
                 }
-            } catch(e) {}
+            }
 
-            await this.authenticateWithGoogleUser({ email, name });
-            this.closeGoogleChooserModal();
-        },
+            // 2. Fallback to Official Google OAuth 2.0 Full Redirect Flow
+            const redirectUri = window.location.origin + window.location.pathname;
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${encodeURIComponent(clientId)}` +
+                `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                `&response_type=token` +
+                `&scope=${encodeURIComponent('openid email profile')}` +
+                `&include_granted_scopes=true` +
+                `&prompt=select_account`;
 
-        selectGoogleAccount: async function(index) {
-            const accounts = window._currentGoogleChooserAccounts || this.DEFAULT_GOOGLE_ACCOUNTS;
-            const account = accounts[index] || accounts[0];
-            if (!account) return;
-
-            this.closeGoogleChooserModal();
-            this.showToast(`Google арқылы кіру: ${account.name}...`, 'info');
-
-            await this.authenticateWithGoogleUser({
-                name: account.name,
-                email: account.email,
-                avatar: account.avatar || ''
-            });
+            window.location.href = authUrl;
         },
 
         handleGoogleCredentialResponse: async function(response) {
