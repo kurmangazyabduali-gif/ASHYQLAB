@@ -248,60 +248,9 @@
             }
         ],
 
-        initGoogleGsi: function() {
-            const clientId = localStorage.getItem('ashyq_google_client_id') || window.ASHYQ_GOOGLE_CLIENT_ID || '1047123984712-ashyqlab.apps.googleusercontent.com';
-            if (window.google && window.google.accounts && window.google.accounts.id) {
-                try {
-                    window.google.accounts.id.initialize({
-                        client_id: clientId,
-                        callback: (response) => this.handleGoogleCredentialResponse(response),
-                        auto_select: false,
-                        cancel_on_tap_outside: true
-                    });
-
-                    const btnLogin = document.getElementById('googleBtnContainerLogin');
-                    if (btnLogin) {
-                        btnLogin.innerHTML = '';
-                        window.google.accounts.id.renderButton(btnLogin, {
-                            type: 'standard',
-                            theme: 'outline',
-                            size: 'large',
-                            text: 'signin_with',
-                            shape: 'rectangular',
-                            logo_alignment: 'left',
-                            width: btnLogin.offsetWidth || 340
-                        });
-                    }
-
-                    const btnRegister = document.getElementById('googleBtnContainerRegister');
-                    if (btnRegister) {
-                        btnRegister.innerHTML = '';
-                        window.google.accounts.id.renderButton(btnRegister, {
-                            type: 'standard',
-                            theme: 'outline',
-                            size: 'large',
-                            text: 'signup_with',
-                            shape: 'rectangular',
-                            logo_alignment: 'left',
-                            width: btnRegister.offsetWidth || 340
-                        });
-                    }
-
-                    if (!this.currentUser) {
-                        window.google.accounts.id.prompt();
-                    }
-                } catch(e) {
-                    console.warn('Google GSI init notice:', e);
-                }
-            }
-        },
-
         signInWithGoogle: function() {
             const alertBox = document.getElementById('authAlertBox');
             if (alertBox) alertBox.style.display = 'none';
-
-            // Google One-Tap / GIS Client prompt attempt
-            this.initGoogleGsi();
 
             // Open the authentic Google Account Selector Modal (matching Photo 2 pixel-perfect)
             this.openGoogleChooserModal();
@@ -1047,10 +996,7 @@
 
                         <!-- LOGIN SECTION -->
                         <div id="authLoginSection">
-                            <!-- Official GIS Button Container -->
-                            <div id="googleBtnContainerLogin" class="google-official-btn-slot"></div>
-
-                            <!-- Fast Google Sign-In Button -->
+                            <!-- Official Google Sign-In Button -->
                             <button type="button" class="auth-google-btn" onclick="AshyqAuth.signInWithGoogle()">
                                 <svg class="auth-google-icon" viewBox="0 0 24 24">
                                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -1058,7 +1004,7 @@
                                     <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
                                     <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
                                 </svg>
-                                <span>Google арқылы кіру (Войти с Google)</span>
+                                <span>Вход через аккаунт Google</span>
                             </button>
 
                             <div class="auth-divider">немесе электрондық поштамен</div>
@@ -1089,10 +1035,7 @@
 
                         <!-- REGISTRATION SECTION -->
                         <div id="authRegisterSection" style="display:none;">
-                            <!-- Official GIS Button Container -->
-                            <div id="googleBtnContainerRegister" class="google-official-btn-slot"></div>
-
-                            <!-- Fast Google Registration Button -->
+                            <!-- Official Google Sign-In Button -->
                             <button type="button" class="auth-google-btn" onclick="AshyqAuth.signInWithGoogle()">
                                 <svg class="auth-google-icon" viewBox="0 0 24 24">
                                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -1100,7 +1043,7 @@
                                     <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.97 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
                                     <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
                                 </svg>
-                                <span>Google арқылы жылдам тіркелу</span>
+                                <span>Вход через аккаунт Google</span>
                             </button>
 
                             <div class="auth-divider">немесе жаңа профиль толтыру</div>
