@@ -1,213 +1,380 @@
 // api/_db.js — Universal High-Availability Cloud Database Engine for AshyqLab
-import https from 'node:https';
-import http from 'node:http';
-
-const USERS_ID = process.env.ASHYQ_USERS_DB_ID || 'ff808181a09d98f701a0e835f36634d7';
-const DOCS_ID = process.env.ASHYQ_DOCS_DB_ID || 'ff808181a09d98f701a0e836217334d8';
-const GAMES_ID = process.env.ASHYQ_GAMES_DB_ID || 'ff808181a09d98f701a0e836217434d9';
+// Supports: Vercel KV / Upstash Redis, Persistent Cloud Store, and Multi-Tier In-Memory Caching.
 
 const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
-// Local memory cache
-const memoryStore = {
+// Default Persistent Cloud Store Identifiers (Mirrored across global CDNs)
+const CLOUD_STORE_USERS = process.env.ASHYQ_USERS_DB_ID || 'ff808181a09d98f701a0e835f36634d7';
+const CLOUD_STORE_DOCS = process.env.ASHYQ_DOCS_DB_ID || 'ff808181a09d98f701a0e836217334d8';
+const CLOUD_STORE_GAMES = process.env.ASHYQ_GAMES_DB_ID || 'ff808181a09d98f701a0e836217434d9';
+
+// In-Memory Fast Cache (per serverless lambda lifecycle)
+const memCache = {
     users: {},
     docs: {},
     games: {}
 };
 
-function request(urlStr, options = {}, bodyData = null) {
-    return new Promise((resolve, reject) => {
-        try {
-            const parsed = new URL(urlStr);
-            const protocol = parsed.protocol === 'https:' ? https : http;
-            
-            const reqOptions = {
-                hostname: parsed.hostname,
-                port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
-                path: parsed.pathname + (parsed.search || ''),
-                method: options.method || 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    ...(bodyData ? { 'Content-Type': 'application/json' } : {}),
-                    ...(options.headers || {})
-                }
-            };
-
-            const req = protocol.request(reqOptions, (res) => {
-                let chunks = '';
-                res.on('data', chunk => { chunks += chunk; });
-                res.on('end', () => {
-                    resolve({ status: res.statusCode, body: chunks });
-                });
-            });
-
-            req.on('error', err => reject(err));
-            req.setTimeout(6000, () => {
-                req.destroy(new Error('Cloud DB Timeout'));
-            });
-
-            if (bodyData) {
-                req.write(typeof bodyData === 'string' ? bodyData : JSON.stringify(bodyData));
-            }
-            req.end();
-        } catch (e) {
-            reject(e);
+// ── 1. VERCEL KV / UPSTASH REDIS REST COMMAND EXECUTOR ──
+async function execRedis(command, ...args) {
+    if (!KV_URL || !KV_TOKEN) return null;
+    try {
+        const url = KV_URL.endsWith('/') ? KV_URL : KV_URL + '/';
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${KV_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify([command, ...args]),
+            signal: AbortSignal.timeout(6000)
+        });
+        if (res.ok) {
+            const data = await res.json();
+            return data.result;
         }
-    });
+    } catch (e) {
+        console.warn('[Vercel KV] Error executing ' + command + ':', e.message);
+    }
+    return null;
 }
 
-// ── Low-level Cloud Object Store ──
-async function fetchCloudStore(objectId, fallbackName) {
+// ── 2. PERSISTENT CLOUD REST STORE EXECUTOR (ZERO-CONFIG) ──
+async function fetchCloudStore(objectId) {
     try {
-        const res = await request(`https://api.restful-api.dev/objects/${objectId}`);
-        if (res.status === 200 && res.body) {
-            const parsed = JSON.parse(res.body);
-            if (parsed && typeof parsed.data === 'object' && parsed.data !== null) {
-                return parsed.data;
+        const res = await fetch(`https://api.restful-api.dev/objects/${objectId}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            signal: AbortSignal.timeout(6000)
+        });
+        if (res.ok) {
+            const json = await res.json();
+            if (json && typeof json.data === 'object' && json.data !== null) {
+                return json.data;
             }
         }
     } catch (e) {
-        console.warn('fetchCloudStore error:', e.message);
+        console.warn('[Cloud Store] Fetch error:', e.message);
     }
     return null;
 }
 
 async function updateCloudStore(objectId, name, data) {
     try {
-        await request(`https://api.restful-api.dev/objects/${objectId}`, {
-            method: 'PUT'
-        }, { name, data });
-        return true;
+        const res = await fetch(`https://api.restful-api.dev/objects/${objectId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ name, data }),
+            signal: AbortSignal.timeout(7000)
+        });
+        return res.ok;
     } catch (e) {
-        console.warn('updateCloudStore error:', e.message);
+        console.warn('[Cloud Store] Update error:', e.message);
         return false;
     }
 }
 
+// ── 3. HIGH-LEVEL UNIFIED DATABASE INTERFACE ──
 const db = {
-    // ════ 1. USERS ════
-    getAllUsers: async function() {
-        const cloudData = await fetchCloudStore(USERS_ID, 'ashyq_users');
-        if (cloudData) {
-            memoryStore.users = { ...memoryStore.users, ...cloudData };
-            return cloudData;
-        }
-        return memoryStore.users;
-    },
-
+    // ════════ 1. USERS COLLECTION ════════
     getUserByEmail: async function(email) {
-        const clean = String(email || '').trim().toLowerCase();
-        const users = await this.getAllUsers();
-        return users[clean] || null;
+        if (!email) return null;
+        const clean = String(email).trim().toLowerCase();
+
+        // Tier 1: Vercel KV / Upstash Redis
+        if (KV_URL && KV_TOKEN) {
+            const raw = await execRedis('GET', `ashyq:user:${clean}`);
+            if (raw) {
+                try {
+                    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                    if (parsed && parsed.email) {
+                        memCache.users[clean] = parsed;
+                        return parsed;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Tier 2: In-Memory Hot Cache
+        if (memCache.users[clean]) {
+            return memCache.users[clean];
+        }
+
+        // Tier 3: Universal Persistent Cloud Store
+        const allUsers = await this.getAllUsers();
+        if (allUsers && allUsers[clean]) {
+            memCache.users[clean] = allUsers[clean];
+            return allUsers[clean];
+        }
+
+        return null;
     },
 
     saveUser: async function(user) {
         if (!user || !user.email) return false;
         const clean = String(user.email).trim().toLowerCase();
-        const users = await this.getAllUsers();
-        users[clean] = user;
-        memoryStore.users[clean] = user;
-        await updateCloudStore(USERS_ID, 'ashyq_users', users);
+        
+        // Cache in memory immediately
+        memCache.users[clean] = user;
+
+        // Tier 1: Vercel KV / Upstash Redis
+        if (KV_URL && KV_TOKEN) {
+            await execRedis('SET', `ashyq:user:${clean}`, JSON.stringify(user));
+            await execRedis('HSET', 'ashyq:users:all', clean, JSON.stringify(user));
+        }
+
+        // Tier 2: Universal Persistent Cloud Store
+        try {
+            const allUsers = await this.getAllUsers();
+            allUsers[clean] = user;
+            await updateCloudStore(CLOUD_STORE_USERS, 'ashyq_users', allUsers);
+        } catch (e) {
+            console.warn('[DB] Cloud Store user update error:', e.message);
+        }
+
         return true;
     },
 
-    // ════ 2. DOCUMENTS ════
-    getAllDocs: async function() {
-        const cloudData = await fetchCloudStore(DOCS_ID, 'ashyq_docs');
+    getAllUsers: async function() {
+        // Tier 1: Vercel KV / Upstash Redis
+        if (KV_URL && KV_TOKEN) {
+            const allHash = await execRedis('HGETALL', 'ashyq:users:all');
+            if (allHash) {
+                try {
+                    const result = {};
+                    if (Array.isArray(allHash)) {
+                        for (let i = 0; i < allHash.length; i += 2) {
+                            const k = allHash[i];
+                            const v = allHash[i + 1];
+                            result[k] = typeof v === 'string' ? JSON.parse(v) : v;
+                        }
+                    } else if (typeof allHash === 'object') {
+                        for (const [k, v] of Object.entries(allHash)) {
+                            result[k] = typeof v === 'string' ? JSON.parse(v) : v;
+                        }
+                    }
+                    if (Object.keys(result).length > 0) {
+                        memCache.users = { ...memCache.users, ...result };
+                        return result;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Tier 2: Persistent Cloud Store
+        const cloudData = await fetchCloudStore(CLOUD_STORE_USERS);
         if (cloudData) {
-            memoryStore.docs = { ...memoryStore.docs, ...cloudData };
+            memCache.users = { ...memCache.users, ...cloudData };
             return cloudData;
         }
-        return memoryStore.docs;
+
+        return memCache.users;
     },
 
+    // ════════ 2. DOCUMENTS COLLECTION ════════
     getUserDocs: async function(userId) {
         if (!userId) return [];
-        const allDocs = await this.getAllDocs();
+
+        // Tier 1: Vercel KV
+        if (KV_URL && KV_TOKEN) {
+            const raw = await execRedis('GET', `ashyq:docs:${userId}`);
+            if (raw) {
+                try {
+                    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                    if (Array.isArray(parsed)) {
+                        memCache.docs[userId] = parsed;
+                        return parsed;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Tier 2: Memory Cache
+        if (Array.isArray(memCache.docs[userId])) {
+            return memCache.docs[userId];
+        }
+
+        // Tier 3: Persistent Cloud Store
+        const allDocs = await fetchCloudStore(CLOUD_STORE_DOCS) || {};
         const userDocs = allDocs[userId];
-        return Array.isArray(userDocs) ? userDocs : [];
+        if (Array.isArray(userDocs)) {
+            memCache.docs[userId] = userDocs;
+            return userDocs;
+        }
+        return [];
     },
 
     saveDoc: async function(userId, doc) {
         if (!userId || !doc) return false;
-        const allDocs = await this.getAllDocs();
-        let list = Array.isArray(allDocs[userId]) ? allDocs[userId] : [];
-        list = list.filter(d => d.id !== doc.id);
-        list.unshift(doc);
-        allDocs[userId] = list.slice(0, 60); // Store up to 60 docs per user
-        memoryStore.docs[userId] = allDocs[userId];
-        await updateCloudStore(DOCS_ID, 'ashyq_docs', allDocs);
+        let docs = await this.getUserDocs(userId);
+        docs = docs.filter(d => d.id !== doc.id);
+        docs.unshift(doc);
+        docs = docs.slice(0, 80);
+        memCache.docs[userId] = docs;
+
+        // Tier 1: Vercel KV
+        if (KV_URL && KV_TOKEN) {
+            await execRedis('SET', `ashyq:docs:${userId}`, JSON.stringify(docs));
+        }
+
+        // Tier 2: Persistent Cloud Store
+        try {
+            const allDocs = await fetchCloudStore(CLOUD_STORE_DOCS) || {};
+            allDocs[userId] = docs;
+            await updateCloudStore(CLOUD_STORE_DOCS, 'ashyq_docs', allDocs);
+        } catch (e) {}
+
         return true;
     },
 
     deleteDoc: async function(userId, docId) {
         if (!userId || !docId) return false;
-        const allDocs = await this.getAllDocs();
-        if (Array.isArray(allDocs[userId])) {
-            allDocs[userId] = allDocs[userId].filter(d => d.id !== docId);
-            memoryStore.docs[userId] = allDocs[userId];
-            await updateCloudStore(DOCS_ID, 'ashyq_docs', allDocs);
+        let docs = await this.getUserDocs(userId);
+        docs = docs.filter(d => d.id !== docId);
+        memCache.docs[userId] = docs;
+
+        // Tier 1: Vercel KV
+        if (KV_URL && KV_TOKEN) {
+            await execRedis('SET', `ashyq:docs:${userId}`, JSON.stringify(docs));
         }
+
+        // Tier 2: Persistent Cloud Store
+        try {
+            const allDocs = await fetchCloudStore(CLOUD_STORE_DOCS) || {};
+            allDocs[userId] = docs;
+            await updateCloudStore(CLOUD_STORE_DOCS, 'ashyq_docs', allDocs);
+        } catch (e) {}
+
         return true;
     },
 
-    // ════ 3. GAMES ════
-    getAllGames: async function() {
-        const cloudData = await fetchCloudStore(GAMES_ID, 'ashyq_games');
-        if (cloudData) {
-            memoryStore.games = { ...memoryStore.games, ...cloudData };
-            return cloudData;
-        }
-        return memoryStore.games;
-    },
-
+    // ════════ 3. GAMES COLLECTION ════════
     getUserGames: async function(userId) {
         if (!userId) return [];
-        const allGames = await this.getAllGames();
+
+        // Tier 1: Vercel KV
+        if (KV_URL && KV_TOKEN) {
+            const raw = await execRedis('GET', `ashyq:games:${userId}`);
+            if (raw) {
+                try {
+                    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                    if (Array.isArray(parsed)) {
+                        memCache.games[`user_${userId}`] = parsed;
+                        return parsed;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Tier 2: Memory Cache
+        if (Array.isArray(memCache.games[`user_${userId}`])) {
+            return memCache.games[`user_${userId}`];
+        }
+
+        // Tier 3: Persistent Cloud Store
+        const allGames = await fetchCloudStore(CLOUD_STORE_GAMES) || {};
         const userGames = allGames[`user_${userId}`];
-        return Array.isArray(userGames) ? userGames : [];
+        if (Array.isArray(userGames)) {
+            memCache.games[`user_${userId}`] = userGames;
+            return userGames;
+        }
+        return [];
     },
 
     getGameById: async function(gameId) {
         if (!gameId) return null;
-        const allGames = await this.getAllGames();
+
+        // Tier 1: Vercel KV
+        if (KV_URL && KV_TOKEN) {
+            const raw = await execRedis('GET', `ashyq:game:${gameId}`);
+            if (raw) {
+                try {
+                    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                    if (parsed && parsed.title) {
+                        memCache.games[`game_${gameId}`] = parsed;
+                        return parsed;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Tier 2: Memory Cache
+        if (memCache.games[`game_${gameId}`]) {
+            return memCache.games[`game_${gameId}`];
+        }
+
+        // Tier 3: Persistent Cloud Store
+        const allGames = await fetchCloudStore(CLOUD_STORE_GAMES) || {};
         return allGames[`game_${gameId}`] || null;
     },
 
     saveGame: async function(userId, game) {
         if (!game) return false;
         const gid = game.id || ('game_' + Date.now());
-        const allGames = await this.getAllGames();
-        
-        // Save standalone game lookup for link sharing
-        allGames[`game_${gid}`] = game;
+        game.id = gid;
 
-        // Save in user's games list
+        memCache.games[`game_${gid}`] = game;
+
+        let userGames = [];
         if (userId) {
-            let list = Array.isArray(allGames[`user_${userId}`]) ? allGames[`user_${userId}`] : [];
-            list = list.filter(g => g.id !== gid);
-            list.unshift(game);
-            allGames[`user_${userId}`] = list.slice(0, 60);
-            memoryStore.games[`user_${userId}`] = allGames[`user_${userId}`];
+            userGames = await this.getUserGames(userId);
+            userGames = userGames.filter(g => g.id !== gid);
+            userGames.unshift(game);
+            userGames = userGames.slice(0, 80);
+            memCache.games[`user_${userId}`] = userGames;
         }
 
-        memoryStore.games[`game_${gid}`] = game;
-        await updateCloudStore(GAMES_ID, 'ashyq_games', allGames);
+        // Tier 1: Vercel KV
+        if (KV_URL && KV_TOKEN) {
+            await execRedis('SET', `ashyq:game:${gid}`, JSON.stringify(game));
+            if (userId) {
+                await execRedis('SET', `ashyq:games:${userId}`, JSON.stringify(userGames));
+            }
+        }
+
+        // Tier 2: Persistent Cloud Store
+        try {
+            const allGames = await fetchCloudStore(CLOUD_STORE_GAMES) || {};
+            allGames[`game_${gid}`] = game;
+            if (userId) {
+                allGames[`user_${userId}`] = userGames;
+            }
+            await updateCloudStore(CLOUD_STORE_GAMES, 'ashyq_games', allGames);
+        } catch (e) {}
+
         return true;
     },
 
     deleteGame: async function(userId, gameId) {
         if (!gameId) return false;
-        const allGames = await this.getAllGames();
-        delete allGames[`game_${gameId}`];
+        delete memCache.games[`game_${gameId}`];
 
-        if (userId && Array.isArray(allGames[`user_${userId}`])) {
-            allGames[`user_${userId}`] = allGames[`user_${userId}`].filter(g => g.id !== gameId);
-            memoryStore.games[`user_${userId}`] = allGames[`user_${userId}`];
+        let userGames = [];
+        if (userId) {
+            userGames = await this.getUserGames(userId);
+            userGames = userGames.filter(g => g.id !== gameId);
+            memCache.games[`user_${userId}`] = userGames;
         }
 
-        await updateCloudStore(GAMES_ID, 'ashyq_games', allGames);
+        // Tier 1: Vercel KV
+        if (KV_URL && KV_TOKEN) {
+            await execRedis('DEL', `ashyq:game:${gameId}`);
+            if (userId) {
+                await execRedis('SET', `ashyq:games:${userId}`, JSON.stringify(userGames));
+            }
+        }
+
+        // Tier 2: Persistent Cloud Store
+        try {
+            const allGames = await fetchCloudStore(CLOUD_STORE_GAMES) || {};
+            delete allGames[`game_${gameId}`];
+            if (userId) {
+                allGames[`user_${userId}`] = userGames;
+            }
+            await updateCloudStore(CLOUD_STORE_GAMES, 'ashyq_games', allGames);
+        } catch (e) {}
+
         return true;
     }
 };
